@@ -53,6 +53,33 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 순정 NVIDIA 환경에서는 켜둬도 무방.
 if "ZLUDA" in (torch.cuda.get_device_name(0) if device.type == "cuda" else ""):
     torch.backends.cudnn.enabled = False
+    # SAM2 어텐션(scaled_dot_product_attention)이 flash/mem-efficient(cutlass sm80+) 커널을 고르면
+    # ZLUDA에서 "built for sm37"로 실패 -> 일반 math 경로만 사용
+    torch.backends.cuda.enable_flash_sdp(False)
+    torch.backends.cuda.enable_mem_efficient_sdp(False)
+    torch.backends.cuda.enable_math_sdp(True)
+
+# GPU 사용률 상한(기본 90%). 장시간 100% 부하로 PC가 꺼진 적이 있어서(Kernel-Power 41),
+# GPU 작업 구간 시간 t마다 t*(1/duty - 1)만큼 쉬어 평균 점유율을 duty 이하로 맞춘다.
+# 환경변수 GPU_DUTY=1.0 이면 제한 없음. 평균만 줄이고 순간 전력 스파이크는 못 막으니,
+# 확실히 하려면 AMD Adrenalin > 성능 > 튜닝 > Power Limit도 같이 낮출 것.
+GPU_DUTY = float(os.environ.get("GPU_DUTY", "0.9"))
+
+
+class GpuDutyLimiter:
+    def __init__(self, duty=GPU_DUTY):
+        self.duty = min(max(duty, 0.05), 1.0)
+
+    def __enter__(self):
+        self.t0 = time.perf_counter()
+        return self
+
+    def __exit__(self, *exc):
+        if device.type == "cuda":
+            torch.cuda.synchronize()
+        if self.duty < 1.0:
+            time.sleep((time.perf_counter() - self.t0) * (1 / self.duty - 1))
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +129,18 @@ def crop_resize(mask, crop, out_hw):
     return cv2.resize(mask, (out_hw[1], out_hw[0]), interpolation=cv2.INTER_NEAREST).astype(bool)
 
 
+def prob_resize(prob, crop, out_hw):
+    """패딩 크롭 후 원본 해상도로 bilinear 리사이즈한 float32 확률맵."""
+    top, left, h, w = crop
+    prob = prob[top:top + h, left:left + w].astype(np.float32)
+    return cv2.resize(prob, (out_hw[1], out_hw[0]), interpolation=cv2.INTER_LINEAR)
+
+
+def two_ch_prob(t):
+    """[bg, fg] 2채널 출력 -> fg 확률. 채널별 sigmoid(YOLOP)/softmax 유사(YOLOPv2) 둘 다 비율로 정규화."""
+    return (t[:, 1] / (t[:, 0] + t[:, 1] + 1e-6))[0].cpu().numpy()
+
+
 def overlay_masks(img0, da_full, ll_full):
     overlay = img0.copy()
     overlay[da_full] = (0.5 * overlay[da_full].astype(np.float64) + 0.5 * np.array([255, 100, 0])).astype(np.uint8)
@@ -144,8 +183,15 @@ def load_yolopv2():
         ll = torch.round(ll)[0, 0].cpu().numpy()
         return crop_resize(da, crop, img0.shape[:2]), crop_resize(ll, crop, img0.shape[:2])
 
+    def probs(img0):
+        img, crop = pad_to_stride(img0)
+        with torch.no_grad():
+            _, seg, ll = model(to_tensor(img, rgb=True, imagenet_norm=False))
+        return prob_resize(two_ch_prob(seg), crop, img0.shape[:2]), prob_resize(ll[0, 0].cpu().numpy(), crop, img0.shape[:2])
+
     # benchmark_models.py용: 전처리 끝난 입력 텐서 / 순수 forward
     infer.prep = lambda img0: to_tensor(pad_to_stride(img0)[0], rgb=True, imagenet_norm=False)
+    infer.probs = probs  # (da_prob, ll_prob) float32, 원본 해상도 — make_ensemble_gif.py용
     infer.model = model
     return infer
 
@@ -165,8 +211,17 @@ def load_twinlitenetplus(config):
         ll = torch.argmax(out_ll, 1)[0].cpu().numpy()
         return crop_resize(da, crop, img0.shape[:2]), crop_resize(ll, crop, img0.shape[:2])
 
+    def probs(img0):
+        img, crop = pad_to_stride(img0)
+        with torch.no_grad():
+            out_da, out_ll = model(to_tensor(img, rgb=True, imagenet_norm=False))
+        da = torch.softmax(out_da, 1)[0, 1].cpu().numpy()
+        ll = torch.softmax(out_ll, 1)[0, 1].cpu().numpy()
+        return prob_resize(da, crop, img0.shape[:2]), prob_resize(ll, crop, img0.shape[:2])
+
     # benchmark_models.py용: 전처리 끝난 입력 텐서 / 순수 forward
     infer.prep = lambda img0: to_tensor(pad_to_stride(img0)[0], rgb=True, imagenet_norm=False)
+    infer.probs = probs  # (da_prob, ll_prob) float32, 원본 해상도 — make_ensemble_gif.py용
     infer.model = model
     return infer
 
@@ -187,8 +242,15 @@ def load_yolop():
         ll = torch.argmax(ll_out, 1)[0].cpu().numpy()
         return crop_resize(da, crop, img0.shape[:2]), crop_resize(ll, crop, img0.shape[:2])
 
+    def probs(img0):
+        img, crop = pad_to_stride(img0)
+        with torch.no_grad():
+            _, da_out, ll_out = model(to_tensor(img, rgb=False, imagenet_norm=True))
+        return prob_resize(two_ch_prob(da_out), crop, img0.shape[:2]), prob_resize(two_ch_prob(ll_out), crop, img0.shape[:2])
+
     # benchmark_models.py용: 전처리 끝난 입력 텐서 / 순수 forward
     infer.prep = lambda img0: to_tensor(pad_to_stride(img0)[0], rgb=False, imagenet_norm=True)
+    infer.probs = probs  # (da_prob, ll_prob) float32, 원본 해상도 — make_ensemble_gif.py용
     infer.model = model
     return infer
 
@@ -218,8 +280,16 @@ def load_hybridnets():
         cls = torch.argmax(seg, 1)[0].cpu().numpy()  # 0=bg, 1=road, 2=lane
         return crop_resize(cls == 1, crop, img0.shape[:2]), crop_resize(cls == 2, crop, img0.shape[:2])
 
+    def probs(img0):
+        img, crop = pad_to_stride(img0, stride=128)
+        with torch.no_grad():
+            p = torch.softmax(model(to_tensor(img, rgb=True, imagenet_norm=True))[-1], 1)[0].cpu().numpy()
+        # multiclass라 차선 픽셀은 road가 아니라 lane으로만 찍힘 -> da는 다른 모델처럼 차선 포함(road+lane)
+        return prob_resize(p[1] + p[2], crop, img0.shape[:2]), prob_resize(p[2], crop, img0.shape[:2])
+
     # benchmark_models.py용: 전처리 끝난 입력 텐서 / 순수 forward
     infer.prep = lambda img0: to_tensor(pad_to_stride(img0, stride=128)[0], rgb=True, imagenet_norm=True)
+    infer.probs = probs  # (da_prob, ll_prob) float32, 원본 해상도 — make_ensemble_gif.py용
     infer.model = model
     return infer
 
@@ -250,9 +320,11 @@ def render_model_panels(key, paths, panel_dir):
     infer = loader()
     print(f"[{key}] 로드 {time.time() - t0:.1f}s", flush=True)
     t0 = time.time()
+    limiter = GpuDutyLimiter()
     for i, path in enumerate(todo):
         img0 = cv2.imread(path)
-        da, ll = infer(img0)
+        with limiter:
+            da, ll = infer(img0)
         cv2.imwrite(os.path.join(out_dir, os.path.basename(path)), label_panel(overlay_masks(img0, da, ll), name))
         if i % 50 == 0:
             print(f"[{key}] {i}/{len(todo)} ({time.time() - t0:.1f}s)", flush=True)
@@ -310,7 +382,9 @@ def main():
     ap.add_argument("--end", type=int, default=None, help="끝 인덱스(포함 안 함)")
     ap.add_argument("--step", type=int, default=1, help="프레임 간격(GIF 용량 줄일 때)")
     ap.add_argument("--fps", type=float, default=10.0, help="LimoPro 카메라 기록 주기 10Hz")
-    ap.add_argument("--jobs", type=int, default=len(MODELS), help="동시에 돌릴 모델 워커 수")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="동시에 돌릴 모델 워커 수. 2 이상이면 워커끼리 GPU가 겹쳐 GPU_DUTY 상한이 보장 안 됨 "
+                         "(첫 ZLUDA 컴파일만 빨라짐, 캐시된 뒤엔 1로 충분)")
     ap.add_argument("--model", choices=list(MODELS), help="(내부용) 이 모델 하나만 패널 렌더링")
     args = ap.parse_args()
 
