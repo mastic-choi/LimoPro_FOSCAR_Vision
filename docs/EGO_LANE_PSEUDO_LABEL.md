@@ -11,7 +11,7 @@
 
 공개 da/ll 모델 7개를 **앙상블**해서 차선을 얻고 → **노란색 HSV**로 빠진 차선을 보완 → 화면 아래부터
 위로 **중심선 기준 좌/우 가장 가까운 차선**을 추적해 그 사이를 "지금 달리는 차선(ego lane)" da로 채우고 →
-**SAM2** 결과를 그 범위 안으로만 잘라 다듬는다. 자동 판정 **FAIL** 프레임만 사람이 검수한다.
+기하 ego **마스크 + 점**을 프롬프트로 준 **SAM2** 결과를 그 범위 안으로 잘라 다듬는다. 자동 판정 **FAIL** 프레임만 사람이 검수한다.
 
 ```
 프레임 ─▶ [1] 7모델 앙상블 ─▶ [2] +노란색 HSV ─▶ [3] 차선 정리 ─▶ [4] 좌/우 경계 추적
@@ -92,11 +92,18 @@ AMD Adrenalin의 Power Limit도 낮춰 둘 것.
 | `--save-labels DIR` | `DIR/images/`, `DIR/da_masks/`, `DIR/ll_masks/`, `DIR/status.csv` 저장 |
 | `--no-hsv` | HSV 보완 끄기(앙상블 차선만) |
 | `--no-sam` | SAM2 생략, 최종 = 기하 결과 |
+| `--prompt` | SAM2 프롬프트: `mask`(기하 마스크 + 점, 기본) / `sparse`(점만) / `dense`(점만, 촘촘) |
 | `--out` | GIF 경로(기본 `outputs/montages/ego_lane_final.gif`) |
 
 소요 시간(RX 9070 XT + ZLUDA, 컴파일 캐시 있는 상태, 90% 제한): 175장에 약 3분 + GIF 저장 1분.
 
-출력 GIF 4칸: `원본 | 1. 앙상블 | 2. +HSV ego lane(초록 = 선택된 좌/우 경계, 상단 OK/FAIL) | 3. 최종(SAM2 ∩ ego)`.
+출력 GIF 5칸: `원본 | 1. 앙상블 | 2. +HSV ego lane(초록 = 선택된 좌/우 경계, 상단 OK/FAIL) | SAM2 원본 | 3. 최종(SAM2 ∩ ego)`.
+실행이 끝나면 `SAM2 raw vs 기하 ego: 평균 IoU …, 번짐 …%`를 출력한다(SAM이 기하에서 얼마나 벗어났는지).
+
+프롬프트 방식 비교 GIF(2×2):
+```bash
+.venv/Scripts/python scripts/make_sam_prompt_compare_gif.py --frames D:/fine-tune/LimoPro_frames_20261023 \n    --start 85 --step 2 --fps 5      # -> outputs/montages/sam_prompt_compare.gif
+```
 
 ---
 
@@ -166,21 +173,37 @@ AMD Adrenalin의 Power Limit도 낮춰 둘 것.
 
 > OK 프레임은 이것만으로도 깔끔하다. 이게 라벨의 뼈대다.
 
-### [6] SAM2 보정 (범위 클리핑)
+### [6] SAM2 보정 (마스크 + 점 프롬프트, 범위 클리핑)
 
-- 프롬프트(ultralytics `SAM`): ego 세로 범위의 25% / 50% / 80% 높이에서
-  - 포함 점: 그 행의 ego 중심
-  - 제외 점: 왼쪽 경계 − off, 왼쪽 경계 − 2.5·off, 오른쪽 경계 + off, 오른쪽 경계 + 2.5·off (off = max(20, 0.25×차선 폭)), 화면 밖이면 생략
-  - → 포함 3 + 제외 최대 12
+- 프롬프트(ultralytics `SAM`, 기본 `--prompt mask`):
+  - **마스크**: 기하 ego를 1×256×256 logit으로(안 +10 / 밖 −10). ultralytics SAM은 입력을 긴 변 1024로 리사이즈하고
+    오른쪽/아래를 패딩하므로, 같은 배치로 256 격자에 넣는다(640×480 → 256×192 영역, 나머지 −10). `sam_mask_logits()`.
+  - **점**: ego 세로 범위의 25% / 50% / 80% 높이에서 포함 점 = 그 행의 ego 중심,
+    제외 점 = 왼쪽 경계 − off, − 2.5·off, 오른쪽 경계 + off, + 2.5·off (off = max(20, 0.25×차선 폭)), 화면 밖이면 생략
+    → 포함 3 + 제외 최대 12.
 - **점 전체를 `[[...]]`(1, N, 2) 형태로 넘긴다.** 평평한 (N, 2)로 주면 ultralytics가 점마다 별도 물체로 처리해 포함/제외가 무시된다.
-- SAM 마스크 → 15×15 closing(구멍 메우기) → **기하 ego를 9px 팽창한 범위와 AND**.
+- **`SAM(...)(img, points=..., labels=...)` 호출은 `masks`를 넘겨주지 않는다**(ultralytics 8.3.90 `SAM.predict`가
+  bboxes/points/labels만 prompts에 담음). 상위 `ultralytics.engine.model.Model.predict(sam, img, False,
+  prompts=dict(points=..., labels=..., masks=...), conf=0.25, task="segment", mode="predict", imgsz=1024)`로 직접 넘긴다.
+- SAM 마스크 → 15×15 closing(구멍 메우기) → **기하 ego를 9px 팽창한 범위와 AND**(안전장치).
 - 클리핑 결과가 기하 ego 면적의 50% 미만이면 기하 결과로 폴백(`SAM2 weak -> geometric`).
-- FAIL 프레임에는 SAM을 돌리지 않고 기하 결과를 그대로 둔다.
+- ego 영역이 조금이라도 있으면 FAIL 프레임에도 SAM을 돌린다(FAIL 판정은 그대로 유지). ego 자체가 없으면 기하(=빈) 결과.
 
-> 왜: **SAM2를 단독으로 쓰면 제외 점을 찍어도 노란 선을 넘어 매트 전체로 번진다**(`ego_lane_compare.gif`).
+프롬프트 비교(2026-10-23 데이터, OK 90장, SAM2 **원본**을 기하 ego와 비교):
+
+| 프롬프트 | IoU | ego 밖 번짐 | 관찰 |
+|---|---|---|---|
+| 점만 (sparse) | 0.717 | 11% | 노란 선을 넘어 매트로 번짐, 구멍 |
+| 점만 (dense: 8높이 × 포함 3/제외 2, 12장 실험) | 0.47 | 147% | 벽/천장까지 번짐 — 포함 점이 많을수록 "넓게 칠하라"로 받아들임 |
+| 마스크만 | 0.218 | 1% | 대부분 빈 마스크 — 마스크 입력은 점과 함께 쓰는 보조 정보 |
+| **마스크 + 점** | **0.968** | **2%** | 노란 선 안쪽에 붙고 번짐 없음 → 채택 |
+| 마스크 + 박스 | 0.970 | 2% | 마스크+점과 거의 같음(대안) |
+
+> 왜: **점만 주면 제외 점을 찍어도 노란 선을 넘어 매트 전체로 번진다**(`ego_lane_compare.gif`, `sam_prompt_compare.gif`).
 > 노란 선 양쪽이 같은 검은 매트라 SAM은 한 물체로 본다. TwinLiteNet-KMU에서도 같은 이유로 자동 SAM이 실패했다
-> (da/ll 경계가 시각적 경계가 아니라 차선이 정의하는 의미적 경계). 범위 안으로 자르면 번짐은 무해해지고,
-> 차선 위의 사람/장애물을 잘라내는 효과만 남는다. 제외 점을 6→12개로 늘려도 번짐 자체는 막지 못했다.
+> (da/ll 경계가 시각적 경계가 아니라 차선이 정의하는 의미적 경계). 기하 ego를 마스크로 같이 주면 SAM이 그 모양을
+> 기준으로 다듬기만 해서 번지지 않는다. 다만 결과가 기하와 95~97% 겹치므로 **SAM의 추가 이득은 작다** —
+> 경계를 매끄럽게 하고 차선 위 사람/장애물을 잘라낼 여지를 주는 보조 단계로 보면 된다.
 
 ### [7] OK / FAIL 판정
 
@@ -237,6 +260,7 @@ outputs/ego_labels_<날짜>/
 | `scripts/make_ego_lane_labels.py` | 이 파이프라인 전체 |
 | `scripts/make_model_compare_gif.py` | 모델 로더/전처리/확률 변환, ZLUDA 설정, `GpuDutyLimiter` (다른 스크립트가 import) |
 | `scripts/make_ensemble_gif.py` | Voting vs Averaging 비교 GIF |
+| `scripts/make_sam_prompt_compare_gif.py` | SAM2 프롬프트 4종 2×2 비교 GIF |
 | `scripts/benchmark_models.py` | 모델별 추론 속도 |
 | `models/README.md` | 모델/가중치 다운로드, 추론 설정 |
 | `docs/LANE_MODEL_WORKFLOW.md` | 참고 프로젝트(TwinLiteNet-KMU) 전체 워크플로우 |

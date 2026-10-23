@@ -10,7 +10,8 @@ AutoRace2026 참가팀 FOSCAR 비전 모델관련 코드
 | `scripts/make_model_compare_gif.py` | 모델 7개 결과를 4×2 오버레이 GIF로 비교 |
 | `scripts/benchmark_models.py` | 모델별 추론 속도(forward / end-to-end) 측정 |
 | `scripts/make_ensemble_gif.py` | 7개 앙상블 Voting vs Averaging 비교 GIF |
-| `scripts/make_ego_lane_labels.py` | 앙상블 → HSV 보완 → ego 추적 → SAM2(범위 클리핑)로 '지금 달리는 차선' da pseudo-label 생성, OK/FAIL 판정 (아래 방법론) |
+| `scripts/make_ego_lane_labels.py` | 앙상블 → HSV 보완 → ego 추적 → SAM2(마스크+점 프롬프트, 범위 클리핑)로 '지금 달리는 차선' da pseudo-label 생성, OK/FAIL 판정 (아래 방법론) |
+| `scripts/make_sam_prompt_compare_gif.py` | SAM2 프롬프트 4종(점만/마스크만/마스크+점/마스크+박스) 2×2 비교 GIF |
 | `tools/da_trust_review.ipynb` | 사람 검수 노트북 (아래) |
 
 ## 결과 GIF
@@ -51,14 +52,37 @@ AutoRace2026 참가팀 FOSCAR 비전 모델관련 코드
 SAM이 한 물체로 봄 — TwinLiteNet-KMU에서 겪은 실패와 같은 원인). 그래서 최종 방법에서는 SAM을 기하 범위
 안으로 잘라서만 쓴다.
 
-### 4. Ego lane 최종 — `outputs/montages/ego_lane_final.gif`
+### 4. SAM2 프롬프트 4종 비교 — `outputs/montages/sam_prompt_compare.gif`
 
-원본 | 1. 앙상블 | 2. +HSV 보완 ego lane(초록 선 = 선택된 좌/우 경계, 상단 OK/FAIL) | 3. 최종(SAM2 ∩ ego 범위)
+| 점만 (포함 3 + 제외 최대 12) | 마스크만 (기하 ego를 마스크 프롬프트로) |
+|---|---|
+| **마스크 + 점** | **마스크 + 박스** (박스 = 기하 ego 외곽 사각형) |
+
+![SAM2 프롬프트 비교](outputs/montages/sam_prompt_compare.gif)
+
+각 칸은 SAM2 **원본** 결과(범위로 자르기 전). OK 90장 기준, 기하 ego 대비:
+
+| 프롬프트 | IoU | ego 밖 번짐 | 관찰 |
+|---|---|---|---|
+| 점만 | 0.717 | 11% | 매트로 번지고 구멍이 숭숭 뚫림 |
+| 마스크만 | 0.218 | 1% | 대부분 거의 아무것도 안 칠함(마스크 입력은 점과 같이 써야 하는 보조 정보) |
+| **마스크 + 점** | **0.968** | **2%** | 노란 선 안쪽에 붙고 번짐 없음 → **채택** |
+| 마스크 + 박스 | 0.970 | 2% | 마스크+점과 거의 같음 |
+
+(별도 12장 실험: 점을 8높이 × 포함 3/제외 2로 촘촘하게 찍으면 오히려 벽/천장까지 번짐, IoU 0.62 → 0.47.)
+
+### 5. Ego lane 최종 — `outputs/montages/ego_lane_final.gif`
+
+원본 | 1. 앙상블 | 2. +HSV 보완 ego lane(초록 선 = 선택된 좌/우 경계, 상단 OK/FAIL) | SAM2 원본(마스크+점) | 3. 최종(SAM2 ∩ ego 범위)
 
 ![ego lane 최종](outputs/montages/ego_lane_final.gif)
 
 175장 중 **OK 90장(51%)** — 그대로 라벨 후보. FAIL 85장(좌/우 차선 한쪽 누락 43, 추적 끊김 27,
-양쪽 동시 검출 행 부족 15)은 사람이 검수/보정. 라벨은 `--save-labels`로 `images/ da_masks/ ll_masks/ status.csv` 저장.
+양쪽 동시 검출 행 부족 15)은 사람이 검수/보정. SAM2 원본은 기하 ego 대비 IoU 0.951 / 번짐 3%(125장).
+라벨은 `--save-labels`로 `images/ da_masks/ ll_masks/ status.csv` 저장.
+
+솔직한 평가: 이 트랙에서는 **기하 ego만으로도 거의 충분**하다(SAM 결과가 기하와 95% 겹침). SAM2는 경계를
+매끄럽게 하고 차선 위 사람/장애물을 잘라낼 여지를 주는 보조 단계다. 정량 판단은 사람 GT로 해야 한다.
 
 ## Ego lane pseudo-label 방법론 (`scripts/make_ego_lane_labels.py`)
 
@@ -72,7 +96,7 @@ SAM이 한 물체로 봄 — TwinLiteNet-KMU에서 겪은 실패와 같은 원�
 | 3. 차선 정리 | 작은 조각, 화면 맨 아래 가로줄(모델 공통 가짜 차선), 납작한 가로선(정지선/횡단보도) 제거 | 맨 아래 가로줄이 바닥까지 내려온 차선과 붙어 추적이 잘못 시작되던 문제 → 아래 15행의 긴 가로 구간은 행 단위로 직접 지움 |
 | 4. ego 경계 추적 | 화면 아래 → 위로 행마다, 중심선 기준 **좌/우 가장 가까운 차선**을 경계로 선택. 다음 행은 이전 위치 ±14px 안에서만 찾고, 끊기면 최대 40행 선형 외삽. 화면 아래로 빠진 구간도 외삽 | 커브/점선에서도 같은 차선을 따라가게. 경계 간격이 8px 미만(소실점)이거나 도로 밖이면 정상 종료 |
 | 5. 기하 ego da | 행마다 좌/우 경계 사이를 채움(앙상블 도로 범위로 클리핑) | 두 차선 사이 = 지금 차선. 이것만으로도 OK 프레임은 깔끔함 |
-| 6. SAM2 보정 | ego 중심선에 포함 점 3개, 좌/우 차선 바깥에 제외 점 최대 12개(가까운/먼 바깥 2개씩) → 마스크 구멍 메움 → **ego 범위(±9px)로 클리핑**. SAM이 ego의 절반도 못 덮으면 기하 결과로 폴백 | SAM 단독은 매트 전체로 번져서 못 씀(3번 GIF). 범위 안으로 자르면 차선 위 사람/장애물을 잘라내는 효과만 남음 |
+| 6. SAM2 보정 | **기하 ego 마스크(256×256 logit) + 점**(ego 중심선 포함 3, 좌/우 바깥 제외 최대 12)을 프롬프트로 → 구멍 메움 → **ego 범위(±9px)로 클리핑**. SAM이 ego의 절반도 못 덮으면 기하 결과로 폴백 | 점만 주면 매트 전체로 번지고(3번 GIF), 마스크만 주면 반응이 없음. 마스크+점이 IoU 0.97·번짐 2%로 가장 깔끔(4번 GIF). 클리핑은 안전장치 |
 | 7. 품질 판정 | 양쪽 차선을 실제로 찾은 행 < 60, 한쪽 차선 없음, 추적 끊김 → **FAIL** | FAIL 프레임만 사람이 `tools/da_trust_review.ipynb`로 검수/SAM 클릭 보정 |
 
 출력 라벨: da = 최종 ego ∪ ll, ll = 정리된 차선. `status.csv`에 프레임별 OK/FAIL 사유와 최종 결과 출처
