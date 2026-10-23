@@ -1,0 +1,19 @@
+# 외부 모델 레포 + 사전학습 가중치 (용량 큼, models/README.md 보고 재다운로드)
+models/*
+!models/README.md
+
+# 대용량 바이너리 (모델 가중치)
+*.pth
+*.pt
+*.onnx
+*.onnx.data
+
+# 파이썬 가상환경 / 캐시
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# 로컬 작업 노트 (세션 기록용, 커밋 안 함)
+docs/WORK_PROCESS.md
+outputs/panels/
