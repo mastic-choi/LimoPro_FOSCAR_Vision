@@ -194,6 +194,42 @@ def sam_prompts(left, right, shape):
     return [pts], [lbl]  # (1, N, 2): ultralytics SAM이 점들을 한 오브젝트로 묶도록
 
 
+def sam_prompts_dense(left, right, road, shape, n_rows=8):
+    """촘촘한 프롬프트: ego 세로 범위를 n_rows 높이로 나눠 각 높이마다
+    포함 점 = 차선 안쪽 20% / 50% / 80% 지점 3개(앙상블 도로 위인 것만),
+    제외 점 = 좌/우 경계 바로 바깥(margin) 2개. 먼 쪽(위) 행일수록 차선이 좁아서 margin도 비례 축소."""
+    h, w = shape
+    ys = np.flatnonzero(~np.isnan(left) & ~np.isnan(right))
+    if ys.size < 20:
+        return None, None
+    pts, lbl = [], []
+    for q in np.linspace(0.05, 0.95, n_rows):
+        y = int(ys.min() + q * (ys.max() - ys.min()))
+        xl, xr = left[y], right[y]
+        width = xr - xl
+        for t in (0.2, 0.5, 0.8):
+            x = int(xl + t * width)
+            if 0 <= x < w and road[y, x]:
+                pts.append([x, y]); lbl.append(1)
+        margin = max(6, 0.12 * width)
+        for x in (xl - margin, xr + margin):
+            if 0 <= x < w:
+                pts.append([int(x), y]); lbl.append(0)
+    return ([pts], [lbl]) if 1 in lbl else (None, None)
+
+
+def sam_mask_logits(mask, k=10.0):
+    """기하 ego -> SAM 마스크 프롬프트(1x256x256 logit, 안 +k / 밖 -k).
+    ultralytics SAM은 입력을 긴 변 1024로 리사이즈하고 오른쪽/아래를 패딩하므로 같은 배치로 256에 넣는다.
+    마스크만 주면 SAM이 거의 반응 안 함(6장 중 4장 빈 마스크) -> 반드시 점과 같이 쓴다."""
+    h, w = mask.shape
+    r = 256 / max(h, w)
+    lr = np.full((256, 256), -k, np.float32)
+    small = cv2.resize(mask.astype(np.uint8), (round(w * r), round(h * r)), interpolation=cv2.INTER_NEAREST)
+    lr[:small.shape[0], :small.shape[1]][small > 0] = k
+    return lr[None]
+
+
 def hsv_lanes(img0, road):
     """HSV로 노란 차선 검출(앙상블이 놓친 노란 선 보완용). 도로(앙상블 da) 근처만 남김.
     흰색은 안 씀: 횡단보도/마름모/노면 글자/화살표까지 잡혀서 ego 추적을 망침(흰 점선은 앙상블이 잘 잡음)."""
@@ -229,6 +265,10 @@ def main():
     ap.add_argument("--fps", type=float, default=10.0)
     ap.add_argument("--no-sam", action="store_true", help="SAM2 생략(최종 = 기하 결과)")
     ap.add_argument("--no-hsv", action="store_true", help="HSV 차선 보완 끄기")
+    ap.add_argument("--prompt", choices=["mask", "sparse", "dense"], default="mask",
+                    help="SAM2 프롬프트: mask(기하 ego 마스크 + sparse 점, 기본) / sparse(점만: 3높이 x 포함1/제외4) / "
+                         "dense(점만: 8높이 x 포함3/제외2). 2026-10-24 비교(기하 ego 대비 IoU / 번짐): "
+                         "mask 0.98/0%%, sparse 0.66/12%%, dense 0.47/147%%")
     ap.add_argument("--save-labels", help="이 폴더에 images/ da_masks/ ll_masks/ (+status.csv) 저장")
     args = ap.parse_args()
 
@@ -240,6 +280,7 @@ def main():
     sam = None
     if not args.no_sam:
         from ultralytics import SAM
+        from ultralytics.engine.model import Model
         sam = SAM(SAM_WEIGHT)
     if args.save_labels:
         for sub in ("images", "da_masks", "ll_masks"):
@@ -248,6 +289,7 @@ def main():
         status_f.write("frame,status,tracked_rows,final_source\n")
 
     frames, n_ok = [], 0
+    sam_ious, sam_leak = [], []
     limiter = m.GpuDutyLimiter()
     t0 = time.time()
     for i, path in enumerate(paths):
@@ -270,16 +312,27 @@ def main():
         # 최종: SAM2 결과를 기하 ego 범위(9px 여유) 안으로 클리핑. SAM은 매트 전체로 번지므로 단독 사용 X,
         # 차선 안의 사람/장애물 등을 잘라내는 역할만. SAM이 ego의 절반도 못 덮으면 기하 결과로 폴백.
         final, how = ego, "geometric"
+        sam_raw = None
         pts = lbl = None
         if sam is not None and ego.any():
-            pts, lbl = sam_prompts(left, right, ll.shape)
+            pts, lbl = (sam_prompts_dense(left, right, road, ll.shape) if args.prompt == "dense"
+                        else sam_prompts(left, right, ll.shape))
             if pts is not None:
                 with limiter:
-                    r = sam(img0, points=pts, labels=lbl, verbose=False)[0]
+                    prompts = dict(points=pts, labels=lbl)
+                    if args.prompt == "mask":
+                        prompts["masks"] = sam_mask_logits(ego)
+                    # SAM.__call__은 masks를 안 넘겨줘서 상위 Model.predict에 prompts로 직접 전달
+                    r = Model.predict(sam, img0, False, prompts=prompts, conf=0.25, task="segment",
+                                      mode="predict", imgsz=1024, verbose=False)[0]
                 sm = r.masks.data[0].cpu().numpy().astype(bool) if r.masks is not None else np.zeros_like(ll)
                 if sm.shape != ll.shape:
                     sm = cv2.resize(sm.astype(np.uint8), (ll.shape[1], ll.shape[0]), interpolation=cv2.INTER_NEAREST).astype(bool)
                 sm = cv2.morphologyEx(sm.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8)).astype(bool)  # 구멍 메우기
+                sam_raw = sm
+                inter, union = (sm & ego).sum(), (sm | ego).sum()
+                sam_ious.append(inter / max(union, 1))
+                sam_leak.append((sm & ~ego).sum() / max(ego.sum(), 1))
                 clipped = sm & cv2.dilate(ego.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
                 if clipped.sum() >= 0.5 * ego.sum():
                     final, how = clipped, "SAM2 in ego"
@@ -292,6 +345,9 @@ def main():
             label_panel(draw(img0, ego, ll, left, right), f"2. +HSV, ego lane  {tag}", tag_color),
             label_panel(draw(img0, final, ll, left, right, pts, lbl), f"3. Final ({how})", tag_color),
         ]
+        if sam is not None:
+            panels.insert(3, label_panel(draw(img0, sam_raw, ll, pts=pts, lbl=lbl), f"SAM2 raw ({'mask+pts' if args.prompt == 'mask' else args.prompt})")
+                          if sam_raw is not None else label_panel(img0, "SAM2 raw (no prompt)", (80, 80, 255)))
         frames.append(Image.fromarray(cv2.cvtColor(np.hstack(panels), cv2.COLOR_BGR2RGB)))
 
         if args.save_labels:
@@ -306,6 +362,9 @@ def main():
     if args.save_labels:
         status_f.close()
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
+    if sam_ious:
+        print(f"SAM2 raw vs 기하 ego ({args.prompt}): 평균 IoU {np.mean(sam_ious):.3f}, "
+              f"ego 밖으로 번진 면적 {np.mean(sam_leak) * 100:.0f}% (ego 대비), {len(sam_ious)}장", flush=True)
     print(f"OK {n_ok}/{len(paths)}. GIF 저장 중...", flush=True)
     frames[0].save(args.out, save_all=True, append_images=frames[1:], duration=int(1000 / args.fps), loop=0, optimize=True)
     print(f"저장: {os.path.abspath(args.out)} ({os.path.getsize(args.out) / 1024 / 1024:.1f} MB, {len(frames)}프레임)")
