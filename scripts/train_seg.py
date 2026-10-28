@@ -15,6 +15,7 @@
 손실: BCE + soft Dice, da + ll_weight * ll.  평가: val IoU(da/ll, 0.5 threshold) 매 epoch.
 저장: <out>/best_da.pt, best_ll.pt, last.pt(재개용), log.csv, test.json(best_da 기준 test IoU, 커브/직진 별도).
 재개: <out>/last.pt가 있으면 자동으로 이어서 학습(매 epoch 저장, 임시 파일에 쓴 뒤 교체해서 전원이 꺼져도 안 깨짐).
+조기 종료: val da+ll IoU가 --patience(기본 8) epoch 동안 --min-delta(0.001) 이상 안 오르면 멈추고 test로.
 GPU 사용률은 GPU_DUTY 환경변수(기본 0.9 = 90%)로 제한. 4개를 순서대로 돌리려면 scripts/train_all.py.
 
 사용 예:
@@ -300,6 +301,8 @@ def main():
     ap.add_argument("--lr", type=float, default=None, help="기본: 모델별 DEFAULT_LR")
     ap.add_argument("--ll-weight", type=float, default=2.0, help="ll 손실 가중치 (KMU에서 2.0이 효과 있었음)")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--patience", type=int, default=8, help="val da+ll이 이 epoch 수 동안 안 오르면 조기 종료 (0 = 끔)")
+    ap.add_argument("--min-delta", type=float, default=0.001, help="조기 종료 판정의 '오름' 최소 폭")
     ap.add_argument("--out", default=None, help="기본: outputs/train/<model>_seed<seed>")
     ap.add_argument("--fresh", action="store_true", help="last.pt가 있어도 무시하고 처음부터")
     args = ap.parse_args()
@@ -331,6 +334,10 @@ def main():
         opt.load_state_dict(ck["opt"])
         start, best = ck["epoch"], ck["best"]
         print(f"재개: epoch {start}, best {best}", flush=True)
+    # 조기 종료 상태 (예전 체크포인트엔 없음): score = val da + ll IoU
+    best.setdefault("score", -1.0)
+    best.setdefault("epoch", start)
+    best.setdefault("stopped", False)
 
     print(f"[{args.model} seed {args.seed}] train {len(train_loader.dataset)} / val {len(val_loader.dataset)} / "
           f"test {len(test_loader.dataset)}, lr {lr0}, batch {args.batch}, epochs {args.epochs} -> {out}", flush=True)
@@ -341,6 +348,9 @@ def main():
     limiter = m.GpuDutyLimiter()
 
     for ep in range(start, args.epochs):
+        if best["stopped"]:
+            print(f"조기 종료된 학습 (best epoch {best['epoch']}) -> test로", flush=True)
+            break
         lr = lr0 * (1 - ep / args.epochs) ** 1.5  # TwinLiteNetPlus poly_lr_scheduler 와 같은 모양
         for g in opt.param_groups:
             g["lr"] = lr
@@ -360,6 +370,9 @@ def main():
             if v[f"{k}_iou"] > best[k]:
                 best[k] = v[f"{k}_iou"]
                 save(model, os.path.join(out, f"best_{k}.pt"))
+        if v["da_iou"] + v["ll_iou"] > best["score"] + args.min_delta:
+            best["score"], best["epoch"] = v["da_iou"] + v["ll_iou"], ep + 1
+        best["stopped"] = args.patience > 0 and ep + 1 - best["epoch"] >= args.patience
         ck = {"model": model.state_dict(), "opt": opt.state_dict(), "epoch": ep + 1, "best": best}
         atomic(lambda p: torch.save(ck, p), os.path.join(out, "last.pt"))
         sec = time.time() - t0
@@ -367,6 +380,10 @@ def main():
             f.write(f"{ep + 1},{lr:.3g},{tot / max(n, 1):.4f},{v['da_iou']},{v['ll_iou']},{sec:.0f}\n")
         print(f"epoch {ep + 1}/{args.epochs}  loss {tot / max(n, 1):.4f}  val da {v['da_iou']:.4f} ll {v['ll_iou']:.4f}"
               f"  (best da {best['da']:.4f} ll {best['ll']:.4f})  {sec:.0f}s", flush=True)
+        if best["stopped"]:
+            print(f"조기 종료: {args.patience} epoch 동안 val da+ll이 {args.min_delta} 이상 안 오름 "
+                  f"(best epoch {best['epoch']})", flush=True)
+            break
 
     # test: best_da 가중치로, 커브/직진 따로
     with open(os.path.join(args.data, "manifest.csv"), encoding="utf-8") as f:
