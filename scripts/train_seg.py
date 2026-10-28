@@ -42,7 +42,7 @@ PAD = 12  # 360 -> 384
 # ---------------------------------------------------------------------------
 def motion_blur(img):
     """빠르게 달릴 때/차체 흔들림: 임의 방향 직선 블러."""
-    k = random.randint(5, 15)
+    k = random.randint(9, 25)
     ker = np.zeros((k, k), np.float32)
     ker[k // 2] = 1
     ker = cv2.warpAffine(ker, cv2.getRotationMatrix2D((k / 2 - 0.5, k / 2 - 0.5), random.uniform(0, 180), 1), (k, k))
@@ -54,7 +54,7 @@ def zoom_blur(img):
     h, w = img.shape[:2]
     cx, cy = w * random.uniform(0.4, 0.6), h * random.uniform(0.2, 0.45)
     acc = img.astype(np.float32)
-    n, amount = 6, random.uniform(0.02, 0.06)
+    n, amount = 8, random.uniform(0.04, 0.10)
     for i in range(1, n):
         M = cv2.getRotationMatrix2D((cx, cy), 0, 1 + amount * i / n)
         acc += cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REFLECT).astype(np.float32)
@@ -63,7 +63,7 @@ def zoom_blur(img):
 
 def overexpose(img):
     """노출 과다: 밝은 곳(벽/하늘/조명)이 하얗게 날아감."""
-    gain, gamma = random.uniform(1.3, 2.0), random.uniform(0.6, 0.9)
+    gain, gamma = random.uniform(1.6, 2.6), random.uniform(0.5, 0.8)
     x = np.clip((img.astype(np.float32) / 255.0) * gain, 0, 1) ** gamma
     return (x * 255).astype(np.uint8)
 
@@ -72,11 +72,11 @@ def light_bloom(img):
     """위쪽 조명/창문에서 강한 빛이 들어와 번짐: 화면 위쪽에 큰 밝은 원형 그라디언트를 더함."""
     h, w = img.shape[:2]
     cx, cy = random.uniform(0, w), random.uniform(-0.3 * h, 0.4 * h)
-    r = random.uniform(0.3, 0.8) * w
+    r = random.uniform(0.4, 1.0) * w
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     g = np.clip(1 - np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / r, 0, 1) ** 1.5
     tint = np.array([random.uniform(0.85, 1.0), random.uniform(0.9, 1.0), 1.0], np.float32)  # 살짝 따뜻한 흰빛
-    x = img.astype(np.float32) + g[..., None] * random.uniform(120, 255) * tint
+    x = img.astype(np.float32) + g[..., None] * random.uniform(180, 320) * tint
     return np.clip(x, 0, 255).astype(np.uint8)
 
 
@@ -87,10 +87,10 @@ def floor_streak(img):
     x0 = random.uniform(0.1, 0.9) * w
     top = (int(x0 + random.uniform(-0.05, 0.05) * w), int(random.uniform(0.35, 0.55) * h))
     bot = (int(x0 + random.uniform(-0.3, 0.3) * w), h)
-    cv2.line(mask, top, bot, 1.0, random.randint(15, 45))
+    cv2.line(mask, top, bot, 1.0, random.randint(20, 60))
     mask = cv2.GaussianBlur(mask, (0, 0), random.uniform(8, 20))
     mask *= np.linspace(0.3, 1.0, h, dtype=np.float32)[:, None]  # 가까울수록 밝게
-    x = img.astype(np.float32) + mask[..., None] * random.uniform(60, 150)
+    x = img.astype(np.float32) + mask[..., None] * random.uniform(100, 200)
     return np.clip(x, 0, 255).astype(np.uint8)
 
 
