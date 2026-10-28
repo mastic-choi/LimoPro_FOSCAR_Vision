@@ -82,10 +82,13 @@ train_seg.py x 4 모델 (train_all.py 순차 실행, train_watchdog.py 감시)
   `best_da.pt` / `best_ll.pt`는 val 기준 최고점. 끝나면 `test.json`(best_da 가중치, 전체/커브/직진 IoU).
 
 ### 2.1 YOLOPv2 (TorchScript) 학습 가능하게 만들기
-학습 코드가 공개되지 않아 TorchScript 가중치를 직접 학습한다. 두 가지를 고쳤다(`load_yolopv2_trainable`).
+학습 코드가 공개되지 않아 TorchScript 가중치를 직접 학습한다. 세 가지를 고쳤다(`load_yolopv2_trainable`).
 1. 배포본이라 파라미터가 `requires_grad=False`로 저장돼 있음 → 켬.
 2. `batch_norm`에 `cudnn_enabled=True`가 상수로 박혀 있어 ZLUDA에서 `CUDNN_STATUS_EXECUTION_FAILED`.
    추론용 로더처럼 `torch.jit.freeze`하면 가중치가 상수가 돼 학습이 안 됨 → 그래프를 inline한 뒤 batch_norm 8번째 입력만 False로 교체.
+3. 합성곱 128개에도 `cudnn_enabled=True`가 박혀 있다. ZLUDA에서 da 헤드의 전치 합성곱이 **에러 없이 엉터리 값**을 내서
+   1차 학습은 사전학습 상태부터 val da IoU 0.01 → 발산(ll은 nearest 업샘플이라 정상). CPU에서는 추론용 로더와 출력이 완전히 같았음.
+   → `_convolution`의 11번째 입력(cudnn_enabled)도 False로 교체.
 - 그래프의 batch_norm은 추적 당시 eval 모드로 고정이라 통계는 안 바뀌고 가중치만 학습된다. 검출 헤드 파라미터 72개는 손실에 안 쓰여 기울기 없음(정상).
 
 ### 2.2 실행과 감시
@@ -100,13 +103,27 @@ train_seg.py x 4 모델 (train_all.py 순차 실행, train_watchdog.py 감시)
 
 ## 3. 결과 (test 268장, 학습에 안 쓴 시간 구간)
 
-| 모델 | epoch (best) | 전체 da | 전체 ll | 커브 da | 커브 ll | 직진 da | 직진 ll | epoch당 |
-|---|---|---|---|---|---|---|---|---|
-| TwinLiteNet+ Large | 40 (–) | 0.954 | 0.784 | 0.918 | 0.731 | 0.970 | 0.806 | 105초 |
-| YOLOP | 35 조기 종료 (27) | 0.925 | 0.723 | 0.894 | 0.670 | 0.940 | 0.745 | 83초 |
-| HybridNets | 학습 중 | | | | | | | 64초 |
-| YOLOPv2 | 대기 | | | | | | | |
-| YOLOP 채널별 BCE | 대기 | | | | | | | |
+| 모델 | epoch (best) | 전체 da | 전체 ll | 커브 da | 커브 ll | 직진 da | 직진 ll |
+|---|---|---|---|---|---|---|---|
+| TwinLiteNet+ Large | 40 (–) | 0.954 | 0.784 | 0.918 | 0.731 | 0.970 | 0.806 |
+| YOLOP | 35 조기 종료 (27) | 0.925 | 0.723 | 0.894 | 0.670 | 0.940 | 0.745 |
+| **HybridNets** | 32 조기 종료 (24) | **0.967** | **0.809** | **0.937** | **0.760** | **0.980** | **0.830** |
+| YOLOPv2 | 재학습 예정 (§2.1) | | | | | | |
+| YOLOP 채널별 BCE | 학습 중 | | | | | | |
+
+### 3.1 학습 시간 (RX 9070 XT + ZLUDA, GPU 90% 상한, batch 8, train 950장)
+
+| 모델 | 파라미터 | 시작 → 끝 | 걸린 시간 | epoch | 첫 epoch (컴파일 포함) | 이후 epoch |
+|---|---|---|---|---|---|---|
+| TwinLiteNet+ Large | 1.94M | 11:56 → 13:09 | **73분** | 40 (조기 종료 도입 전) | 273초 | 105초 |
+| YOLOP | 7.9M | 13:09 → 13:58 | **49분** | 35 (조기 종료) | 97초 | 83초 |
+| HybridNets | 12.8M | 13:58 → 14:33 | **35분** | 32 (조기 종료) | 121초 | 64초 |
+| YOLOPv2 (1차, 실패) | 38.9M | 14:33 → 14:41 | 8분 | 3 (중단) | 148초 | 136초 |
+
+- 걸린 시간 = 학습 + 매 epoch val + 마지막 test 평가. 파라미터 수와 속도가 비례하지 않는다(HybridNets가 가장 빠름).
+  모델 구조(업샘플 방식, 연산 종류)와 ZLUDA 커널 효율 차이로 보인다.
+- TwinLiteNet+ 첫 epoch가 유독 긴 건 ZLUDA가 학습(역전파) 커널을 처음 컴파일했기 때문. 이후 모델은 캐시 덕에 짧다.
+- YOLOPv2 1차는 da 출력이 처음부터 깨져(§2.1) 3 epoch에서 중단.
 
 - 모든 모델에서 **커브가 직진보다 약하다**(TwinLiteNet+ da 0.92 vs 0.97).
 - TwinLiteNet+는 val 최고점(da 0.960 / ll 0.791)과 test가 거의 같아 특정 구간 과적합 흔적은 없다.
