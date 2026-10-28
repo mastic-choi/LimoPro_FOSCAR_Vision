@@ -12,7 +12,9 @@ AutoRace2026 참가팀 FOSCAR 비전 모델관련 코드
 | `scripts/make_ensemble_gif.py` | 7개 앙상블 Voting vs Averaging 비교 GIF |
 | `scripts/make_ego_lane_labels.py` | 앙상블 → HSV 보완 → ego 추적 → SAM2(마스크+점 프롬프트, 범위 클리핑)로 '지금 달리는 차선' da pseudo-label 생성, OK/FAIL 판정 (아래 방법론) |
 | `scripts/make_sam_prompt_compare_gif.py` | SAM2 프롬프트 4종(점만/마스크만/마스크+점/마스크+박스) 2×2 비교 GIF |
-| `tools/da_trust_review.ipynb` | 사람 검수 노트북 (아래) |
+| `tools/da_trust_review.ipynb` | (KMU 원본 복사본, 경로가 KMU 구조라 그대로는 안 됨 — 아래 ego_label_review 사용) |
+| `tools/ego_label_review_{mac,radeon,nvidia}.ipynb` | 파인튜닝 앙상블 pseudo-label 검수 + SAM 보정(da/ll). 1 신뢰 / 2 보정 / 3 버림, 여러 명 동시 작업. 생성기 `tools/build_review_notebooks.py` |
+| `scripts/make_finetuned_pseudo_labels.py` | 파인튜닝한 4개 모델 앙상블로 FAIL/미검수 프레임 pseudo-label + 모델 간 일치도(검수 우선순위), `--eval-test`로 앙상블 test 평가 |
 | `docs/ENSEMBLE_FINETUNE.md` | 검수한 ego lane 라벨로 앙상블 멤버 4개 파인튜닝: 데이터 분할, 학습 방식, 결과 |
 | `scripts/split_ego_labels.py`, `scripts/review_ok_labels.py` | pseudo-label을 OK/FAIL로 나누고, OK를 사람이 이미지 삭제로 빠르게 검수 |
 | `scripts/build_train_dataset.py` | 검수 라벨 → 시간 구간 train/val/test, 비슷한 프레임 제거, 커브/직진 균형 |
