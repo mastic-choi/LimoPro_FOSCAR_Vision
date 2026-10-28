@@ -9,6 +9,8 @@
   exit 5  GPU_IDLE 첫 epoch 이후인데 GPU 사용률 0%가 2번 연속
 
 감시하는 동안 Windows 절전을 막는다(SetThreadExecutionState). 화면 잠금/모니터 꺼짐은 학습과 무관.
+--once: --interval 만큼 기다렸다 한 번 점검하고 종료(정상이어도 exit 0으로 보고) -> 주기 보고용.
+        절전 방지/GPU_IDLE 연속 판정은 계속 도는 감시 쪽이 맡는다.
 
 사용 예:
   .venv/Scripts/python scripts/train_watchdog.py --models tln_large yolop hybridnets yolopv2
@@ -64,6 +66,7 @@ def main():
     ap.add_argument("--stall-min", type=float, default=40, help="epoch 정체 판정 최소 분")
     ap.add_argument("--first-epoch-min", type=float, default=90, help="첫 epoch(ZLUDA 컴파일 포함) 정체 판정 분")
     ap.add_argument("--log", default=os.path.join(ROOT, "outputs", "train_watchdog.log"))
+    ap.add_argument("--once", action="store_true", help="interval 뒤 한 번만 점검하고 종료 (주기 보고용)")
     args = ap.parse_args()
 
     runs = [f"{m}_seed{s}" for s in args.seeds for m in args.models]
@@ -77,6 +80,8 @@ def main():
         with open(args.log, "a", encoding="utf-8") as f:
             f.write(line + "\n")
 
+    if args.once:
+        time.sleep(args.interval)
     while True:
         ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
         done = [r for r in runs if os.path.exists(os.path.join(args.out, r, "test.json"))]
@@ -119,6 +124,8 @@ def main():
         if idle_count >= 2:
             report(f"GPU_IDLE {cur}: GPU 0%가 2번 연속")
             sys.exit(5)
+        if args.once:
+            sys.exit(0)
         time.sleep(args.interval)
 
 
