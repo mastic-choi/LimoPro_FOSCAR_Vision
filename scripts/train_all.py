@@ -10,6 +10,7 @@
 사용 예 (PC가 꺼졌다 켜진 뒤에도 같은 명령):
   .venv/Scripts/python scripts/train_all.py --data dataset/ego_v1
   .venv/Scripts/python scripts/train_all.py --data dataset/ego_v1 --models tln_large yolop --seeds 0 1 2
+  .venv/Scripts/python scripts/train_all.py --data dataset/ego_v1 --models yolop --suffix _chbce -- --loss channel
 """
 import argparse
 import os
@@ -29,13 +30,14 @@ def main():
     ap.add_argument("--seeds", type=int, nargs="*", default=[0])
     ap.add_argument("--out", default=os.path.join(ROOT, "outputs", "train"))
     ap.add_argument("--retries", type=int, default=3)
+    ap.add_argument("--suffix", default="", help="결과 폴더 이름 <model><suffix>_seed<seed> (같은 모델 다른 설정 비교용)")
     ap.add_argument("extra", nargs=argparse.REMAINDER, help="-- 뒤 인자는 train_seg.py로 그대로 (예: -- --epochs 30)")
     args = ap.parse_args()
     extra = [a for a in args.extra if a != "--"]
 
     for seed in args.seeds:
         for model in args.models:
-            out = os.path.join(args.out, f"{model}_seed{seed}")
+            out = os.path.join(args.out, f"{model}{args.suffix}_seed{seed}")
             if os.path.exists(os.path.join(out, "test.json")):
                 print(f"[skip] {model} seed {seed}: 완료됨", flush=True)
                 continue
