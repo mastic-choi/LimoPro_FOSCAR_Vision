@@ -305,6 +305,10 @@ MODELS = {
     "tln_nano": ("TwinLiteNet+ Nano (0.03M)", lambda: load_twinlitenetplus("nano")),
 }
 
+# 앙상블 멤버: TwinLiteNet+ N/S/M/L은 같은 구조의 크기 차이라 Large만 넣는다
+# (4개를 다 넣으면 TwinLiteNet+ 계열 혼자 7표 중 과반 4표를 차지함)
+ENSEMBLE = ["yolopv2", "tln_large", "yolop", "hybridnets"]
+
 
 def render_model_panels(key, paths, panel_dir):
     """모델 하나만 로드해서 프레임별 오버레이 패널을 panel_dir/key/ 에 PNG로 저장."""
@@ -388,7 +392,7 @@ def main():
     ap.add_argument("--model", choices=list(MODELS), help="(내부용) 이 모델 하나만 패널 렌더링")
     args = ap.parse_args()
 
-    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")))[args.start:args.end:args.step]
+    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")) + glob.glob(os.path.join(args.frames, "frame_*.jpg")))[args.start:args.end:args.step]
     if not paths:
         sys.exit(f"프레임 없음: {args.frames}")
 

@@ -2,6 +2,10 @@
 models/*
 !models/README.md
 
+# 데이터셋 (용량 큼, dataset/README.md 에 출처/구성 기록)
+dataset/*
+!dataset/README.md
+
 # 대용량 바이너리 (모델 가중치)
 *.pth
 *.pt
@@ -18,3 +22,4 @@ __pycache__/
 docs/WORK_PROCESS.md
 outputs/panels/
 outputs/ego_labels_*/
+outputs/ego_labels_*.log

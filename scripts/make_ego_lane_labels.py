@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""공개 모델 7개 앙상블 차선(ll)으로 '지금 달리는 차선(ego lane)' da pseudo-label을 만든다.
+"""공개 모델 4개(m.ENSEMBLE) 앙상블 차선(ll)으로 '지금 달리는 차선(ego lane)' da pseudo-label을 만든다.
 
 흐름 (프레임마다):
-  1. 7개 모델 확률 -> ll Voting(과반) / da Averaging
+  0. 가로가 WORK_W보다 크면 비율 유지로 축소 (1280x720 -> 640x360. 공개 모델도 긴 변 640으로 받으므로 같은 해상도)
+  1. 4개 모델 확률 -> ll Voting(과반) / da Averaging
   2. ll 정리: 작은 조각, 화면 맨 아래 가로줄(모델 공통 아티팩트), 납작한 가로선(정지선/횡단보도) 제거
   3. 화면 아래 -> 위로 행 단위 추적: 중심선 기준 좌/우 가장 가까운 차선을 ego lane 경계로 선택
      (이전 행 위치 근처만 허용, 점선 끊김은 선형 외삽으로 메움, 화면 아래로 빠진 구간도 외삽)
@@ -30,10 +31,11 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import make_model_compare_gif as m  # noqa: E402  (ZLUDA면 여기서 cuDNN 꺼짐)
 
-PANEL_W, PANEL_H = 320, 240
+PANEL_W = 320  # 패널 높이는 입력 종횡비를 따름 (640x480 -> 240, 640x360 -> 180)
+WORK_W = 640  # 처리/라벨 해상도의 가로. 아래 px 파라미터는 이 가로 기준
 SAM_WEIGHT = os.path.join(m.MODELS_DIR, "sam2", "sam2.1_b.pt")
 
-# 추적 파라미터 (640x480 기준)
+# 추적 파라미터 (가로 640 기준. 640x480, 640x360 공통)
 ROW_TOL = 14          # 한 행 사이 경계가 움직일 수 있는 최대 px
 MAX_GAP = 40          # 점선 끊김 등으로 경계를 못 찾아도 외삽으로 버티는 최대 행 수
 MIN_WIDTH = 8         # 좌/우 경계 간격이 이보다 좁아지면(소실점 근처) 추적 종료
@@ -41,7 +43,7 @@ MIN_TRACKED_ROWS = 60  # 실제로 양쪽 다 찾은 행이 이보다 적으면 
 
 
 def label_panel(img, text, color=(255, 255, 255)):
-    panel = cv2.resize(img, (PANEL_W, PANEL_H))
+    panel = cv2.resize(img, (PANEL_W, round(PANEL_W * img.shape[0] / img.shape[1])))
     cv2.rectangle(panel, (0, 0), (PANEL_W, 22), (0, 0, 0), -1)
     cv2.putText(panel, text, (4, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv2.LINE_AA)
     return panel
@@ -270,12 +272,13 @@ def main():
                          "dense(점만: 8높이 x 포함3/제외2). 2026-10-24 비교(기하 ego 대비 IoU / 번짐): "
                          "mask 0.98/0%%, sparse 0.66/12%%, dense 0.47/147%%")
     ap.add_argument("--save-labels", help="이 폴더에 images/ da_masks/ ll_masks/ (+status.csv) 저장")
+    ap.add_argument("--no-gif", action="store_true", help="GIF 생략 (수천 장 라벨만 뽑을 때. 패널을 메모리에 안 쌓음)")
     args = ap.parse_args()
 
-    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")))[args.start:args.end:args.step]
+    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")) + glob.glob(os.path.join(args.frames, "frame_*.jpg")))[args.start:args.end:args.step]
     if not paths:
         sys.exit(f"프레임 없음: {args.frames}")
-    members = [m.MODELS[k][1]() for k in m.MODELS]
+    members = [m.MODELS[k][1]() for k in m.ENSEMBLE]
     vote_min = len(members) // 2 + 1
     sam = None
     if not args.no_sam:
@@ -294,6 +297,8 @@ def main():
     t0 = time.time()
     for i, path in enumerate(paths):
         img0 = cv2.imread(path)
+        if img0.shape[1] > WORK_W:
+            img0 = cv2.resize(img0, (WORK_W, round(img0.shape[0] * WORK_W / img0.shape[1])), interpolation=cv2.INTER_AREA)
         fname = os.path.basename(path)
         with limiter:
             probs = [f.probs(img0) for f in members]
@@ -339,16 +344,17 @@ def main():
                 else:
                     how = "SAM2 weak -> geometric"
 
-        panels = [
-            label_panel(img0, f"Raw  {fname}"),
-            label_panel(m.overlay_masks(img0, road, ll_vote), "1. Ensemble 7 (vote ll / avg da)"),
-            label_panel(draw(img0, ego, ll, left, right), f"2. +HSV, ego lane  {tag}", tag_color),
-            label_panel(draw(img0, final, ll, left, right, pts, lbl), f"3. Final ({how})", tag_color),
-        ]
-        if sam is not None:
-            panels.insert(3, label_panel(draw(img0, sam_raw, ll, pts=pts, lbl=lbl), f"SAM2 raw ({'mask+pts' if args.prompt == 'mask' else args.prompt})")
-                          if sam_raw is not None else label_panel(img0, "SAM2 raw (no prompt)", (80, 80, 255)))
-        frames.append(Image.fromarray(cv2.cvtColor(np.hstack(panels), cv2.COLOR_BGR2RGB)))
+        if not args.no_gif:
+            panels = [
+                label_panel(img0, f"Raw  {fname}"),
+                label_panel(m.overlay_masks(img0, road, ll_vote), f"1. Ensemble {len(members)} (vote ll / avg da)"),
+                label_panel(draw(img0, ego, ll, left, right), f"2. +HSV, ego lane  {tag}", tag_color),
+                label_panel(draw(img0, final, ll, left, right, pts, lbl), f"3. Final ({how})", tag_color),
+            ]
+            if sam is not None:
+                panels.insert(3, label_panel(draw(img0, sam_raw, ll, pts=pts, lbl=lbl), f"SAM2 raw ({'mask+pts' if args.prompt == 'mask' else args.prompt})")
+                              if sam_raw is not None else label_panel(img0, "SAM2 raw (no prompt)", (80, 80, 255)))
+            frames.append(Image.fromarray(cv2.cvtColor(np.hstack(panels), cv2.COLOR_BGR2RGB)))
 
         if args.save_labels:
             stem = os.path.splitext(fname)[0]
@@ -365,6 +371,9 @@ def main():
     if sam_ious:
         print(f"SAM2 raw vs 기하 ego ({args.prompt}): 평균 IoU {np.mean(sam_ious):.3f}, "
               f"ego 밖으로 번진 면적 {np.mean(sam_leak) * 100:.0f}% (ego 대비), {len(sam_ious)}장", flush=True)
+    if args.no_gif:
+        print(f"OK {n_ok}/{len(paths)}. (GIF 생략)", flush=True)
+        return
     print(f"OK {n_ok}/{len(paths)}. GIF 저장 중...", flush=True)
     frames[0].save(args.out, save_all=True, append_images=frames[1:], duration=int(1000 / args.fps), loop=0, optimize=True)
     print(f"저장: {os.path.abspath(args.out)} ({os.path.getsize(args.out) / 1024 / 1024:.1f} MB, {len(frames)}프레임)")
