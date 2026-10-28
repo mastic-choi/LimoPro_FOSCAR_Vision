@@ -218,8 +218,9 @@ def build_hybridnets(m):
 def load_yolopv2_trainable(path, device):
     """TorchScript YOLOPv2를 학습 가능하게 로드.
     - 배포본이라 파라미터가 requires_grad=False로 저장돼 있음 -> 켬
-    - batch_norm에 cudnn_enabled=True가 상수로 박혀 있어 ZLUDA에서 CUDNN_STATUS_EXECUTION_FAILED
-      -> 추론용 로더처럼 freeze하면 가중치가 상수가 돼 학습 불가. 대신 그래프를 inline한 뒤 8번째 입력만 False로 교체
+    - batch_norm(9개)과 _convolution(128개)에 cudnn_enabled=True가 상수로 박혀 있음. ZLUDA에서 batch_norm은
+      CUDNN_STATUS_EXECUTION_FAILED, 전치 합성곱(da 업샘플)은 에러 없이 엉터리 값 -> 사전학습 상태부터 val da IoU 0.01
+      -> 추론용 로더처럼 freeze하면 가중치가 상수가 돼 학습 불가. 대신 그래프를 inline한 뒤 두 연산의 cudnn_enabled 입력만 False로 교체
     - 그래프의 batch_norm은 추적 당시 eval 모드로 고정 -> 통계는 안 바뀌고 가중치만 학습됨
     """
     torch._C._jit_set_profiling_executor(False)
@@ -233,6 +234,8 @@ def load_yolopv2_trainable(path, device):
         false_const.node().moveBefore(next(graph.nodes()))
         for node in graph.findAllNodes("aten::batch_norm"):
             node.replaceInput(8, false_const)
+        for node in graph.findAllNodes("aten::_convolution"):  # (..., benchmark, deterministic, cudnn_enabled, allow_tf32)
+            node.replaceInput(11, false_const)
     for p in model.parameters():
         p.requires_grad_(True)
     return model
