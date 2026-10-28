@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""models/의 공개 da/ll 모델 7개를 앙상블해서 Voting vs Averaging 을 나란히 보여주는 GIF.
+"""models/의 공개 da/ll 모델(기본 m.ENSEMBLE 4개)을 앙상블해서 Voting vs Averaging 을 나란히 보여주는 GIF.
 
 나중에 pseudo-label 생성용 앙상블 방식을 고르기 위한 비교. 배치: 원본 | Voting | Averaging.
   - Voting   : 모델별로 확률 >= 0.5 를 1표로 보고, 7표 중 VOTE_MIN(기본 4, 과반) 이상이면 채택
-  - Averaging: 7개 모델 확률을 픽셀별 평균(soft-vote) 후 >= 0.5 채택
+  - Averaging: 멤버 확률을 픽셀별 평균(soft-vote) 후 >= 0.5 채택
                (TwinLiteNet-KMU 딥앙상블과 같은 방식)
 da/ll 각각 따로 적용. 오버레이 색은 make_model_compare_gif.py와 동일(파랑=da, 빨강=ll).
 모델 로더/전처리도 그 스크립트의 것(infer.probs)을 그대로 쓴다.
@@ -44,10 +44,10 @@ def main():
     ap.add_argument("--step", type=int, default=1)
     ap.add_argument("--fps", type=float, default=10.0)
     ap.add_argument("--vote-min", type=int, default=None, help="Voting 채택 최소 표 수 (기본: 과반)")
-    ap.add_argument("--models", nargs="*", default=list(m.MODELS), help="앙상블 멤버 (기본: 7개 전부)")
+    ap.add_argument("--models", nargs="*", default=list(m.ENSEMBLE), help="앙상블 멤버 (기본: m.ENSEMBLE 4개)")
     args = ap.parse_args()
 
-    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")))[args.start:args.end:args.step]
+    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")) + glob.glob(os.path.join(args.frames, "frame_*.jpg")))[args.start:args.end:args.step]
     if not paths:
         sys.exit(f"프레임 없음: {args.frames}")
     n = len(args.models)

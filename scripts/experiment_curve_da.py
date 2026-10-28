@@ -79,8 +79,8 @@ def main():
     ap.add_argument("--out", default=os.path.join(m.ROOT, "outputs", "montages", "curve_da_experiment.gif"))
     args = ap.parse_args()
 
-    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")))[args.start:args.end:args.step]
-    members = [m.MODELS[k][1]() for k in m.MODELS]
+    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")) + glob.glob(os.path.join(args.frames, "frame_*.jpg")))[args.start:args.end:args.step]
+    members = [m.MODELS[k][1]() for k in m.ENSEMBLE]
     vote_min = len(members) // 2 + 1
     limiter = m.GpuDutyLimiter()
     t0 = time.time()

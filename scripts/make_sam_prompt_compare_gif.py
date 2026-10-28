@@ -43,10 +43,10 @@ def main():
     from ultralytics import SAM
     from ultralytics.engine.model import Model
 
-    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")))[args.start:args.end:args.step]
+    paths = sorted(glob.glob(os.path.join(args.frames, "frame_*.png")) + glob.glob(os.path.join(args.frames, "frame_*.jpg")))[args.start:args.end:args.step]
     if not paths:
         sys.exit(f"프레임 없음: {args.frames}")
-    members = [m.MODELS[k][1]() for k in m.MODELS]
+    members = [m.MODELS[k][1]() for k in m.ENSEMBLE]
     vote_min = len(members) // 2 + 1
     sam = SAM(E.SAM_WEIGHT)
     limiter = m.GpuDutyLimiter()
