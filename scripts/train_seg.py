@@ -38,6 +38,63 @@ PAD = 12  # 360 -> 384
 
 
 # ---------------------------------------------------------------------------
+# 사진 증강 (밝기/흐림만 바꿔서 라벨은 그대로)
+# ---------------------------------------------------------------------------
+def motion_blur(img):
+    """빠르게 달릴 때/차체 흔들림: 임의 방향 직선 블러."""
+    k = random.randint(5, 15)
+    ker = np.zeros((k, k), np.float32)
+    ker[k // 2] = 1
+    ker = cv2.warpAffine(ker, cv2.getRotationMatrix2D((k / 2 - 0.5, k / 2 - 0.5), random.uniform(0, 180), 1), (k, k))
+    return cv2.filter2D(img, -1, ker / max(ker.sum(), 1e-6))
+
+
+def zoom_blur(img):
+    """전진 주행 블러: 소실점(화면 위쪽 가운데 근처)에서 바깥으로 번짐 = 조금씩 확대한 사본 평균."""
+    h, w = img.shape[:2]
+    cx, cy = w * random.uniform(0.4, 0.6), h * random.uniform(0.2, 0.45)
+    acc = img.astype(np.float32)
+    n, amount = 6, random.uniform(0.02, 0.06)
+    for i in range(1, n):
+        M = cv2.getRotationMatrix2D((cx, cy), 0, 1 + amount * i / n)
+        acc += cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REFLECT).astype(np.float32)
+    return (acc / n).astype(np.uint8)
+
+
+def overexpose(img):
+    """노출 과다: 밝은 곳(벽/하늘/조명)이 하얗게 날아감."""
+    gain, gamma = random.uniform(1.3, 2.0), random.uniform(0.6, 0.9)
+    x = np.clip((img.astype(np.float32) / 255.0) * gain, 0, 1) ** gamma
+    return (x * 255).astype(np.uint8)
+
+
+def light_bloom(img):
+    """위쪽 조명/창문에서 강한 빛이 들어와 번짐: 화면 위쪽에 큰 밝은 원형 그라디언트를 더함."""
+    h, w = img.shape[:2]
+    cx, cy = random.uniform(0, w), random.uniform(-0.3 * h, 0.4 * h)
+    r = random.uniform(0.3, 0.8) * w
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    g = np.clip(1 - np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / r, 0, 1) ** 1.5
+    tint = np.array([random.uniform(0.85, 1.0), random.uniform(0.9, 1.0), 1.0], np.float32)  # 살짝 따뜻한 흰빛
+    x = img.astype(np.float32) + g[..., None] * random.uniform(120, 255) * tint
+    return np.clip(x, 0, 255).astype(np.uint8)
+
+
+def floor_streak(img):
+    """바닥(매트)에 빛이 반사돼 생기는 길쭉한 밝은 띠 (KMU 증강의 바닥 반사 스트릭)."""
+    h, w = img.shape[:2]
+    mask = np.zeros((h, w), np.float32)
+    x0 = random.uniform(0.1, 0.9) * w
+    top = (int(x0 + random.uniform(-0.05, 0.05) * w), int(random.uniform(0.35, 0.55) * h))
+    bot = (int(x0 + random.uniform(-0.3, 0.3) * w), h)
+    cv2.line(mask, top, bot, 1.0, random.randint(15, 45))
+    mask = cv2.GaussianBlur(mask, (0, 0), random.uniform(8, 20))
+    mask *= np.linspace(0.3, 1.0, h, dtype=np.float32)[:, None]  # 가까울수록 밝게
+    x = img.astype(np.float32) + mask[..., None] * random.uniform(60, 150)
+    return np.clip(x, 0, 255).astype(np.uint8)
+
+
+# ---------------------------------------------------------------------------
 # 데이터 (DataLoader worker가 import하므로 여기선 make_model_compare_gif를 import하지 않음: CUDA 초기화 방지)
 # ---------------------------------------------------------------------------
 class EgoDataset(torch.utils.data.Dataset):
@@ -65,9 +122,21 @@ class EgoDataset(torch.utils.data.Dataset):
             hsv[..., 0] = (hsv[..., 0] * r[0]) % 180
             hsv[..., 1:] = np.clip(hsv[..., 1:] * r[1:], 0, 255)
             img = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
-        if random.random() < 0.1:
-            img = cv2.GaussianBlur(np.ascontiguousarray(img), (0, 0), random.uniform(0.5, 1.5))
-        return np.ascontiguousarray(img), np.ascontiguousarray(da), np.ascontiguousarray(ll)
+        img = np.ascontiguousarray(img)
+        if random.random() < 0.15:
+            img = overexpose(img)
+        if random.random() < 0.25:
+            img = light_bloom(img)
+        if random.random() < 0.2:
+            img = floor_streak(img)
+        r = random.random()
+        if r < 0.15:
+            img = motion_blur(img)
+        elif r < 0.3:
+            img = zoom_blur(img)
+        elif r < 0.4:
+            img = cv2.GaussianBlur(img, (0, 0), random.uniform(0.5, 1.5))
+        return img, np.ascontiguousarray(da), np.ascontiguousarray(ll)
 
     def __getitem__(self, i):
         n = self.names[i]
