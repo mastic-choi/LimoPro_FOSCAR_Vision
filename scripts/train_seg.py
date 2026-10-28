@@ -194,6 +194,11 @@ def build_yolop(m):
     def fwd(model, x):
         _, da, ll = model(x)
         return ratio_fg(da), ratio_fg(ll)
+
+    def raw(model, x):  # --loss channel 용: 채널별 sigmoid 2ch 그대로
+        _, da, ll = model(x)
+        return da, ll
+    fwd.raw = raw
     return model, False, True, fwd, save_state
 
 
@@ -256,7 +261,17 @@ def seg_loss(p, t):
 
 
 def crop(p):
-    return p[:, PAD:-PAD]
+    return p[..., PAD:-PAD, :]  # (B,H,W) / (B,C,H,W) 둘 다 높이 축만 자름
+
+
+def channel_loss(p, t):
+    """채널별 sigmoid 2ch(YOLOP)용: 배경 채널 정답 = 1-t, 전경 채널 정답 = t 로 각각 BCE + 전경 Dice.
+    전경/(배경+전경) 비율로 학습하면 두 채널이 함께 포화될 때 기울기가 거의 사라져서(--loss prob) 원래 YOLOP 방식대로."""
+    p = p.clamp(1e-6, 1 - 1e-6)
+    bce = F.binary_cross_entropy(p[:, 0], 1 - t) + F.binary_cross_entropy(p[:, 1], t)
+    fg = p[:, 1]
+    dice = 1 - (2 * (fg * t).sum((1, 2)) + 1) / (fg.sum((1, 2)) + t.sum((1, 2)) + 1)
+    return bce + dice.mean()
 
 
 class IoU:
@@ -299,6 +314,8 @@ def main():
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--lr", type=float, default=None, help="기본: 모델별 DEFAULT_LR")
+    ap.add_argument("--loss", choices=["prob", "channel"], default="prob",
+                    help="prob: 전경 확률에 BCE+Dice (전 모델 공통) / channel: 채널별 BCE (yolop만)")
     ap.add_argument("--ll-weight", type=float, default=2.0, help="ll 손실 가중치 (KMU에서 2.0이 효과 있었음)")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--patience", type=int, default=8, help="val da+ll이 이 epoch 수 동안 안 오르면 조기 종료 (0 = 끔)")
@@ -313,6 +330,8 @@ def main():
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    if args.loss == "channel" and args.model != "yolop":
+        sys.exit("--loss channel은 yolop만 지원")
     out = args.out or os.path.join(m.ROOT, "outputs", "train", f"{args.model}_seed{args.seed}")
     os.makedirs(out, exist_ok=True)
     lr0 = args.lr or DEFAULT_LR[args.model]
@@ -359,8 +378,12 @@ def main():
         for x, da, ll, _ in train_loader:
             with limiter:
                 x, da, ll = x.to(m.device), da.to(m.device), ll.to(m.device)
-                pda, pll = fwd(model, x)
-                loss = seg_loss(crop(pda), da) + args.ll_weight * seg_loss(crop(pll), ll)
+                if args.loss == "channel":
+                    rda, rll = fwd.raw(model, x)
+                    loss = channel_loss(crop(rda), da) + args.ll_weight * channel_loss(crop(rll), ll)
+                else:
+                    pda, pll = fwd(model, x)
+                    loss = seg_loss(crop(pda), da) + args.ll_weight * seg_loss(crop(pll), ll)
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
                 opt.step()

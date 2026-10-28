@@ -61,6 +61,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="*", default=["tln_large", "yolop", "hybridnets", "yolopv2"])
     ap.add_argument("--seeds", type=int, nargs="*", default=[0])
+    ap.add_argument("--suffix", default="", help="train_all.py --suffix 와 같게")
     ap.add_argument("--out", default=os.path.join(ROOT, "outputs", "train"))
     ap.add_argument("--interval", type=int, default=600)
     ap.add_argument("--stall-min", type=float, default=40, help="epoch 정체 판정 최소 분")
@@ -69,7 +70,7 @@ def main():
     ap.add_argument("--once", action="store_true", help="interval 뒤 한 번만 점검하고 종료 (주기 보고용)")
     args = ap.parse_args()
 
-    runs = [f"{m}_seed{s}" for s in args.seeds for m in args.models]
+    runs = [f"{m}{args.suffix}_seed{s}" for s in args.seeds for m in args.models]
     all_log = os.path.join(ROOT, "outputs", "train_all.log")
     giveups_at_start = open(all_log, encoding="utf-8").read().count("[give up]") if os.path.exists(all_log) else 0
     idle_count = 0
@@ -102,8 +103,8 @@ def main():
             sys.exit(3)
 
         seg = [(p, c) for p, c in procs if "train_seg.py" in c]
-        m = re.search(r"--model (\S+).*--seed (\d+)", seg[0][1]) if seg else None
-        cur = f"{m.group(1)}_seed{m.group(2)}" if m else next((r for r in runs if r not in done), "?")
+        m = re.search(r"--out (\S+)", seg[0][1]) if seg else None  # train_all.py가 항상 --out <.../run 이름> 을 넘김
+        cur = os.path.basename(m.group(1).strip('"')) if m else next((r for r in runs if r not in done), "?")
         d = os.path.join(args.out, cur)
         epochs = []
         if os.path.exists(os.path.join(d, "log.csv")):
