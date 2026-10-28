@@ -23,3 +23,8 @@ docs/WORK_PROCESS.md
 outputs/panels/
 outputs/ego_labels_*/
 outputs/ego_labels_*.log
+
+# 학습 결과(가중치/로그)와 파인튜닝 pseudo-label, 감시 로그
+outputs/train/
+outputs/train_*.log
+outputs/pseudo_ft_*/

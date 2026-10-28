@@ -121,6 +121,17 @@ train_seg.py x 4 모델 (train_all.py 순차 실행, train_watchdog.py 감시)
 - 4개 학습이 끝나면: 파인튜닝한 4개로 앙상블을 다시 구성해 test에서 단일 모델과 비교.
 - 급커브(FAIL 4946장)는 아직 학습/평가에 없다. 파인튜닝 앙상블로 FAIL 프레임 pseudo-label → 모델 간 의견이 갈리는 프레임만 사람 검수 → 학습 데이터 추가(반복).
 - 4930번 이후 OK 1292장 검수가 남아 있다.
+
+### 4.1 다음 루프: 파인튜닝 앙상블 pseudo-label → 사람 검수
+1. `make_finetuned_pseudo_labels.py --eval-test` 로 앙상블이 단일 모델보다 나은지 test에서 확인.
+2. `make_finetuned_pseudo_labels.py --labels ... --reviewed-max 4929 --out outputs/pseudo_ft_v1`
+   - 대상: fail/ 전부 + 4929번 이후 미검수 OK. val/test 구간(+버퍼)은 제외(급커브 사람 GT로 평가에 쓸 것).
+   - da = 멤버 확률 평균 ≥ 0.5, ll = 과반 투표, 저장 da = da ∪ ll. `meta.csv`의 `da_agree`(멤버 쌍별 IoU 평균) 오름차순 = 검수 우선순위.
+3. 검수: `tools/ego_label_review_{mac,radeon,nvidia}.ipynb` (GPU 설정 셀만 다르고 나머지 동일).
+   - 노트북은 SAM2만 로드한다(모델 4개 불필요). gradio는 5.x 고정 — 6.x는 huggingface-hub ≥ 1.16을 요구해 transformers와 충돌.
+   - 라데온 버전은 이 PC(Windows ZLUDA)에서 버튼 흐름 + SAM(2.4초/회) + 웹 앱 기동까지 확인. 맥/NVIDIA 버전은 문법 검사만 함.
+4. 검수 결과(`<out>_review/`)를 학습 데이터에 추가 → 재학습.
+- 자기참조 주의: 이 모델들 라벨을 사람이 검수만 해서 만든 GT로 같은 모델을 평가하면 점수가 부풀려진다. 급커브 test GT는 SAM으로 직접 만들 것.
 - 배포 후보는 속도가 중요하므로 LIMO PRO(Jetson)에서 `scripts/benchmark_models.py`로 실측 필요.
 
 ## 5. 재현 명령
