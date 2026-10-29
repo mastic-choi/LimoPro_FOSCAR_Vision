@@ -61,12 +61,17 @@ need = [p for p, mod in [("gradio>=5.30,<6", "gradio"), ("ultralytics", "ultraly
 if need:
     pip(*need, "huggingface-hub>=0.34,<1.0")
 if importlib.util.find_spec("torch") is None:
-    # CUDA 버전은 nvidia-smi 로 확인하고 맞출 것 (예: CUDA 12.1 -> cu121, 12.4 -> cu124)
-    pip("torch", "torchvision", "--index-url", "https://download.pytorch.org/whl/cu121")
+    # cu128: RTX 50 시리즈(Blackwell, sm_120)까지 지원하는 첫 빌드. 드라이버 570 이상 필요(nvidia-smi로 확인)
+    pip("torch", "torchvision", "--index-url", "https://download.pytorch.org/whl/cu128")
 
 import torch
 assert torch.cuda.is_available(), "CUDA 인식 안 됨 - NVIDIA 드라이버 / CUDA용 torch 설치 확인"
 DEVICE = "cuda"
+major, minor = torch.cuda.get_device_capability(0)
+# 이미 깔린 torch가 이 GPU 아키텍처를 모르면 SAM 실행 때 "no kernel image" 에러가 난다 (예: RTX 50 + cu121 torch)
+assert f"sm_{major}{minor}" in torch.cuda.get_arch_list(), (
+    f"이 torch({torch.__version__})는 sm_{major}{minor} 미지원 - "
+    "pip install -U torch torchvision --index-url https://download.pytorch.org/whl/cu128")
 print("torch", torch.__version__, "| GPU:", torch.cuda.get_device_name(0))
 '''
 
@@ -272,8 +277,11 @@ APP_MD = """
 **보정 모드**
 1. `고칠 대상`: da(지금 차선) 또는 ll(차선) 선택
 2. `클릭`: 포함 / 제외 고르고 이미지 클릭 → 점 찍기
-3. `SAM 실행` → 결과 확인, 이상하면 점 추가/초기화 후 다시
-4. `저장하고 다음` (da/ll 둘 다 지금 보이는 상태로 저장). `원래대로`는 pseudo-label로 되돌림, `ll 지우기`는 차선 없음
+3. `SAM 실행 / 선 적용` → 결과 확인, 이상하면 점 추가/초기화 후 다시
+   - da: 점을 프롬프트로 SAM이 da를 새로 만든다
+   - ll: SAM을 안 쓴다(가는 선은 SAM이 매트까지 번짐). 포함 점을 차선을 따라 **순서대로** 찍으면 그 점들을 이은 선이
+     기존 ll에 **추가**되고, 제외 점 주변의 ll은 지워진다. 차선 여러 개는 한 줄 긋고 적용 → 다음 줄 긋고 적용
+4. `저장하고 다음` (da/ll 둘 다 지금 보이는 상태로 저장). 점을 찍고 SAM 실행을 안 눌렀으면 경고가 뜨고 저장되지 않는다. `원래대로`는 pseudo-label로 되돌림, `ll 지우기`는 차선 없음
 """
 
 APP = r'''
@@ -353,15 +361,37 @@ def on_click(stem, mode, points, da, ll, click_mode, evt: gr.SelectData):
     return points, overlay(img, da, ll, points)
 
 
+LL_WIDTH = 5         # 그리는 차선 두께(px)
+LL_ERASE_R = 15      # ll 제외 점 주변을 지우는 반경(px)
+
+
+def draw_ll(ll, points):
+    """ll은 SAM 대신 직접 그린다: 포함 점을 찍은 순서대로 이은 선을 기존 ll에 추가, 제외 점 주변 ll은 지움.
+    SAM은 가는 차선 위 점 하나를 주면 주변 매트까지 한 덩어리로 잡아서 ll 전체가 빨갛게 됨."""
+    ll = ll.copy().astype(np.uint8)
+    inc = np.array([[x, y] for x, y, l in points if l == 1], np.int32)
+    if len(inc) >= 2:
+        cv2.polylines(ll, [inc], False, 1, LL_WIDTH)
+    for x, y, l in points:
+        if l == 0:
+            cv2.circle(ll, (int(x), int(y)), LL_ERASE_R, 0, -1)
+    return ll > 0
+
+
 def sam_apply(stem, points, da, ll, target):
     img, _, _ = load(stem)
-    m = run_sam(img, points)
-    if m is not None:
-        if target.startswith("da"):
+    if target.startswith("da"):
+        m = run_sam(img, points)
+        if m is not None:
             da = m
         else:
-            ll = m
-    return da, ll, overlay(img, da, ll, points)
+            gr.Warning("SAM 결과가 비었음 - 점을 바꿔서 다시 실행")
+    else:
+        if sum(1 for p in points if p[2] == 1) == 1:
+            gr.Warning("선을 그으려면 포함 점이 2개 이상 필요 (차선을 따라 순서대로 찍기)")
+        ll = draw_ll(ll, points)
+        points = []  # 그은 선은 ll에 들어갔으니 점은 비움 -> 다음 차선을 이어서 그릴 수 있음
+    return points, da, ll, overlay(img, da, ll, points), [list(p) for p in points]
 
 
 def reset_points(stem, da, ll):
@@ -380,8 +410,12 @@ def clear_ll(stem, points, da):
     return ll, overlay(img, da, ll, points)
 
 
-def save_fix(stem, mode, da, ll):
+def save_fix(stem, mode, da, ll, points, sam_points):
     if mode != "fix" or stem is None:
+        return (gr.update(),) * 10
+    if points and [list(p) for p in points] != sam_points:
+        # 점만 찍고 SAM 실행을 안 누르면 마스크는 원래 pseudo-label 그대로 저장된다
+        gr.Warning("찍은 점이 아직 반영 안 됨 - 'SAM 실행'을 누르고 결과를 확인한 뒤 저장하세요 (점을 안 쓸 거면 '점 초기화')")
         return (gr.update(),) * 10
     finalize(stem, "corrected", da, ll)
     return next_frame()
@@ -391,6 +425,7 @@ with gr.Blocks(js=KEY_JS, title="ego lane 검수") as demo:
     gr.Markdown("### Ego lane 검수 — **1** 신뢰 / **2** 보정(SAM) / **3** 버림   (파랑 = da, 빨강 = ll)")
     info = gr.Textbox(label="진행", interactive=False)
     s_stem, s_mode, s_points, s_da, s_ll = gr.State(None), gr.State("review"), gr.State([]), gr.State(None), gr.State(None)
+    s_sam_points = gr.State([])  # 마지막 SAM 실행 때의 점 (저장 시 미반영 점 경고용)
 
     with gr.Group(visible=True) as review_box:
         review_img = gr.Image(label="원본 | 오버레이", interactive=False)
@@ -401,11 +436,12 @@ with gr.Blocks(js=KEY_JS, title="ego lane 검수") as demo:
 
     with gr.Group(visible=False) as fix_box:
         with gr.Row():
-            target = gr.Radio(["da (지금 차선)", "ll (차선)"], value="da (지금 차선)", label="고칠 대상")
+            target = gr.Radio(["da (지금 차선)", "ll (차선)"], value="da (지금 차선)",
+                              label="고칠 대상 (da: SAM / ll: 포함 점을 순서대로 이어 선 추가, 제외 점 주변 ll 지우기)")
             click_mode = gr.Radio(["포함", "제외"], value="포함", label="클릭")
         fix_img = gr.Image(label="클릭해서 점 찍기 (초록 = 포함, 주황 = 제외)", interactive=False)
         with gr.Row():
-            sam_btn = gr.Button("SAM 실행", variant="secondary")
+            sam_btn = gr.Button("SAM 실행 / 선 적용", variant="secondary")
             reset_btn = gr.Button("점 초기화")
             restore_btn = gr.Button("원래대로")
             clear_ll_btn = gr.Button("ll 지우기")
@@ -420,11 +456,11 @@ with gr.Blocks(js=KEY_JS, title="ego lane 검수") as demo:
     drop2_btn.click(drop, [s_stem, s_mode], outs)
     fix_btn.click(enter_fix, [s_stem, s_mode], outs)
     fix_img.select(on_click, [s_stem, s_mode, s_points, s_da, s_ll, click_mode], [s_points, fix_img])
-    sam_btn.click(sam_apply, [s_stem, s_points, s_da, s_ll, target], [s_da, s_ll, fix_img])
+    sam_btn.click(sam_apply, [s_stem, s_points, s_da, s_ll, target], [s_points, s_da, s_ll, fix_img, s_sam_points])
     reset_btn.click(reset_points, [s_stem, s_da, s_ll], [s_points, fix_img])
     restore_btn.click(restore, [s_stem], [s_points, s_da, s_ll, fix_img])
     clear_ll_btn.click(clear_ll, [s_stem, s_points, s_da], [s_ll, fix_img])
-    save_btn.click(save_fix, [s_stem, s_mode, s_da, s_ll], outs)
+    save_btn.click(save_fix, [s_stem, s_mode, s_da, s_ll, s_points, s_sam_points], outs)
 
 demo.queue().launch(share=SHARE, inline=False, inbrowser=True)
 '''
