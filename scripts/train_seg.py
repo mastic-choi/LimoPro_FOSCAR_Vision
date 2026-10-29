@@ -96,6 +96,47 @@ def floor_streak(img):
 
 
 # ---------------------------------------------------------------------------
+# 차선 끊김 증강 (트랙 매트가 구겨져 ll이 끊기면 da가 차선 밖으로 새는 문제 대응)
+# 이미지만 바꾸고 라벨은 그대로 = "차선이 안 보이거나 어긋나도 경계는 이어진다"를 배우게 함
+# ---------------------------------------------------------------------------
+def lane_gap(img, ll):
+    """차선 1~2구간(세로 20~80px)을 주변 바닥으로 inpaint. 구간마다 그 높이의 차선 조각 하나만 지움
+    (먼 곳에서 좌우 차선이 한 덩어리로 붙어 있어도 양쪽이 같이 지워지지 않도록 구간 안에서 덩어리를 나눔)."""
+    ys = np.flatnonzero(ll.any(1))
+    if len(ys) < 60:
+        return img
+    hole = np.zeros_like(ll)
+    for _ in range(random.randint(1, 2)):
+        gh = random.randint(20, 80)
+        y0 = random.randint(ys[0], max(ys[0], ys[-1] - gh))
+        n, lab = cv2.connectedComponents(np.ascontiguousarray(ll[y0:y0 + gh]), connectivity=8)
+        if n > 1:
+            hole[y0:y0 + gh][lab == random.randint(1, n - 1)] = 1
+    hole = cv2.dilate(hole, np.ones((7, 7), np.uint8))
+    out = cv2.inpaint(img, hole, 5, cv2.INPAINT_TELEA).astype(np.float32)
+    out += np.random.normal(0, 3, out.shape).astype(np.float32) * hole[..., None]  # 매끈한 패치 = 차선 자리라는 꼼수 방지
+    a = cv2.GaussianBlur(hole.astype(np.float32), (0, 0), 2)[..., None]
+    return np.clip(out * a + img.astype(np.float32) * (1 - a), 0, 255).astype(np.uint8)
+
+
+def track_wrinkle(img):
+    """매트 주름: 살짝 기운 가로 띠에서 이미지가 옆으로 밀려 차선이 꺾여 보이고, 주름 한쪽은 그늘/반대쪽은 반사."""
+    h, w = img.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    mx, my = xx.copy(), yy.copy()
+    shade = np.ones((h, w), np.float32)
+    for _ in range(random.randint(1, 2)):
+        cy = random.uniform(0.45, 0.95) * h + (xx - w / 2) * random.uniform(-0.15, 0.15)
+        d = (yy - cy) / random.uniform(4, 15)
+        bump = np.exp(-d ** 2)
+        mx += random.choice([-1, 1]) * random.uniform(4, 15) * bump
+        my += random.uniform(-4, 4) * bump
+        shade *= 1 + random.choice([-1, 1]) * random.uniform(0.25, 0.5) * (-2 * d * bump)
+    out = cv2.remap(img, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT).astype(np.float32)
+    return np.clip(out * shade[..., None], 0, 255).astype(np.uint8)
+
+
+# ---------------------------------------------------------------------------
 # 데이터 (DataLoader worker가 import하므로 여기선 make_model_compare_gif를 import하지 않음: CUDA 초기화 방지)
 # ---------------------------------------------------------------------------
 class EgoDataset(torch.utils.data.Dataset):
@@ -123,7 +164,11 @@ class EgoDataset(torch.utils.data.Dataset):
             hsv[..., 0] = (hsv[..., 0] * r[0]) % 180
             hsv[..., 1:] = np.clip(hsv[..., 1:] * r[1:], 0, 255)
             img = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
-        img = np.ascontiguousarray(img)
+        img, ll = np.ascontiguousarray(img), np.ascontiguousarray(ll)
+        if random.random() < 0.3:
+            img = lane_gap(img, ll)
+        if random.random() < 0.25:
+            img = track_wrinkle(img)
         if random.random() < 0.15:
             img = overexpose(img)
         if random.random() < 0.25:
