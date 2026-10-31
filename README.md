@@ -1,152 +1,196 @@
 # LimoPro_FOSCAR_Vision
-AutoRace2026 참가팀 FOSCAR 비전 모델관련 코드
 
-## 구성
+AutoRace 2026 참가팀 FOSCAR의 차선 인식 모델 저장소입니다. BDD100K로 학습된 공개 모델을 LIMO PRO 카메라 영상과 대회 트랙에 맞게 파인튜닝합니다.
+
+모델은 영상에서 두 가지를 찾습니다.
+
+- **da (주행가능영역):** 차가 지금 달리는 차로
+- **ll (차선):** 차선 위치
+
+![1차와 2차 모델 비교](outputs/montages/result_compare_clean.jpg)
+
+*학습에 쓰지 않은 test 프레임입니다. 파랑은 da, 빨강은 ll이고, 칸 아래 숫자는 정답과 비교한 IoU입니다.*
+
+## 현재 상태 (2026-10-31)
+
+- 1차, 2차 파인튜닝을 마쳤고 가중치는 [Releases](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases)에 있습니다.
+- 어려운 장면에서는 2차가 나아 보이지만, 쉬운 test와 3차선 구간 일부에서는 1차가 더 좋습니다. **어느 쪽이 항상 낫다고 정하지 않았습니다.**
+- LIMO PRO 보드에서는 아직 돌려 보지 않았습니다. 차에 올릴 모델은 Jetson 속도를 잰 뒤 정합니다.
+
+## 왜 파인튜닝하나
+
+BDD100K는 실제 도로 데이터입니다. 공개 모델을 그대로 쓰면 트랙 위에서 다음 문제가 생깁니다.
+
+- 지금 달리는 차로가 아니라 매트 전체를 도로로 칠합니다.
+- 흰 횡단보도 선을 잘 잡지 못합니다.
+- 커브와 주름진 트랙에서 차선과 da가 끊기거나 샙니다.
+
+대회 트랙은 도면으로 고정돼 있습니다(10m×6m, 차선 폭 550mm). 그래서 이 트랙과 이 카메라에 잘 맞는 모델을 목표로 합니다. 공개 모델을 비교한 기록은 [`docs/EARLY_EXPLORATION.md`](docs/EARLY_EXPLORATION.md)에 있습니다.
+
+## 파인튜닝 과정
+
+| 단계 | 내용 |
+|---|---|
+| 1. 데이터 수집 | LIMO PRO로 트랙을 16분 주행. 1280×720, 약 8.6Hz. 멈춰 있던 프레임을 빼고 8,232장 |
+| 2. 첫 라벨 | 공개 모델 앙상블 + HSV + 차선 추적 + SAM2로 내 차로 라벨 생성. 사람이 OK 프레임 검수 |
+| 3. 1차 학습 | 검수 라벨 950장으로 모델 4개 파인튜닝 |
+| 4. 라벨 확장 | 1차 앙상블로 커브 등 어려운 프레임에 pseudo-label 생성. 사람이 신뢰, SAM 보정, 버림으로 판정 |
+| 5. 2차 학습 | 학습 데이터 3,709장으로 모델 4개 재학습 |
+| 6. 라벨 정리, 재채점 | 정답의 구멍과 조각을 정리하고 흰 선을 da에 포함. 1차와 2차를 다시 비교 |
+
+### 데이터
+
+2차 데이터는 시간 구간 단위로 나눴습니다. 연속 프레임은 서로 거의 같아서 무작위로 나누면 점수가 부풀려집니다. 구간 앞뒤 프레임은 학습에서 뺐습니다.
+
+| split | 장수 | 구성 |
+|---|---:|---|
+| train | 3,709 | 1차 라벨 782, 사람이 승인 2,086, 사람이 보정 841 |
+| val | 327 | 기존 97 + 추가 230 |
+| test | 542 | 기존 268 + 추가 274 (어려운 장면 포함) |
+
+원본 이미지와 라벨은 용량 때문에 저장소에 넣지 않았습니다.
+
+### 학습 설정
+
+모델마다 출력 형식이 달라, 공통 학습 코드에 어댑터를 끼워 같은 손실과 평가를 씁니다.
+
+- **입력:** 640×360에 위아래 12px을 패딩한 640×384
+- **손실:** BCE + soft Dice, ll 가중치 2.0 (YOLOP은 채널별 BCE)
+- **학습:** AdamW, poly LR, 최대 40 epoch, 8 epoch 동안 개선이 없으면 조기 종료
+- **증강:** 좌우 반전, 회전·확대·이동, HSV, 노출 과다, 조명 번짐, 바닥 반사, 모션·줌·가우시안 블러
+- **2차에 추가한 증강:** 차선 일부를 지우는 `lane_gap`, 매트 주름을 흉내 내는 `track_wrinkle`. 이미지만 바꾸고 라벨은 그대로 둬서, 차선이 끊겨 보여도 경계는 이어진다고 학습합니다. 효과는 아직 따로 재지 않았습니다.
+
+| 모델 | 파라미터 | LR | 2차 batch | 2차 epoch (best) | 2차 학습 시간 |
+|---|---:|---:|---:|---|---:|
+| HybridNets | 12.8M | 0.0001 | 4 | 39 (31) | 101분 |
+| TwinLiteNet+ Large | 1.94M | 0.00005 | 8 | 30 (22) | 57분 |
+| YOLOP | 7.9M | 0.0001 | 8 | 40 (37) | 48분 |
+| YOLOPv2 | 38.9M | 0.00001 | 8 | 38 (30) | 70분 |
+
+2차는 RTX 3070 Ti 8GB에서 총 4시간 37분 걸렸고, HybridNets만 메모리 때문에 batch 4로 학습했습니다.
+
+### 학습 곡선
+
+![2차 모델별 val IoU 곡선](outputs/train_v2_foscar/images/val_curves.png)
+
+- 네 모델 모두 20 epoch 전후로 대부분 수렴합니다.
+- da는 HybridNets가 가장 높고, ll은 YOLOPv2가 가장 높습니다.
+- YOLOP은 40 epoch까지 조금씩 올라 아직 포화되지 않았을 수 있습니다.
+- val에 어려운 장면이 들어가 있어서 1차 val 점수와 직접 비교할 수 없습니다.
+
+## 결과
+
+점수는 test 전체 픽셀로 낸 IoU입니다. da는 정리한 라벨 기준이고, ll 라벨은 정리하지 않았습니다. 앙상블은 da 확률 평균 0.5 이상, ll 과반 투표로 합칩니다.
+
+### 쉬운 test 268장 (1차 → 2차)
+
+기존 파이프라인을 통과한 프레임으로 만든 test입니다. 두 모델 모두 학습에 쓰지 않아 가장 공정한 비교입니다.
+
+| 모델 | da | ll | 커브 da | 커브 ll |
+|---|---:|---:|---:|---:|
+| HybridNets | 0.967 → 0.959 | 0.809 → 0.802 | 0.938 → 0.917 | 0.760 → 0.750 |
+| TwinLiteNet+ Large | 0.954 → 0.956 | 0.784 → 0.783 | 0.919 → 0.923 | 0.731 → 0.724 |
+| YOLOP | 0.940 → 0.947 | 0.749 → 0.769 | 0.907 → 0.908 | 0.692 → 0.715 |
+| YOLOPv2 | 0.963 → 0.960 | 0.809 → 0.806 | 0.940 → 0.929 | 0.761 → 0.752 |
+| **4개 앙상블** | **0.971 → 0.962** | **0.809 → 0.801** | **0.948 → 0.925** | **0.754 → 0.743** |
+
+### 어려운 장면을 포함한 추가 test 274장 (1차 → 2차)
+
+| 모델 | da | ll | 커브 da | 커브 ll |
+|---|---:|---:|---:|---:|
+| HybridNets | 0.873 → 0.936 | 0.832 → 0.850 | 0.864 → 0.918 | 0.823 → 0.844 |
+| TwinLiteNet+ Large | 0.908 → 0.929 | 0.821 → 0.842 | 0.894 → 0.909 | 0.807 → 0.837 |
+| YOLOP | 0.841 → 0.923 | 0.786 → 0.812 | 0.816 → 0.901 | 0.773 → 0.802 |
+| YOLOPv2 | 0.859 → 0.936 | 0.839 → 0.854 | 0.834 → 0.918 | 0.824 → 0.847 |
+| 2차 앙상블 | 0.939 | 0.868 | 0.921 | 0.864 |
+
+이 표는 참고용입니다.
+
+- **1차에 유리한 점:** 라벨 대부분이 1차 앙상블에서 나왔고, 71장은 1차 학습에도 쓰였습니다. 그래서 1차 앙상블 점수는 표에서 뺐습니다.
+- **1차에 불리한 점:** 사람이 보정한 53장은 1차가 틀려서 고친 프레임입니다.
+
+### 눈에 띄는 장면
+
+- **좋아진 곳:** `005693`처럼 1차의 da가 끊기던 커브에서 2차가 매끄럽습니다(da 0.49 → 0.96).
+- **나빠진 곳:** 3차선 구간인 `004919`(0.57 → 0.17), `004924`(0.85 → 0.42), `004669`(0.85 → 0.52)에서 2차가 옆 차로까지 얼룩지게 칠합니다. 2차 학습 라벨에 옆 차로까지 칠한 프레임이 섞인 영향일 수 있지만, 아직 확인하지 못했습니다.
+- **라벨 오류:** `001660`은 모델이 아니라 정답이 틀린 프레임입니다.
+
+### 라벨 정리의 효과
+
+사람이 SAM으로 보정한 라벨에는 구멍과 작은 조각이 많았습니다. `scripts/clean_labels.py`로 정리하되, 모델 출력은 쓰지 않아 점수가 부풀려지지 않게 했습니다.
+
+![라벨 정리 전후](outputs/montages/label_clean_before_after.jpg)
+
+정리 후 재채점해도 전체 da는 0.003 이하로만 올랐고, 보정 라벨 53장의 앙상블 da만 0.872 → 0.898로 뚜렷이 올랐습니다. 따라서 쉬운 test에서 2차 점수가 떨어진 원인은 채점 라벨의 잡음이 아닙니다. 정리한 라벨로 다시 학습한 결과는 아직 없습니다.
+
+## 한계
+
+- 데이터 전체가 같은 트랙, 같은 조명의 주행 1회에서 나왔고 시드도 1개입니다. ±0.01 안팎의 차이는 우연일 수 있습니다.
+- 주름 없는 트랙(2026-10-23 촬영)에는 라벨이 없습니다. 차가 비스듬할 때 da가 얼룩지는 모습이 보입니다.
+- 정차 LIMO, 라바콘, 신호등, 표지판이 차선을 가리는 장면은 학습하지 않았습니다.
+- 라벨 정리로 고칠 수 없는 오류가 남아 있습니다. 차로를 잘못 칠한 라벨은 사람이 고쳐야 합니다.
+
+## 다음 할 일
+
+1. 2차 점수가 크게 떨어진 프레임의 라벨을 사람이 확인합니다.
+2. 3차선 구간의 라벨 기준을 정하고, 정리한 라벨로 다시 학습합니다.
+3. Jetson에서 후보 모델의 속도를 재고 차에 올릴 모델을 고릅니다. 배포 전 확인 사항은 [`docs/LIMO_DEPLOY_NOTES.md`](docs/LIMO_DEPLOY_NOTES.md)에 있습니다.
+4. 주행 코드와 연결해 실제 트랙에서 차로 이탈이 나는 구간을 찾습니다.
+
+## 가중치 받기
+
+| 릴리즈 | 내용 |
+|---|---|
+| [`ego-lane-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v1) | 1차 모델 4개 |
+| [`ego-lane-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v2) | 2차 모델 4개, 보고서, 이 학습에 쓴 코드 |
+
+```bash
+gh release download ego-lane-v2 -p "hybridnets_v2_best_da.pt"
+```
+
+- `best_da`, `best_ll`은 각각 val da, val ll이 가장 높을 때의 가중치입니다.
+- YOLOPv2는 TorchScript이므로 `scripts/train_seg.py`의 `load_yolopv2_trainable`로 읽습니다. 나머지는 state_dict입니다.
+- 모델 코드와 사전학습 가중치는 [`models/README.md`](models/README.md)를 보고 받습니다.
+
+## 실행
+
+```bash
+# 1차 데이터로 학습. 끊겨도 같은 명령으로 이어서 함. GPU 사용률은 GPU_DUTY(기본 90%)로 제한
+.venv/Scripts/python scripts/train_all.py --data dataset/ego_v1
+
+# 다른 NVIDIA PC로 옮길 코드, 모델, 데이터 묶기
+.venv/Scripts/python -I scripts/make_rtx_bundle.py --data dataset/ego_v2 --out <USB 폴더>
+
+# 1차와 2차를 정리한 라벨로 채점하고 몽타주 생성
+.venv/Scripts/python scripts/eval_clean_compare.py --data dataset/ego_v2_clean --out outputs/eval_clean
+```
+
+2차 학습 데이터(`ego_v2_ys_split`)를 만든 `merge_review.py`, `resplit_dataset.py`와 동아리 PC용 수정 코드는 [`outputs/train_v2_foscar/코드_수정본.zip`](outputs/train_v2_foscar/코드_수정본.zip)에 있고, `scripts/`에는 아직 합치지 않았습니다.
+
+## 저장소 구성
 
 | 경로 | 내용 |
 |---|---|
-| `docs/LANE_MODEL_WORKFLOW.md` | 참고 프로젝트 [TwinLiteNet-KMU-finetune](https://github.com/mastic-choi/TwinLiteNet-KMU-finetune)의 차선 모델 제작 워크플로우 정리 |
-| `models/` | 공개 da/ll 모델 7종(YOLOPv2, TwinLiteNet+ N/S/M/L, YOLOP, HybridNets) + SAM2. 가중치는 gitignore, 받는 법은 `models/README.md` |
-| `scripts/make_model_compare_gif.py` | 모델 7개 결과를 4×2 오버레이 GIF로 비교 |
-| `scripts/benchmark_models.py` | 모델별 추론 속도(forward / end-to-end) 측정 |
-| `scripts/make_ensemble_gif.py` | 7개 앙상블 Voting vs Averaging 비교 GIF |
-| `scripts/make_ego_lane_labels.py` | 앙상블 → HSV 보완 → ego 추적 → SAM2(마스크+점 프롬프트, 범위 클리핑)로 '지금 달리는 차선' da pseudo-label 생성, OK/FAIL 판정 (아래 방법론) |
-| `scripts/make_sam_prompt_compare_gif.py` | SAM2 프롬프트 4종(점만/마스크만/마스크+점/마스크+박스) 2×2 비교 GIF |
-| `tools/da_trust_review.ipynb` | (KMU 원본 복사본, 경로가 KMU 구조라 그대로는 안 됨 — 아래 ego_label_review 사용) |
-| `tools/ego_label_review_{mac,radeon,nvidia}.ipynb` | 파인튜닝 앙상블 pseudo-label 검수 + SAM 보정(da/ll). 1 신뢰 / 2 보정 / 3 버림, 여러 명 동시 작업. 생성기 `tools/build_review_notebooks.py` |
-| `scripts/make_finetuned_pseudo_labels.py` | 파인튜닝한 4개 모델 앙상블로 FAIL/미검수 프레임 pseudo-label + 모델 간 일치도(검수 우선순위), `--eval-test`로 앙상블 test 평가 |
-| `docs/LIMO_DEPLOY_NOTES.md` | LIMO PRO 사양과 모델 비교, 보드 배포 전 확인할 점 (아직 실측 전) |
-| `tools/rtx/`, `scripts/make_rtx_bundle.py` | 다른 NVIDIA PC에서 바로 학습할 수 있게 코드, 모델, 데이터를 zip으로 묶음. Claude용 10분 감시 지시 포함 |
-| `scripts/build_train_dataset_v2.py` | ego_v1에 사람 검수 pseudo-label을 더해 2차 학습 데이터셋 생성 |
-| `scripts/eval_da_leak.py` | test에서 da 차선 밖 침범률 측정, 라벨 없는 프레임은 몽타주로 확인 |
-| `docs/ENSEMBLE_FINETUNE.md` | 검수한 ego lane 라벨로 앙상블 멤버 4개 파인튜닝: 데이터 분할, 학습 방식, 결과 |
-| `scripts/split_ego_labels.py`, `scripts/review_ok_labels.py` | pseudo-label을 OK/FAIL로 나누고, OK를 사람이 이미지 삭제로 빠르게 검수 |
-| `scripts/build_train_dataset.py` | 검수 라벨 → 시간 구간 train/val/test, 비슷한 프레임 제거, 커브/직진 균형 |
-| `scripts/train_seg.py`, `scripts/train_all.py`, `scripts/train_watchdog.py` | 4개 모델 파인튜닝(자동 재개·조기 종료), 순차 실행, 감시 |
+| `scripts/train_seg.py`, `train_all.py`, `train_watchdog.py` | 모델별 학습, 순차 실행과 자동 재개, 감시 |
+| `scripts/make_ego_lane_labels.py`, `split_ego_labels.py`, `review_ok_labels.py` | 첫 라벨 생성과 OK 프레임 검수 |
+| `scripts/make_finetuned_pseudo_labels.py` | 파인튜닝 앙상블로 pseudo-label 생성 |
+| `tools/ego_label_review_{mac,radeon,nvidia}.ipynb` | 사람 검수와 SAM 보정 앱 |
+| `scripts/build_train_dataset.py`, `build_train_dataset_v2.py` | 학습 데이터셋 생성 |
+| `scripts/clean_labels.py`, `eval_clean_compare.py`, `eval_da_leak.py` | 라벨 정리, 재채점, da 침범률 측정 |
+| `scripts/benchmark_models.py` | 추론 속도 측정 |
+| `tools/rtx/`, `scripts/make_rtx_bundle.py` | NVIDIA PC 학습 번들 |
+| `outputs/train_v2_foscar/` | 2차 학습 원본 보고서, 로그, 그림 |
+| `outputs/eval_clean/` | 재채점 결과 |
 
-## 결과 GIF
+## 문서
 
-입력: LimoPro 실차 카메라 `LimoPro_frames_20261023`(640×480, 10Hz) 중 frame 85~433(0~84는 정지 화면),
-2프레임 간격 175장 → 5fps 재생. 공통 색: **파랑 = 주행가능영역(da)**, **빨강 = 차선(ll)**.
-모델은 전부 BDD100K 사전학습 그대로(파인튜닝 없음), RX 9070 XT + ZLUDA에서 실행.
+- [`docs/ENSEMBLE_FINETUNE.md`](docs/ENSEMBLE_FINETUNE.md): 파인튜닝 방법과 결과 상세
+- [`docs/EGO_LANE_PSEUDO_LABEL.md`](docs/EGO_LANE_PSEUDO_LABEL.md): 첫 라벨 생성 방법
+- [`docs/LANE_MODEL_WORKFLOW.md`](docs/LANE_MODEL_WORKFLOW.md): 참고 프로젝트의 작업 흐름
+- [`docs/EARLY_EXPLORATION.md`](docs/EARLY_EXPLORATION.md): 공개 모델 비교 기록
+- [`docs/LIMO_DEPLOY_NOTES.md`](docs/LIMO_DEPLOY_NOTES.md): LIMO PRO 사양과 배포 전 확인 사항
+- [`outputs/train_v2_foscar/학습결과_보고서.md`](outputs/train_v2_foscar/학습결과_보고서.md): 2차 원본 보고서. `001660` 해석 등 일부는 재채점 전 내용입니다.
 
-### 1. 공개 모델 7종 비교 — `outputs/montages/model_compare.gif`
+## 사용한 모델
 
-| 원본 | YOLOPv2 | TwinLiteNet+ Large | TwinLiteNet+ Medium |
-|---|---|---|---|
-| **YOLOP** | **TwinLiteNet+ Small** | **HybridNets** | **TwinLiteNet+ Nano** |
-
-![모델 7종 비교](outputs/montages/model_compare.gif)
-
-노란 실선은 대부분 잡지만 흰 횡단보도 선은 거의 모든 모델이 못 잡고, da는 지금 차선이 아니라
-매트 전체를 칠한다(BDD100K의 "도로 전체" 개념). TwinLiteNet+ 일부는 화면 맨 아래에 가짜 차선 줄이 생긴다.
-속도는 `outputs/benchmarks/` 참고(이 PC 기준 Nano 135fps ~ YOLOPv2 15fps).
-
-### 2. 앙상블 Voting vs Averaging — `outputs/montages/ensemble_vote_vs_avg.gif`
-
-원본 | **Voting**(픽셀별로 7개 중 4개 이상이 확률 ≥ 0.5) | **Averaging**(7개 확률 평균 ≥ 0.5)
-
-![앙상블 비교](outputs/montages/ensemble_vote_vs_avg.gif)
-
-두 방식 결과는 거의 같다. 개별 모델보다 차선이 안정적이고, **끊긴 흰 점선을 연속된 선으로 이어 준다**
-(HSV로는 조각만 나옴) → 이 앙상블 차선을 ego lane 추출의 기준으로 씀. 모든 모델이 같이 틀리는
-부분(흰 횡단보도, 매트 전체 da)은 앙상블로도 안 고쳐진다.
-
-### 3. Ego lane 초기 비교(SAM2 단독) — `outputs/montages/ego_lane_compare.gif`
-
-원본 | 앙상블 | ego lane(기하) | ego lane + SAM2(점 프롬프트 결과 그대로)
-
-![ego lane 초기 비교](outputs/montages/ego_lane_compare.gif)
-
-**SAM2를 단독으로 쓰면 제외 점을 찍어도 노란 선을 넘어 매트 전체로 번진다**(선 양쪽이 같은 검은 매트라
-SAM이 한 물체로 봄 — TwinLiteNet-KMU에서 겪은 실패와 같은 원인). 그래서 최종 방법에서는 SAM을 기하 범위
-안으로 잘라서만 쓴다.
-
-### 4. SAM2 프롬프트 4종 비교 — `outputs/montages/sam_prompt_compare.gif`
-
-| 점만 (포함 3 + 제외 최대 12) | 마스크만 (기하 ego를 마스크 프롬프트로) |
-|---|---|
-| **마스크 + 점** | **마스크 + 박스** (박스 = 기하 ego 외곽 사각형) |
-
-![SAM2 프롬프트 비교](outputs/montages/sam_prompt_compare.gif)
-
-각 칸은 SAM2 **원본** 결과(범위로 자르기 전). OK 90장 기준, 기하 ego 대비:
-
-| 프롬프트 | IoU | ego 밖 번짐 | 관찰 |
-|---|---|---|---|
-| 점만 | 0.717 | 11% | 매트로 번지고 구멍이 숭숭 뚫림 |
-| 마스크만 | 0.218 | 1% | 대부분 거의 아무것도 안 칠함(마스크 입력은 점과 같이 써야 하는 보조 정보) |
-| **마스크 + 점** | **0.968** | **2%** | 노란 선 안쪽에 붙고 번짐 없음 → **채택** |
-| 마스크 + 박스 | 0.970 | 2% | 마스크+점과 거의 같음 |
-
-(별도 12장 실험: 점을 8높이 × 포함 3/제외 2로 촘촘하게 찍으면 오히려 벽/천장까지 번짐, IoU 0.62 → 0.47.)
-
-### 5. Ego lane 최종 — `outputs/montages/ego_lane_final.gif`
-
-원본 | 1. 앙상블 | 2. +HSV 보완 ego lane(초록 선 = 선택된 좌/우 경계, 상단 OK/FAIL) | SAM2 원본(마스크+점) | 3. 최종(SAM2 ∩ ego 범위)
-
-![ego lane 최종](outputs/montages/ego_lane_final.gif)
-
-175장 중 **OK 90장(51%)** — 그대로 라벨 후보. FAIL 85장(좌/우 차선 한쪽 누락 43, 추적 끊김 27,
-양쪽 동시 검출 행 부족 15)은 사람이 검수/보정. SAM2 원본은 기하 ego 대비 IoU 0.951 / 번짐 3%(125장).
-라벨은 `--save-labels`로 `images/ da_masks/ ll_masks/ status.csv` 저장.
-
-솔직한 평가: 이 트랙에서는 **기하 ego만으로도 거의 충분**하다(SAM 결과가 기하와 95% 겹침). SAM2는 경계를
-매끄럽게 하고 차선 위 사람/장애물을 잘라낼 여지를 주는 보조 단계다. 정량 판단은 사람 GT로 해야 한다.
-
-## Ego lane pseudo-label 방법론 (`scripts/make_ego_lane_labels.py`)
-
-목표: "지금 달리는 차선"만 da로 칠한 라벨을 자동으로 만들고, 실패한 프레임만 사람이 고친다.
-환경 준비·실행 명령·파라미터·ZLUDA 트러블슈팅까지 포함한 **재현 가이드는 [`docs/EGO_LANE_PSEUDO_LABEL.md`](docs/EGO_LANE_PSEUDO_LABEL.md)**.
-
-| 단계 | 방법 | 이유 / 결정 근거 |
-|---|---|---|
-| 1. 앙상블 | 공개 모델 4종(YOLOPv2, TwinLiteNet+ Large, YOLOP, HybridNets — TwinLiteNet+는 크기만 다른 같은 구조라 Large만) 확률 → **ll = Voting(과반 3/4)**, **도로 = da Averaging(평균 ≥ 0.5)** | 흰 점선을 연속 선으로 이어 주고 모델별 잡음이 줄어듦. Voting/Averaging 차이는 거의 없음 |
-| 2. HSV 보완 | 노란색(H 15–40, S ≥ 70, V ≥ 90)만 검출해 앙상블 ll에 합침(도로 근처만) | 앙상블이 놓친 노란 선(지그재그 등) 보완. **흰색은 안 씀** — 횡단보도/마름모/노면 글자/화살표까지 잡혀 오히려 OK가 줄었음 |
-| 3. 차선 정리 | 작은 조각, 화면 맨 아래 가로줄(모델 공통 가짜 차선), 납작한 가로선(정지선/횡단보도) 제거 | 맨 아래 가로줄이 바닥까지 내려온 차선과 붙어 추적이 잘못 시작되던 문제 → 아래 15행의 긴 가로 구간은 행 단위로 직접 지움 |
-| 4. ego 경계 추적 | 화면 아래 → 위로 행마다, 중심선 기준 **좌/우 가장 가까운 차선**을 경계로 선택. 다음 행은 이전 위치 ±14px 안에서만 찾고, 끊기면 최대 40행 선형 외삽. 화면 아래로 빠진 구간도 외삽 | 커브/점선에서도 같은 차선을 따라가게. 경계 간격이 8px 미만(소실점)이거나 도로 밖이면 정상 종료 |
-| 5. 기하 ego da | 행마다 좌/우 경계 사이를 채움(앙상블 도로 범위로 클리핑) | 두 차선 사이 = 지금 차선. 이것만으로도 OK 프레임은 깔끔함 |
-| 6. SAM2 보정 | **기하 ego 마스크(256×256 logit) + 점**(ego 중심선 포함 3, 좌/우 바깥 제외 최대 12)을 프롬프트로 → 구멍 메움 → **ego 범위(±9px)로 클리핑**. SAM이 ego의 절반도 못 덮으면 기하 결과로 폴백 | 점만 주면 매트 전체로 번지고(3번 GIF), 마스크만 주면 반응이 없음. 마스크+점이 IoU 0.97·번짐 2%로 가장 깔끔(4번 GIF). 클리핑은 안전장치 |
-| 7. 품질 판정 | 양쪽 차선을 실제로 찾은 행 < 60, 한쪽 차선 없음, 추적 끊김 → **FAIL** | FAIL 프레임만 사람이 `tools/da_trust_review.ipynb`로 검수/SAM 클릭 보정 |
-
-출력 라벨: da = 최종 ego ∪ ll, ll = 정리된 차선. `status.csv`에 프레임별 OK/FAIL 사유와 최종 결과 출처
-(SAM2 / 기하) 기록. GPU 사용률은 기본 90%로 제한(`GPU_DUTY` 환경변수).
-
-## 결론과 pseudo-label 운영 방침 (2026-10-24)
-
-- **보통의 경우 기하(geometric) ego lane이 가장 잘 잡는다.** 공개 모델들은 BDD100K식으로 "도로 전체"를 da로 찍는데,
-  우리가 필요한 건 지금 달리는 차선뿐이라 앙상블 차선 기준으로 그 부분만 기하학적으로 잘라낸 결과가 가장 정확했다.
-- **SAM2는 자동 단계에선 보조.** 점만 주면 매트로 번지고, 마스크+점은 깔끔하지만 기하와 95~97% 겹쳐 이득이 작다.
-  대신 사람이 클릭으로 보정할 때 가치가 크다.
-- **운영 방침**
-
-  | 프레임 | 라벨 방법 |
-  |---|---|
-  | 좌/우 차선을 잡은 프레임(직진 위주, 자동 판정 OK — 2026-10-23 데이터 90/175) | 기하 ego 라벨 그대로 채택 |
-  | 차선을 못 잡아 기하로 못 자른 프레임(커브 위주, FAIL — 85/175) | 사람이 SAM 클릭으로 da와 ll 직접 라벨링 |
-
-- **관찰 / 가설(검증 필요)**
-  - 커브에서 ll을 잘 못 잡는다. LimoPro 카메라는 **어안렌즈가 아니라 시야각이 좁아 커브에서 차선이 한 개만 보이는 경우가 흔할 것**
-    → `FAIL: no lane pair`(43장)의 상당수는 "못 잡은" 게 아니라 "한쪽만 보이는" 경우일 수 있다.
-  - 모델이 ll을 못 잡으면 da도 못 잡는 경향이 있다는 가설 — 반례(frame_000175, 000295: ll은 놓쳤지만 앙상블 da는 넓게 칠함)도 있어 미확인.
-
-자세한 근거와 다음 할 일은 [`docs/EGO_LANE_PSEUDO_LABEL.md` §6](docs/EGO_LANE_PSEUDO_LABEL.md#6-결론과-운영-방침).
-
-## 사람 검수: `tools/da_trust_review.ipynb`
-
-TwinLiteNet-KMU-finetune의 `da_trust_review.ipynb`를 **그대로 복사**해 온 Gradio 노트북.
-자동 생성된 da 라벨을 사람이 한 장씩 보며 빠르게 판정한다.
-
-- 키보드 **1 = 신뢰**(그대로 채택) / **2 = 비신뢰** → SAM 클릭 보정 모드(포함/제외 점 찍기 → 마스크 생성 → 수락)
-- 판정 즉시 마스크 PNG + `trust_results.csv` 저장 → 재실행하면 이어서 진행
-- `share=True` 공개 링크로 여러 명 동시 작업 가능(프레임 찜/10분 타임아웃으로 중복 배정 방지)
-- 브라우저 탭에서 열어 쓸 것(Jupyter 출력창 inline에서는 단축키가 안 먹음)
-
-> ⚠️ 아직 KMU 원본 설정 그대로다. 노트북 안의 `INPUT_DIR` / `OUTPUT_DIR` / `ENSEMBLE_DIR` / `DEPLOYED_ONNX` /
-> `SAM_CKPT`가 KMU 레포 구조(KMU 딥앙상블 가중치, KMU 배포 onnx)를 가리킨다. 이 레포에서 쓰려면
-> 초안 da를 `scripts/make_ego_lane_labels.py --save-labels` 결과(`da_masks/`)에서 읽도록,
-> SAM 가중치는 `models/sam2/sam2.1_b.pt`를 쓰도록 바꿔야 한다.
-> ZLUDA(AMD) 환경이면 cuDNN / flash·mem-efficient SDPA를 꺼야 SAM2가 돈다(`scripts/make_model_compare_gif.py` 상단 참고).
-
-pseudo-label 흐름: `make_ego_lane_labels.py`로 초안 생성(FAIL 프레임 자동 표시) → 이 노트북으로 사람이
-신뢰/보정 → 검수된 라벨로 작은 모델(TwinLiteNet+ 등) 파인튜닝.
+[HybridNets](https://github.com/datvuthanh/HybridNets), [TwinLiteNetPlus](https://github.com/chequanghuy/TwinLiteNetPlus), [YOLOP](https://github.com/hustvl/YOLOP), [YOLOPv2](https://github.com/CAIC-AD/YOLOPv2) (모두 MIT License)
