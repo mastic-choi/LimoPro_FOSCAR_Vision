@@ -9,6 +9,7 @@
   exit 5  GPU_IDLE 첫 epoch 이후인데 GPU 사용률 0%가 2번 연속
 
 감시하는 동안 Windows 절전을 막는다(SetThreadExecutionState). 화면 잠금/모니터 꺼짐은 학습과 무관.
+Windows/Linux 공통. GPU 사용률은 nvidia-smi가 있으면 그것으로, 없으면 Windows 성능 카운터로 잰다.
 --once: --interval 만큼 기다렸다 한 번 점검하고 종료(정상이어도 exit 0으로 보고) -> 주기 보고용.
         절전 방지/GPU_IDLE 연속 판정은 계속 도는 감시 쪽이 맡는다.
 
@@ -17,16 +18,18 @@
 """
 import argparse
 import csv
-import ctypes
 import json
 import os
+import platform
 import re
+import shutil
 import subprocess
 import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ES_CONTINUOUS, ES_SYSTEM_REQUIRED = 0x80000000, 0x00000001
+TRAIN_SCRIPTS = ("run_train.py", "train_all.py", "train_seg.py")
 
 
 def ps(cmd):
@@ -35,16 +38,24 @@ def ps(cmd):
 
 
 def train_procs():
-    """[(pid, cmdline)] for train_all.py / train_seg.py"""
+    """[(pid, cmdline)] for run_train.py / train_all.py / train_seg.py"""
+    if platform.system() != "Windows":
+        out = subprocess.run(["ps", "-eo", "pid=,args="], capture_output=True, text=True).stdout
+        rows = [l.strip().split(None, 1) for l in out.splitlines() if l.strip()]
+        return [(int(r[0]), r[1]) for r in rows if len(r) == 2 and any(k in r[1] for k in TRAIN_SCRIPTS) and "python" in r[1]]
     out = ps("Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | "
              "ForEach-Object { \"$($_.ProcessId)`t$($_.CommandLine)\" }")
     rows = [l.split("\t", 1) for l in out.splitlines() if "\t" in l]
-    return [(int(p), c) for p, c in rows if "train_all.py" in c or "train_seg.py" in c]
+    return [(int(p), c) for p, c in rows if any(k in c for k in TRAIN_SCRIPTS)]
 
 
 def gpu_util(pids):
     if not pids:
         return 0.0
+    if shutil.which("nvidia-smi"):
+        out = subprocess.run(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+                             capture_output=True, text=True).stdout.split()
+        return float(out[0]) if out and out[0].replace(".", "").isdigit() else 0.0
     out = ps("(Get-Counter '\\GPU Engine(*engtype_3D)\\Utilization Percentage',"
              "'\\GPU Engine(*engtype_Compute*)\\Utilization Percentage' -SampleInterval 3 -ErrorAction SilentlyContinue)"
              ".CounterSamples | ForEach-Object { \"$($_.InstanceName)`t$($_.CookedValue)\" }")
@@ -70,9 +81,10 @@ def main():
     ap.add_argument("--once", action="store_true", help="interval 뒤 한 번만 점검하고 종료 (주기 보고용)")
     args = ap.parse_args()
 
+    os.makedirs(os.path.dirname(args.log), exist_ok=True)
     runs = [f"{m}{args.suffix}_seed{s}" for s in args.seeds for m in args.models]
     all_log = os.path.join(ROOT, "outputs", "train_all.log")
-    giveups_at_start = open(all_log, encoding="utf-8").read().count("[give up]") if os.path.exists(all_log) else 0
+    giveups_at_start = open(all_log, encoding="utf-8", errors="replace").read().count("[give up]") if os.path.exists(all_log) else 0
     idle_count = 0
 
     def report(msg):
@@ -84,7 +96,9 @@ def main():
     if args.once:
         time.sleep(args.interval)
     while True:
-        ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
+        if platform.system() == "Windows":
+            import ctypes
+            ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
         done = [r for r in runs if os.path.exists(os.path.join(args.out, r, "test.json"))]
         if len(done) == len(runs):
             for r in runs:
@@ -95,10 +109,10 @@ def main():
             sys.exit(0)
 
         procs = train_procs()
-        if not any("train_all.py" in c for _, c in procs):
-            report(f"DEAD train_all.py 없음 (완료 {len(done)}/{len(runs)})")
+        if not any("train_all.py" in c or "run_train.py" in c for _, c in procs):  # run_train.py는 모델 사이 잠깐 train_all.py가 없음
+            report(f"DEAD 학습 프로세스 없음 (완료 {len(done)}/{len(runs)})")
             sys.exit(2)
-        if os.path.exists(all_log) and open(all_log, encoding="utf-8").read().count("[give up]") > giveups_at_start:
+        if os.path.exists(all_log) and open(all_log, encoding="utf-8", errors="replace").read().count("[give up]") > giveups_at_start:
             report("GIVEUP train_all.log에 [give up] 발생")
             sys.exit(3)
 

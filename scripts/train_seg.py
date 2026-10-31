@@ -36,6 +36,7 @@ import torch
 import torch.nn.functional as F
 
 PAD = 12  # 360 -> 384
+cv2.setNumThreads(0)  # Linux DataLoader(fork) 워커에서 OpenCV 스레드 교착 방지. 병렬은 워커 수로 충분
 
 
 # ---------------------------------------------------------------------------

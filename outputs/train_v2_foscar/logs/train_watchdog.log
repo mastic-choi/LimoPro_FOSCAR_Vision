@@ -1,0 +1,60 @@
+10-31 15:17:01 OK hybridnets_v2_seed0 epoch 0 val da - ll - | 마지막 갱신 0분 전 (한도 60) | GPU 90% | 완료 0/4
+10-31 15:27:01 OK hybridnets_v2_seed0 epoch 3 val da 0.9305 ll 0.7893 | 마지막 갱신 2분 전 (한도 40) | GPU 87% | 완료 0/4
+10-31 15:27:01 OK hybridnets_v2_seed0 epoch 3 val da 0.9305 ll 0.7893 | 마지막 갱신 2분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 15:37:01 OK hybridnets_v2_seed0 epoch 7 val da 0.9385 ll 0.814 | 마지막 갱신 2분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 15:37:09 OK hybridnets_v2_seed0 epoch 7 val da 0.9385 ll 0.814 | 마지막 갱신 2분 전 (한도 40) | GPU 83% | 완료 0/4
+10-31 15:47:01 OK hybridnets_v2_seed0 epoch 11 val da 0.9377 ll 0.8215 | 마지막 갱신 2분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 15:47:14 OK hybridnets_v2_seed0 epoch 11 val da 0.9377 ll 0.8215 | 마지막 갱신 2분 전 (한도 40) | GPU 85% | 완료 0/4
+10-31 15:57:01 OK hybridnets_v2_seed0 epoch 15 val da 0.9282 ll 0.8149 | 마지막 갱신 1분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 15:57:19 OK hybridnets_v2_seed0 epoch 15 val da 0.9282 ll 0.8149 | 마지막 갱신 1분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:07:01 OK hybridnets_v2_seed0 epoch 19 val da 0.9432 ll 0.823 | 마지막 갱신 1분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:07:24 OK hybridnets_v2_seed0 epoch 19 val da 0.9432 ll 0.823 | 마지막 갱신 1분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:17:01 OK hybridnets_v2_seed0 epoch 23 val da 0.9408 ll 0.8289 | 마지막 갱신 0분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:17:29 OK hybridnets_v2_seed0 epoch 23 val da 0.9408 ll 0.8289 | 마지막 갱신 1분 전 (한도 40) | GPU 82% | 완료 0/4
+10-31 16:27:02 OK hybridnets_v2_seed0 epoch 27 val da 0.9464 ll 0.83 | 마지막 갱신 0분 전 (한도 40) | GPU 3% | 완료 0/4
+10-31 16:27:34 OK hybridnets_v2_seed0 epoch 27 val da 0.9464 ll 0.83 | 마지막 갱신 1분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:37:02 OK hybridnets_v2_seed0 epoch 30 val da 0.94 ll 0.83 | 마지막 갱신 2분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:37:39 OK hybridnets_v2_seed0 epoch 31 val da 0.9451 ll 0.8315 | 마지막 갱신 0분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:47:02 OK hybridnets_v2_seed0 epoch 34 val da 0.9448 ll 0.8305 | 마지막 갱신 2분 전 (한도 40) | GPU 83% | 완료 0/4
+10-31 16:47:44 OK hybridnets_v2_seed0 epoch 34 val da 0.9448 ll 0.8305 | 마지막 갱신 3분 전 (한도 40) | GPU 92% | 완료 0/4
+10-31 16:57:02 OK hybridnets_v2_seed0 epoch 38 val da 0.945 ll 0.8311 | 마지막 갱신 1분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 16:57:49 OK hybridnets_v2_seed0 epoch 38 val da 0.945 ll 0.8311 | 마지막 갱신 2분 전 (한도 40) | GPU 91% | 완료 0/4
+10-31 17:07:02 OK tln_large_v2_seed0 epoch 4 val da 0.9112 ll 0.7957 | 마지막 갱신 1분 전 (한도 40) | GPU 87% | 완료 1/4
+10-31 17:07:54 OK tln_large_v2_seed0 epoch 5 val da 0.9128 ll 0.8015 | 마지막 갱신 0분 전 (한도 40) | GPU 100% | 완료 1/4
+10-31 17:17:02 OK tln_large_v2_seed0 epoch 9 val da 0.9286 ll 0.8106 | 마지막 갱신 2분 전 (한도 40) | GPU 87% | 완료 1/4
+10-31 17:18:01 OK tln_large_v2_seed0 epoch 10 val da 0.9264 ll 0.8147 | 마지막 갱신 1분 전 (한도 40) | GPU 100% | 완료 1/4
+10-31 17:27:02 OK tln_large_v2_seed0 epoch 15 val da 0.9355 ll 0.8169 | 마지막 갱신 0분 전 (한도 40) | GPU 87% | 완료 1/4
+10-31 17:28:06 OK tln_large_v2_seed0 epoch 15 val da 0.9355 ll 0.8169 | 마지막 갱신 1분 전 (한도 40) | GPU 96% | 완료 1/4
+10-31 17:37:02 OK tln_large_v2_seed0 epoch 20 val da 0.9368 ll 0.8188 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 1/4
+10-31 17:38:11 OK tln_large_v2_seed0 epoch 21 val da 0.9377 ll 0.8207 | 마지막 갱신 0분 전 (한도 40) | GPU 88% | 완료 1/4
+10-31 17:47:02 OK tln_large_v2_seed0 epoch 25 val da 0.938 ll 0.8216 | 마지막 갱신 1분 전 (한도 40) | GPU 87% | 완료 1/4
+10-31 17:48:17 OK tln_large_v2_seed0 epoch 26 val da 0.9377 ll 0.8196 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 1/4
+10-31 17:57:02 OK yolop_v2_seed0 epoch 1 val da 0.8208 ll 0.6881 | 마지막 갱신 1분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 17:58:22 OK yolop_v2_seed0 epoch 2 val da 0.856 ll 0.7422 | 마지막 갱신 1분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 18:07:02 OK yolop_v2_seed0 epoch 9 val da 0.9136 ll 0.7767 | 마지막 갱신 1분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 18:08:28 OK yolop_v2_seed0 epoch 10 val da 0.9206 ll 0.7792 | 마지막 갱신 1분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 18:17:02 OK yolop_v2_seed0 epoch 18 val da 0.9305 ll 0.7878 | 마지막 갱신 0분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 18:18:33 OK yolop_v2_seed0 epoch 19 val da 0.9296 ll 0.7899 | 마지막 갱신 0분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 18:27:02 OK yolop_v2_seed0 epoch 26 val da 0.9284 ll 0.7942 | 마지막 갱신 0분 전 (한도 40) | GPU 86% | 완료 2/4
+10-31 18:28:38 OK yolop_v2_seed0 epoch 27 val da 0.9312 ll 0.792 | 마지막 갱신 1분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 18:37:02 OK yolop_v2_seed0 epoch 34 val da 0.9323 ll 0.7946 | 마지막 갱신 1분 전 (한도 40) | GPU 92% | 완료 2/4
+10-31 18:38:43 OK yolop_v2_seed0 epoch 36 val da 0.932 ll 0.7948 | 마지막 갱신 0분 전 (한도 40) | GPU 84% | 완료 2/4
+10-31 18:47:02 OK yolopv2_v2_seed0 epoch 1 val da 0.8875 ll 0.7717 | 마지막 갱신 2분 전 (한도 40) | GPU 97% | 완료 3/4
+10-31 18:48:48 OK yolopv2_v2_seed0 epoch 2 val da 0.9078 ll 0.8021 | 마지막 갱신 2분 전 (한도 40) | GPU 94% | 완료 3/4
+10-31 18:57:02 OK yolopv2_v2_seed0 epoch 7 val da 0.9268 ll 0.825 | 마지막 갱신 1분 전 (한도 40) | GPU 89% | 완료 3/4
+10-31 18:58:58 OK yolopv2_v2_seed0 epoch 8 val da 0.9315 ll 0.8275 | 마지막 갱신 1분 전 (한도 40) | GPU 94% | 완료 3/4
+10-31 19:07:03 OK yolopv2_v2_seed0 epoch 12 val da 0.9306 ll 0.8311 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:09:03 OK yolopv2_v2_seed0 epoch 13 val da 0.9317 ll 0.8324 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:17:03 OK yolopv2_v2_seed0 epoch 18 val da 0.9339 ll 0.8355 | 마지막 갱신 0분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:19:08 OK yolopv2_v2_seed0 epoch 19 val da 0.9318 ll 0.8361 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:27:03 OK yolopv2_v2_seed0 epoch 23 val da 0.9368 ll 0.8371 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:29:14 OK yolopv2_v2_seed0 epoch 24 val da 0.9373 ll 0.8381 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:37:03 OK yolopv2_v2_seed0 epoch 28 val da 0.9352 ll 0.8386 | 마지막 갱신 2분 전 (한도 40) | GPU 4% | 완료 3/4
+10-31 19:39:19 OK yolopv2_v2_seed0 epoch 30 val da 0.9379 ll 0.8394 | 마지막 갱신 0분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:47:03 OK yolopv2_v2_seed0 epoch 34 val da 0.9371 ll 0.8391 | 마지막 갱신 1분 전 (한도 40) | GPU 97% | 완료 3/4
+10-31 19:49:24 OK yolopv2_v2_seed0 epoch 35 val da 0.9371 ll 0.8394 | 마지막 갱신 1분 전 (한도 40) | GPU 88% | 완료 3/4
+10-31 19:57:03   hybridnets_v2_seed0: test da 0.945 ll 0.8242 (커브 da 0.9132 / 직진 da 0.9751)
+10-31 19:57:03   tln_large_v2_seed0: test da 0.9402 ll 0.8101 (커브 da 0.9089 / 직진 da 0.9698)
+10-31 19:57:03   yolop_v2_seed0: test da 0.9323 ll 0.7887 (커브 da 0.8993 / 직진 da 0.9637)
+10-31 19:57:03   yolopv2_v2_seed0: test da 0.9454 ll 0.8282 (커브 da 0.9176 / 직진 da 0.9715)
+10-31 19:57:03 DONE 모든 모델 학습 완료

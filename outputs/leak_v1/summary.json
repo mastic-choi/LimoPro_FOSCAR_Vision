@@ -1,0 +1,27 @@
+{
+  "runs": [
+    "tln_large_seed0",
+    "yolop_chbce_seed0",
+    "hybridnets_seed0",
+    "yolopv2_seed0"
+  ],
+  "test": {
+    "frames": 268,
+    "tol_px": 5,
+    "mean": 0.0055,
+    "median": 0.0006,
+    "p90": 0.0082,
+    "max": 0.258,
+    "over_1pct": 24,
+    "over_5pct": 7,
+    "near_mean": 0.0044,
+    "da_agree_median": 0.9775
+  },
+  "frames": {
+    "frames": 434,
+    "da_agree_median": 0.9651,
+    "under_0_9": 128,
+    "under_0_8": 87,
+    "path": "D:/fine-tune/LimoPro_frames_20261023"
+  }
+}
