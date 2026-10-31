@@ -1,0 +1,196 @@
+torch 2.11.0+cu128, cuda True
+GPU: NVIDIA GeForce RTX 3070 Ti, 8.2GB
+hybridnets: 메모리 부족 -> batch 4
+hybridnets: batch 4 통과 (GPU 최대 5.1GB, GPU 전체 73% 사용)
+tln_large: batch 8 통과 (GPU 최대 5.3GB, GPU 전체 75% 사용)
+yolop: batch 8 통과 (GPU 최대 5.0GB, GPU 전체 72% 사용)
+yolopv2: batch 8 통과 (GPU 최대 5.9GB, GPU 전체 83% 사용)
+PREFLIGHT {"hybridnets": 4, "tln_large": 8, "yolop": 8, "yolopv2": 8}
+
+[run] hybridnets seed 0 (시도 1/3) 15:16:53
+[hybridnets seed 0] train 3709 / val 327 / test 542, lr 0.0001, batch 4, epochs 40 -> /home/foscar/2026AutoRace/LimoPro_train/outputs/train/hybridnets_v2_seed0
+/home/foscar/2026AutoRace/LimoPro_train/scripts/train_seg.py:439: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  tot, n = tot + float(loss), n + 1
+epoch 1/40  loss 1.1848  val da 0.9103 ll 0.7848  (best da 0.9103 ll 0.7848)  156s
+epoch 2/40  loss 0.7619  val da 0.9251 ll 0.7896  (best da 0.9251 ll 0.7896)  156s
+epoch 3/40  loss 0.6875  val da 0.9305 ll 0.7893  (best da 0.9305 ll 0.7896)  156s
+epoch 4/40  loss 0.6455  val da 0.9288 ll 0.7908  (best da 0.9305 ll 0.7908)  156s
+epoch 5/40  loss 0.6290  val da 0.9368 ll 0.8044  (best da 0.9368 ll 0.8044)  156s
+epoch 6/40  loss 0.5927  val da 0.9422 ll 0.8087  (best da 0.9422 ll 0.8087)  156s
+epoch 7/40  loss 0.5820  val da 0.9385 ll 0.8140  (best da 0.9422 ll 0.8140)  156s
+epoch 8/40  loss 0.5530  val da 0.9389 ll 0.8145  (best da 0.9422 ll 0.8145)  156s
+epoch 9/40  loss 0.5551  val da 0.9339 ll 0.8129  (best da 0.9422 ll 0.8145)  156s
+epoch 10/40  loss 0.5324  val da 0.9344 ll 0.8162  (best da 0.9422 ll 0.8162)  156s
+epoch 11/40  loss 0.5220  val da 0.9377 ll 0.8215  (best da 0.9422 ll 0.8215)  156s
+epoch 12/40  loss 0.5166  val da 0.9323 ll 0.8176  (best da 0.9422 ll 0.8215)  156s
+epoch 13/40  loss 0.5115  val da 0.9451 ll 0.8189  (best da 0.9451 ll 0.8215)  156s
+epoch 14/40  loss 0.5034  val da 0.9383 ll 0.8212  (best da 0.9451 ll 0.8215)  156s
+epoch 15/40  loss 0.4927  val da 0.9282 ll 0.8149  (best da 0.9451 ll 0.8215)  156s
+epoch 16/40  loss 0.4881  val da 0.9425 ll 0.8243  (best da 0.9451 ll 0.8243)  156s
+epoch 17/40  loss 0.4810  val da 0.9423 ll 0.8253  (best da 0.9451 ll 0.8253)  156s
+epoch 18/40  loss 0.4871  val da 0.9443 ll 0.8248  (best da 0.9451 ll 0.8253)  156s
+epoch 19/40  loss 0.4754  val da 0.9432 ll 0.8230  (best da 0.9451 ll 0.8253)  156s
+epoch 20/40  loss 0.4727  val da 0.9336 ll 0.8279  (best da 0.9451 ll 0.8279)  156s
+epoch 21/40  loss 0.4643  val da 0.9461 ll 0.8230  (best da 0.9461 ll 0.8279)  156s
+epoch 22/40  loss 0.4622  val da 0.9417 ll 0.8279  (best da 0.9461 ll 0.8279)  156s
+epoch 23/40  loss 0.4620  val da 0.9408 ll 0.8289  (best da 0.9461 ll 0.8289)  156s
+epoch 24/40  loss 0.4577  val da 0.9450 ll 0.8259  (best da 0.9461 ll 0.8289)  156s
+epoch 25/40  loss 0.4516  val da 0.9429 ll 0.8290  (best da 0.9461 ll 0.8290)  156s
+epoch 26/40  loss 0.4544  val da 0.9474 ll 0.8281  (best da 0.9474 ll 0.8290)  156s
+epoch 27/40  loss 0.4529  val da 0.9464 ll 0.8300  (best da 0.9474 ll 0.8300)  156s
+epoch 28/40  loss 0.4505  val da 0.9461 ll 0.8287  (best da 0.9474 ll 0.8300)  156s
+epoch 29/40  loss 0.4486  val da 0.9461 ll 0.8293  (best da 0.9474 ll 0.8300)  156s
+epoch 30/40  loss 0.4500  val da 0.9400 ll 0.8300  (best da 0.9474 ll 0.8300)  156s
+epoch 31/40  loss 0.4419  val da 0.9451 ll 0.8315  (best da 0.9474 ll 0.8315)  156s
+epoch 32/40  loss 0.4432  val da 0.9455 ll 0.8299  (best da 0.9474 ll 0.8315)  156s
+epoch 33/40  loss 0.4348  val da 0.9450 ll 0.8311  (best da 0.9474 ll 0.8315)  156s
+epoch 34/40  loss 0.4357  val da 0.9448 ll 0.8305  (best da 0.9474 ll 0.8315)  156s
+epoch 35/40  loss 0.4289  val da 0.9447 ll 0.8306  (best da 0.9474 ll 0.8315)  156s
+epoch 36/40  loss 0.4371  val da 0.9422 ll 0.8315  (best da 0.9474 ll 0.8315)  156s
+epoch 37/40  loss 0.4389  val da 0.9452 ll 0.8311  (best da 0.9474 ll 0.8315)  156s
+epoch 38/40  loss 0.4290  val da 0.9450 ll 0.8311  (best da 0.9474 ll 0.8315)  156s
+epoch 39/40  loss 0.4343  val da 0.9459 ll 0.8316  (best da 0.9474 ll 0.8316)  156s
+조기 종료: 8 epoch 동안 val da+ll이 0.001 이상 안 오름 (best epoch 31)
+test (best_da): {"all": {"da_iou": 0.945, "ll_iou": 0.8242, "n": 542}, "curve": {"da_iou": 0.9132, "ll_iou": 0.81, "n": 264}, "straight": {"da_iou": 0.9751, "ll_iou": 0.8356, "n": 278}, "v1": {"da_iou": 0.9581, "ll_iou": 0.8021, "n": 268}, "v1_curve": {"da_iou": 0.9155, "ll_iou": 0.75, "n": 84}, "new": {"da_iou": 0.9316, "ll_iou": 0.8499, "n": 274}, "new_curve": {"da_iou": 0.9121, "ll_iou": 0.8435, "n": 180}, "new_hard": {"da_iou": 0.9349, "ll_iou": 0.8598, "n": 180}}
+[done] hybridnets seed 0
+[run] tln_large seed 0 (시도 1/3) 16:58:18
+[tln_large seed 0] train 3709 / val 327 / test 542, lr 5e-05, batch 8, epochs 40 -> /home/foscar/2026AutoRace/LimoPro_train/outputs/train/tln_large_v2_seed0
+/home/foscar/2026AutoRace/LimoPro_train/scripts/train_seg.py:439: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  tot, n = tot + float(loss), n + 1
+epoch 1/40  loss 1.2926  val da 0.8587 ll 0.7032  (best da 0.8587 ll 0.7032)  115s
+epoch 2/40  loss 0.8784  val da 0.8852 ll 0.7661  (best da 0.8852 ll 0.7661)  114s
+epoch 3/40  loss 0.7810  val da 0.8999 ll 0.7868  (best da 0.8999 ll 0.7868)  114s
+epoch 4/40  loss 0.7461  val da 0.9112 ll 0.7957  (best da 0.9112 ll 0.7957)  114s
+epoch 5/40  loss 0.7034  val da 0.9128 ll 0.8015  (best da 0.9128 ll 0.8015)  114s
+epoch 6/40  loss 0.6830  val da 0.9250 ll 0.8053  (best da 0.9250 ll 0.8053)  114s
+epoch 7/40  loss 0.6689  val da 0.9282 ll 0.8081  (best da 0.9282 ll 0.8081)  114s
+epoch 8/40  loss 0.6471  val da 0.9238 ll 0.8076  (best da 0.9282 ll 0.8081)  114s
+epoch 9/40  loss 0.6332  val da 0.9286 ll 0.8106  (best da 0.9286 ll 0.8106)  114s
+epoch 10/40  loss 0.6232  val da 0.9264 ll 0.8147  (best da 0.9286 ll 0.8147)  114s
+epoch 11/40  loss 0.6183  val da 0.9295 ll 0.8149  (best da 0.9295 ll 0.8149)  114s
+epoch 12/40  loss 0.6111  val da 0.9361 ll 0.8125  (best da 0.9361 ll 0.8149)  114s
+epoch 13/40  loss 0.6019  val da 0.9379 ll 0.8155  (best da 0.9379 ll 0.8155)  114s
+epoch 14/40  loss 0.6094  val da 0.9369 ll 0.8158  (best da 0.9379 ll 0.8158)  114s
+epoch 15/40  loss 0.5949  val da 0.9355 ll 0.8169  (best da 0.9379 ll 0.8169)  114s
+epoch 16/40  loss 0.5907  val da 0.9380 ll 0.8181  (best da 0.9380 ll 0.8181)  114s
+epoch 17/40  loss 0.5818  val da 0.9365 ll 0.8191  (best da 0.9380 ll 0.8191)  114s
+epoch 18/40  loss 0.5839  val da 0.9369 ll 0.8187  (best da 0.9380 ll 0.8191)  114s
+epoch 19/40  loss 0.5761  val da 0.9386 ll 0.8186  (best da 0.9386 ll 0.8191)  114s
+epoch 20/40  loss 0.5876  val da 0.9368 ll 0.8188  (best da 0.9386 ll 0.8191)  114s
+epoch 21/40  loss 0.5729  val da 0.9377 ll 0.8207  (best da 0.9386 ll 0.8207)  114s
+epoch 22/40  loss 0.5761  val da 0.9397 ll 0.8200  (best da 0.9397 ll 0.8207)  114s
+epoch 23/40  loss 0.5722  val da 0.9369 ll 0.8203  (best da 0.9397 ll 0.8207)  114s
+epoch 24/40  loss 0.5594  val da 0.9365 ll 0.8212  (best da 0.9397 ll 0.8212)  114s
+epoch 25/40  loss 0.5672  val da 0.9380 ll 0.8216  (best da 0.9397 ll 0.8216)  114s
+epoch 26/40  loss 0.5606  val da 0.9377 ll 0.8196  (best da 0.9397 ll 0.8216)  114s
+epoch 27/40  loss 0.5571  val da 0.9380 ll 0.8211  (best da 0.9397 ll 0.8216)  114s
+epoch 28/40  loss 0.5570  val da 0.9379 ll 0.8218  (best da 0.9397 ll 0.8218)  114s
+epoch 29/40  loss 0.5580  val da 0.9391 ll 0.8215  (best da 0.9397 ll 0.8218)  114s
+epoch 30/40  loss 0.5546  val da 0.9376 ll 0.8209  (best da 0.9397 ll 0.8218)  114s
+조기 종료: 8 epoch 동안 val da+ll이 0.001 이상 안 오름 (best epoch 22)
+test (best_da): {"all": {"da_iou": 0.9402, "ll_iou": 0.8101, "n": 542}, "curve": {"da_iou": 0.9089, "ll_iou": 0.7962, "n": 264}, "straight": {"da_iou": 0.9698, "ll_iou": 0.8211, "n": 278}, "v1": {"da_iou": 0.9557, "ll_iou": 0.7831, "n": 268}, "v1_curve": {"da_iou": 0.9218, "ll_iou": 0.7243, "n": 84}, "new": {"da_iou": 0.9245, "ll_iou": 0.8416, "n": 274}, "new_curve": {"da_iou": 0.9026, "ll_iou": 0.8366, "n": 180}, "new_hard": {"da_iou": 0.9291, "ll_iou": 0.8539, "n": 180}}
+[done] tln_large seed 0
+[run] yolop seed 0 (시도 1/3) 17:55:17
+[yolop seed 0] train 3709 / val 327 / test 542, lr 0.0001, batch 8, epochs 40 -> /home/foscar/2026AutoRace/LimoPro_train/outputs/train/yolop_v2_seed0
+/home/foscar/2026AutoRace/LimoPro_train/scripts/train_seg.py:439: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  tot, n = tot + float(loss), n + 1
+/home/foscar/2026AutoRace/LimoPro_train/.venv/lib/python3.12/site-packages/torch/functional.py:505: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at /pytorch/aten/src/ATen/native/TensorShape.cpp:4381.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+epoch 1/40  loss 4.7997  val da 0.8208 ll 0.6881  (best da 0.8208 ll 0.6881)  73s
+epoch 2/40  loss 4.2497  val da 0.8560 ll 0.7422  (best da 0.8560 ll 0.7422)  72s
+epoch 3/40  loss 4.1610  val da 0.8787 ll 0.7531  (best da 0.8787 ll 0.7531)  73s
+epoch 4/40  loss 4.1092  val da 0.8874 ll 0.7584  (best da 0.8874 ll 0.7584)  72s
+epoch 5/40  loss 4.0786  val da 0.8969 ll 0.7646  (best da 0.8969 ll 0.7646)  72s
+epoch 6/40  loss 4.0497  val da 0.9044 ll 0.7676  (best da 0.9044 ll 0.7676)  72s
+epoch 7/40  loss 4.0309  val da 0.9085 ll 0.7727  (best da 0.9085 ll 0.7727)  72s
+epoch 8/40  loss 4.0150  val da 0.9119 ll 0.7755  (best da 0.9119 ll 0.7755)  72s
+epoch 9/40  loss 4.0017  val da 0.9136 ll 0.7767  (best da 0.9136 ll 0.7767)  72s
+epoch 10/40  loss 3.9875  val da 0.9206 ll 0.7792  (best da 0.9206 ll 0.7792)  72s
+epoch 11/40  loss 3.9784  val da 0.9216 ll 0.7798  (best da 0.9216 ll 0.7798)  72s
+epoch 12/40  loss 3.9741  val da 0.9232 ll 0.7852  (best da 0.9232 ll 0.7852)  72s
+epoch 13/40  loss 3.9648  val da 0.9256 ll 0.7869  (best da 0.9256 ll 0.7869)  72s
+epoch 14/40  loss 3.9575  val da 0.9290 ll 0.7883  (best da 0.9290 ll 0.7883)  72s
+epoch 15/40  loss 3.9550  val da 0.9277 ll 0.7871  (best da 0.9290 ll 0.7883)  72s
+epoch 16/40  loss 3.9520  val da 0.9311 ll 0.7879  (best da 0.9311 ll 0.7883)  72s
+epoch 17/40  loss 3.9427  val da 0.9297 ll 0.7915  (best da 0.9311 ll 0.7915)  72s
+epoch 18/40  loss 3.9429  val da 0.9305 ll 0.7878  (best da 0.9311 ll 0.7915)  72s
+epoch 19/40  loss 3.9380  val da 0.9296 ll 0.7899  (best da 0.9311 ll 0.7915)  72s
+epoch 20/40  loss 3.9328  val da 0.9288 ll 0.7919  (best da 0.9311 ll 0.7919)  72s
+epoch 21/40  loss 3.9302  val da 0.9299 ll 0.7927  (best da 0.9311 ll 0.7927)  72s
+epoch 22/40  loss 3.9289  val da 0.9303 ll 0.7909  (best da 0.9311 ll 0.7927)  72s
+epoch 23/40  loss 3.9274  val da 0.9297 ll 0.7921  (best da 0.9311 ll 0.7927)  72s
+epoch 24/40  loss 3.9241  val da 0.9296 ll 0.7932  (best da 0.9311 ll 0.7932)  72s
+epoch 25/40  loss 3.9183  val da 0.9292 ll 0.7916  (best da 0.9311 ll 0.7932)  72s
+epoch 26/40  loss 3.9242  val da 0.9284 ll 0.7942  (best da 0.9311 ll 0.7942)  72s
+epoch 27/40  loss 3.9180  val da 0.9312 ll 0.7920  (best da 0.9312 ll 0.7942)  72s
+epoch 28/40  loss 3.9171  val da 0.9316 ll 0.7938  (best da 0.9316 ll 0.7942)  72s
+epoch 29/40  loss 3.9190  val da 0.9303 ll 0.7943  (best da 0.9316 ll 0.7943)  72s
+epoch 30/40  loss 3.9142  val da 0.9314 ll 0.7949  (best da 0.9316 ll 0.7949)  72s
+epoch 31/40  loss 3.9180  val da 0.9304 ll 0.7953  (best da 0.9316 ll 0.7953)  72s
+epoch 32/40  loss 3.9143  val da 0.9319 ll 0.7951  (best da 0.9319 ll 0.7953)  72s
+epoch 33/40  loss 3.9152  val da 0.9312 ll 0.7952  (best da 0.9319 ll 0.7953)  72s
+epoch 34/40  loss 3.9143  val da 0.9323 ll 0.7946  (best da 0.9323 ll 0.7953)  72s
+epoch 35/40  loss 3.9164  val da 0.9318 ll 0.7954  (best da 0.9323 ll 0.7954)  72s
+epoch 36/40  loss 3.9144  val da 0.9320 ll 0.7948  (best da 0.9323 ll 0.7954)  72s
+epoch 37/40  loss 3.9122  val da 0.9323 ll 0.7964  (best da 0.9323 ll 0.7964)  72s
+epoch 38/40  loss 3.9131  val da 0.9319 ll 0.7957  (best da 0.9323 ll 0.7964)  72s
+epoch 39/40  loss 3.9102  val da 0.9316 ll 0.7953  (best da 0.9323 ll 0.7964)  72s
+epoch 40/40  loss 3.9125  val da 0.9322 ll 0.7963  (best da 0.9323 ll 0.7964)  72s
+test (best_da): {"all": {"da_iou": 0.9323, "ll_iou": 0.7887, "n": 542}, "curve": {"da_iou": 0.8993, "ll_iou": 0.7709, "n": 264}, "straight": {"da_iou": 0.9637, "ll_iou": 0.803, "n": 278}, "v1": {"da_iou": 0.946, "ll_iou": 0.7686, "n": 268}, "v1_curve": {"da_iou": 0.907, "ll_iou": 0.715, "n": 84}, "new": {"da_iou": 0.9182, "ll_iou": 0.8121, "n": 274}, "new_curve": {"da_iou": 0.8954, "ll_iou": 0.802, "n": 180}, "new_hard": {"da_iou": 0.928, "ll_iou": 0.8174, "n": 180}}
+[done] yolop seed 0
+[run] yolopv2 seed 0 (시도 1/3) 18:43:33
+[yolopv2 seed 0] train 3709 / val 327 / test 542, lr 1e-05, batch 8, epochs 40 -> /home/foscar/2026AutoRace/LimoPro_train/outputs/train/yolopv2_v2_seed0
+/home/foscar/2026AutoRace/LimoPro_train/scripts/train_seg.py:439: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  tot, n = tot + float(loss), n + 1
+epoch 1/40  loss 1.1345  val da 0.8875 ll 0.7717  (best da 0.8875 ll 0.7717)  111s
+epoch 2/40  loss 0.7270  val da 0.9078 ll 0.8021  (best da 0.9078 ll 0.8021)  111s
+epoch 3/40  loss 0.6623  val da 0.9166 ll 0.8131  (best da 0.9166 ll 0.8131)  111s
+epoch 4/40  loss 0.6157  val da 0.9213 ll 0.8161  (best da 0.9213 ll 0.8161)  111s
+epoch 5/40  loss 0.5999  val da 0.9215 ll 0.8222  (best da 0.9215 ll 0.8222)  111s
+epoch 6/40  loss 0.5750  val da 0.9249 ll 0.8222  (best da 0.9249 ll 0.8222)  111s
+epoch 7/40  loss 0.5505  val da 0.9268 ll 0.8250  (best da 0.9268 ll 0.8250)  111s
+epoch 8/40  loss 0.5315  val da 0.9315 ll 0.8275  (best da 0.9315 ll 0.8275)  111s
+epoch 9/40  loss 0.5223  val da 0.9266 ll 0.8281  (best da 0.9315 ll 0.8281)  111s
+epoch 10/40  loss 0.5158  val da 0.9288 ll 0.8290  (best da 0.9315 ll 0.8290)  111s
+epoch 11/40  loss 0.5033  val da 0.9334 ll 0.8308  (best da 0.9334 ll 0.8308)  111s
+epoch 12/40  loss 0.4976  val da 0.9306 ll 0.8311  (best da 0.9334 ll 0.8311)  111s
+epoch 13/40  loss 0.4968  val da 0.9317 ll 0.8324  (best da 0.9334 ll 0.8324)  111s
+epoch 14/40  loss 0.4881  val da 0.9361 ll 0.8351  (best da 0.9361 ll 0.8351)  111s
+epoch 15/40  loss 0.4762  val da 0.9375 ll 0.8332  (best da 0.9375 ll 0.8351)  111s
+epoch 16/40  loss 0.4744  val da 0.9357 ll 0.8330  (best da 0.9375 ll 0.8351)  110s
+epoch 17/40  loss 0.4672  val da 0.9367 ll 0.8356  (best da 0.9375 ll 0.8356)  111s
+epoch 18/40  loss 0.4723  val da 0.9339 ll 0.8355  (best da 0.9375 ll 0.8356)  110s
+epoch 19/40  loss 0.4606  val da 0.9318 ll 0.8361  (best da 0.9375 ll 0.8361)  111s
+epoch 20/40  loss 0.4618  val da 0.9373 ll 0.8364  (best da 0.9375 ll 0.8364)  111s
+epoch 21/40  loss 0.4629  val da 0.9361 ll 0.8363  (best da 0.9375 ll 0.8364)  110s
+epoch 22/40  loss 0.4487  val da 0.9314 ll 0.8376  (best da 0.9375 ll 0.8376)  111s
+epoch 23/40  loss 0.4589  val da 0.9368 ll 0.8371  (best da 0.9375 ll 0.8376)  110s
+epoch 24/40  loss 0.4549  val da 0.9373 ll 0.8381  (best da 0.9375 ll 0.8381)  111s
+epoch 25/40  loss 0.4469  val da 0.9404 ll 0.8357  (best da 0.9404 ll 0.8381)  111s
+epoch 26/40  loss 0.4501  val da 0.9371 ll 0.8379  (best da 0.9404 ll 0.8381)  110s
+epoch 27/40  loss 0.4464  val da 0.9372 ll 0.8382  (best da 0.9404 ll 0.8382)  111s
+epoch 28/40  loss 0.4454  val da 0.9352 ll 0.8386  (best da 0.9404 ll 0.8386)  111s
+epoch 29/40  loss 0.4439  val da 0.9368 ll 0.8388  (best da 0.9404 ll 0.8388)  111s
+epoch 30/40  loss 0.4342  val da 0.9379 ll 0.8394  (best da 0.9404 ll 0.8394)  111s
+epoch 31/40  loss 0.4366  val da 0.9370 ll 0.8386  (best da 0.9404 ll 0.8394)  110s
+epoch 32/40  loss 0.4388  val da 0.9333 ll 0.8391  (best da 0.9404 ll 0.8394)  110s
+epoch 33/40  loss 0.4451  val da 0.9381 ll 0.8393  (best da 0.9404 ll 0.8394)  110s
+epoch 34/40  loss 0.4325  val da 0.9371 ll 0.8391  (best da 0.9404 ll 0.8394)  110s
+epoch 35/40  loss 0.4439  val da 0.9371 ll 0.8394  (best da 0.9404 ll 0.8394)  110s
+epoch 36/40  loss 0.4391  val da 0.9372 ll 0.8393  (best da 0.9404 ll 0.8394)  110s
+epoch 37/40  loss 0.4363  val da 0.9374 ll 0.8394  (best da 0.9404 ll 0.8394)  110s
+epoch 38/40  loss 0.4400  val da 0.9368 ll 0.8395  (best da 0.9404 ll 0.8395)  111s
+조기 종료: 8 epoch 동안 val da+ll이 0.001 이상 안 오름 (best epoch 30)
+test (best_da): {"all": {"da_iou": 0.9454, "ll_iou": 0.8282, "n": 542}, "curve": {"da_iou": 0.9176, "ll_iou": 0.813, "n": 264}, "straight": {"da_iou": 0.9715, "ll_iou": 0.8405, "n": 278}, "v1": {"da_iou": 0.9594, "ll_iou": 0.8058, "n": 268}, "v1_curve": {"da_iou": 0.9273, "ll_iou": 0.7521, "n": 84}, "new": {"da_iou": 0.9311, "ll_iou": 0.8542, "n": 274}, "new_curve": {"da_iou": 0.9127, "ll_iou": 0.8471, "n": 180}, "new_hard": {"da_iou": 0.9343, "ll_iou": 0.8679, "n": 180}}
+[done] yolopv2 seed 0
+
+16612초 걸림
+hybridnets_v2_seed0: test da 0.9450, ll 0.8242
+tln_large_v2_seed0: test da 0.9402, ll 0.8101
+yolop_v2_seed0: test da 0.9323, ll 0.7887
+yolopv2_v2_seed0: test da 0.9454, ll 0.8282
+결과: /home/foscar/2026AutoRace/LimoPro_train/results_foscar.zip

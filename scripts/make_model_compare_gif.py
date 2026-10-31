@@ -95,7 +95,10 @@ def import_from_repo(repo, module, attr):
         # 레포 안 파일에서 온 모듈만 지운다(matplotlib 같은 외부 패키지는 재import 시 깨짐)
         prefix = os.path.abspath(repo) + os.sep
         for name, mod in list(sys.modules.items()):
-            files = [getattr(mod, "__file__", None) or ""] + list(getattr(mod, "__path__", None) or [])
+            path = getattr(mod, "__path__", None)
+            if not isinstance(path, (list, tuple)) and type(path).__name__ != "_NamespacePath":
+                path = []  # 최신 torch의 torch._classes 등은 __path__가 순회 불가 객체
+            files = [getattr(mod, "__file__", None) or ""] + list(path)
             if any(os.path.abspath(f).startswith(prefix) for f in files if f):
                 del sys.modules[name]
     return obj

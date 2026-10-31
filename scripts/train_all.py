@@ -47,7 +47,13 @@ def main():
             for attempt in range(1, args.retries + 1):
                 print(f"[run] {model} seed {seed} (시도 {attempt}/{args.retries}) {time.strftime('%H:%M:%S')}", flush=True)
                 with open(os.path.join(out, "train.log"), "a", encoding="utf-8") as log:
-                    rc = subprocess.call(cmd, stdout=log, stderr=subprocess.STDOUT, cwd=ROOT)
+                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=ROOT, text=True,
+                                         encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONUTF8="1", PYTHONUNBUFFERED="1"))
+                    for line in p.stdout:  # 화면 + train.log 둘 다
+                        log.write(line)
+                        log.flush()
+                        print(line, end="", flush=True)
+                    rc = p.wait()
                 if rc == 0 and os.path.exists(os.path.join(out, "test.json")):
                     print(f"[done] {model} seed {seed}", flush=True)
                     break
