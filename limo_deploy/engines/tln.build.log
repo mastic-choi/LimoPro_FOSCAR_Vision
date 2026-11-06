@@ -1,0 +1,2 @@
+onnx: /home/wego/lane_perception/engines/tln.onnx 7896418
+engine: /home/wego/lane_perception/engines/tln_fp16.engine 6143460

@@ -1,0 +1,3 @@
+swish replaced: 35
+onnx: /home/wego/lane_perception/engines/hybridnets.onnx 52781182
+engine: /home/wego/lane_perception/engines/hybridnets_fp16.engine 30187108

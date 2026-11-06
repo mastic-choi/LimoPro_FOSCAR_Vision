@@ -1,0 +1,11 @@
+lane_perception_node:
+  ros__parameters:
+    model: yolopv2            # tln | hybridnets | yolop | yolopv2
+    backend: trt              # pt | trt (FP16 engine)
+    weight: ""                # empty = default path for model and backend
+    device: cuda              # cuda | cpu (pt only)
+    input_topic: /camera/color/image_raw
+    da_thresh: 0.5            # training evaluation value
+    ll_thresh: 0.5            # training evaluation value
+    publish_overlay: false   # true only for debugging: costs 1.5-4.2 fps
+    allow_aspect_mismatch: false   # true squashes non-16:9 input: run check only, accuracy is not valid
