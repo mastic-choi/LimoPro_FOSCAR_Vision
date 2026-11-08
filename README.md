@@ -13,7 +13,8 @@ AutoRace 2026 참가팀 FOSCAR의 차선 인식 모델 저장소입니다. BDD10
 
 ## 현재 상태 (2026-11-08)
 
-- 1·2·3차 파인튜닝을 마쳤고 가중치는 [Releases](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases)에 있습니다. **최신은 [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3)입니다.**
+- 1·2·3차 파인튜닝을 마쳤고 가중치는 [Releases](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases)에 있습니다. **최신은 HybridNets만 다시 학습한 [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4)이고, 모델 4개는 [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3)에 있습니다.**
+- 4차(HybridNets만)는 11/07 실차 주행에서 3차 HybridNets가 코너 안쪽 da를 깎던 프레임과 트랙 밖 프레임을 라벨링해 더했습니다. 실차 코너 test da가 0.878 → 0.982로 올랐고, 기존 test와 대회장 test는 0.004~0.005 떨어졌습니다. 아래 [4차 결과](#4차-hybridnets만-2026-11-08)를 보세요.
 - 3차는 2차 가중치에서 이어서, 11/06 대회장 조명 사진과 대회장 조명 증강을 더해 학습했습니다. 대회장 test da가 2차보다 0.02~0.19 올랐고, 기존 test 점수도 떨어지지 않았습니다.
 - 차에는 YOLOPv2 또는 HybridNets 3차를 추천합니다. 정확도가 가장 높고, Jetson TensorRT FP16에서 오버레이를 끄면 약 20 FPS가 나옵니다(2차 가중치로 잰 값).
 
@@ -116,6 +117,35 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 
 ![1차와 2차 모델 비교](outputs/montages/result_compare_clean.jpg)
 
+### 4차 (HybridNets만, 2026-11-08)
+
+11/07 실차 주행(3차 HybridNets, 조명 7가지) rosbag을 분석해 보니, 3차 HybridNets가 특정 코너에서 0.2~0.6초씩 코너 안쪽 da를 깎았습니다. 같은 3차의 다른 모델 3개는 그 프레임을 끝까지 칠했습니다. 주행 노드는 깎인 da의 무게중심을 차로 중심으로 써서 경로가 바깥으로 밀렸습니다.
+
+- **데이터 (`ego_v4` = `ego_v3` + 사람이 고른 후보, `scripts/build_train_dataset_v4.py`):**
+  - 코너 안쪽 깎임 프레임: 다른 3개 모델의 합의 라벨
+  - 트랙 이탈 앞뒤 프레임: 합의 라벨, 또는 내 차로가 안 보이면 da 비움
+  - 3차 때 뺀 3차선 라벨 중 126장: 내 차로만 남겨 되살림(`scripts/wide_to_ego.py`)
+  - bag 프레임은 2번씩 넣어 train 4,652장
+  - 주행 하나(blue6)는 통째로 빼서 `test_bag` 42장으로 씀
+- **학습:** 3차 HybridNets에서 이어서 이 PC(RX 9070 XT, GPU 90% 제한)로 학습했습니다. 증강은 3차와 같고, 실제 어둠·색 조명 주행의 색을 옮기는 v5를 대회장 조명 증강의 25%에 추가했습니다. epoch 4가 best였고 epoch 12에 조기 종료했습니다(epoch당 약 5분).
+
+| HybridNets da / ll | 3차 | **4차** |
+|---|---|---|
+| 기존 test 542장 | 0.956 / 0.823 | 0.951 / 0.819 |
+| 대회장 test 143장 | 0.935 / 0.500 | 0.931 / 0.495 |
+| 실차 코너 test_bag 42장 (blue6, 학습에서 뺀 주행) | 0.878 / 0.662 | **0.982 / 0.816** |
+
+| 실차 bag 전체 프레임 | 3차 | 4차 |
+|---|---:|---:|
+| HybridNets만 코너 안쪽을 깎은 프레임 (blue6, 학습에서 뺌) | 14 | **0** |
+| 같은 수 (나머지 6개 주행, 학습에 일부 들어감) | 38 | 12 |
+
+- 코너 안쪽 깎임은 거의 사라졌습니다. 다만 test_bag 라벨이 다른 모델 3개의 합의라, 그 모델들과 비슷하게 칠할수록 점수가 오르는 셋입니다.
+- 기존 test와 대회장 test의 하락(0.004~0.005)은 시드 1개 기준이라 우연일 수 있지만, 커브 test가 0.932 → 0.922로 가장 많이 떨어졌습니다.
+- 어두운 갈림길 등 일부 프레임에서는 4차가 3차보다 엉뚱한 곳을 칠합니다(아래 그림 맨 아래 줄). 실차에서 확인이 필요합니다.
+
+![실차 코너에서 3차와 4차 HybridNets 비교](outputs/montages/bag_corner_v3_vs_v4.jpg)
+
 ## 한계
 
 - 일반 조명 데이터는 주행 1회, 대회장 조명 데이터는 2.5분 주행 1회에서 나왔고 시드도 1개입니다. ±0.01 안팎의 차이는 우연일 수 있습니다.
@@ -124,20 +154,21 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 
 ## 다음 할 일
 
-1. 3차 가중치로 TensorRT 엔진을 다시 만들고 실차에서 확인합니다. 배포 전 확인 사항은 [`docs/LIMO_DEPLOY_NOTES.md`](docs/LIMO_DEPLOY_NOTES.md)에 있습니다.
-2. 실제 주행 rosbag에서 da가 흔들리거나 새는 구간을 찾아 그 프레임을 라벨링합니다.
+1. 4차 HybridNets로 TensorRT 엔진을 다시 만들고, 3차와 같은 코스·조명에서 실차로 비교합니다. 배포 전 확인 사항은 [`docs/LIMO_DEPLOY_NOTES.md`](docs/LIMO_DEPLOY_NOTES.md)에 있습니다.
+2. 주행 노드가 시야에 잘린 da 띠의 무게중심을 그대로 쓰는 문제는 주행 쪽에서 고칩니다([autorace2026 이슈 #1](https://github.com/smoony0226/autorace2026/issues/1)).
 3. 오른쪽 지그재그 구간처럼 점수가 낮은 곳의 데이터를 보강합니다.
 
 ## 가중치 받기
 
 | 릴리즈 | 내용 |
 |---|---|
-| [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3) | **3차 모델 4개 (최신)**, 대회장 test 채점 |
+| [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4) | **4차 HybridNets (최신)**, 실차 코너 test 채점 |
+| [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3) | 3차 모델 4개, 대회장 test 채점 |
 | [`ego-lane-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v2) | 2차 모델 4개, 보고서, 이 학습에 쓴 코드 |
 | [`ego-lane-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v1) | 1차 모델 4개 |
 
 ```bash
-gh release download ego-lane-v3 -p "yolopv2_v3_best_da.pt"
+gh release download ego-lane-v4 -p "hybridnets_v4_best_da.pt"
 ```
 
 - `best_da`, `best_ll`은 각각 val da, val ll이 가장 높을 때의 가중치입니다.
@@ -173,7 +204,9 @@ gh release download ego-lane-v3 -p "yolopv2_v3_best_da.pt"
 | `scripts/clean_labels.py`, `eval_clean_compare.py`, `eval_da_leak.py` | 라벨 정리, 재채점, da 침범률 측정 |
 | `scripts/benchmark_models.py` | 추론 속도 측정 |
 | `tools/rtx/`, `scripts/make_rtx_bundle.py` | 다른 NVIDIA PC, 서버용 학습 번들 |
-| `outputs/train_v2_foscar/`, `outputs/train_v3_h100/` | 2차, 3차 학습 로그와 결과 |
+| `outputs/train_v2_foscar/`, `outputs/train_v3_h100/`, `outputs/train_v4/` | 2차, 3차, 4차 학습 로그와 결과 |
+| `scripts/review_bag_events.py`, `round4_candidates.py`, `review_round4.py`, `wide_to_ego.py`, `build_train_dataset_v4.py` | 실차 rosbag 문제 순간 분류, 4차 후보 뽑기와 사람 검토, 4차 데이터셋 |
+| `scripts/eval_splits.py` | 가중치 하나를 여러 test split에서 채점 |
 | `outputs/eval_clean/` | 1차와 2차 재채점 결과 |
 
 ## 문서

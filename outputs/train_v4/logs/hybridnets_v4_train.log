@@ -1,0 +1,18 @@
+시작 가중치: outputs/train/hybridnets_v3_seed0/best_da.pt
+[hybridnets seed 0] train 4652 / val 326 / test 542, lr 0.0001, batch 8, epochs 40 -> outputs/train/hybridnets_v4_seed0
+epoch 1/40  loss 0.5690  val da 0.9358 ll 0.8144  (best da 0.9358 ll 0.8144)  310s
+epoch 2/40  loss 0.5630  val da 0.9538 ll 0.8181  (best da 0.9538 ll 0.8181)  305s
+epoch 3/40  loss 0.5463  val da 0.9411 ll 0.8224  (best da 0.9538 ll 0.8224)  306s
+epoch 4/40  loss 0.5444  val da 0.9563 ll 0.8250  (best da 0.9563 ll 0.8250)  307s
+epoch 5/40  loss 0.5344  val da 0.9403 ll 0.8259  (best da 0.9563 ll 0.8259)  307s
+epoch 6/40  loss 0.5255  val da 0.9444 ll 0.8196  (best da 0.9563 ll 0.8259)  313s
+epoch 7/40  loss 0.5361  val da 0.9484 ll 0.8135  (best da 0.9563 ll 0.8259)  303s
+epoch 8/40  loss 0.5235  val da 0.9494 ll 0.8210  (best da 0.9563 ll 0.8259)  303s
+epoch 9/40  loss 0.5237  val da 0.9507 ll 0.8274  (best da 0.9563 ll 0.8274)  304s
+epoch 10/40  loss 0.5116  val da 0.9366 ll 0.8186  (best da 0.9563 ll 0.8274)  303s
+epoch 11/40  loss 0.5076  val da 0.9505 ll 0.8264  (best da 0.9563 ll 0.8274)  303s
+epoch 12/40  loss 0.5064  val da 0.9485 ll 0.8240  (best da 0.9563 ll 0.8274)  304s
+조기 종료: 8 epoch 동안 val da+ll이 0.001 이상 안 오름 (best epoch 4)
+test_venue (best_da): {"all": {"da_iou": 0.9306, "ll_iou": 0.495, "n": 143}, "top": {"da_iou": 0.9507, "ll_iou": 0.5789, "n": 30}, "right": {"da_iou": 0.9, "ll_iou": 0.3542, "n": 30}, "bottom_3lane_ab": {"da_iou": 0.915, "ll_iou": 0.4808, "n": 37}, "left": {"da_iou": 0.9241, "ll_iou": 0.401, "n": 16}, "second": {"da_iou": 0.9635, "ll_iou": 0.5721, "n": 30}}
+test_bag (best_da): {"all": {"da_iou": 0.9818, "ll_iou": 0.8164, "n": 42}, "blue6": {"da_iou": 0.9818, "ll_iou": 0.8164, "n": 42}}
+test (best_da): {"all": {"da_iou": 0.9513, "ll_iou": 0.819, "n": 542}, "curve": {"da_iou": 0.9224, "ll_iou": 0.8041, "n": 264}, "straight": {"da_iou": 0.9784, "ll_iou": 0.8309, "n": 278}}
