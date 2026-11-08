@@ -1,0 +1,41 @@
+시작 가중치: /home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/weights/hybridnets_v2_best_da.pt
+[hybridnets seed 0] train 3988 / val 324 / test 542, lr 0.0001, batch 8, epochs 40 -> /home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/outputs/train/hybridnets_v3_seed0
+/home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/scripts/train_seg.py:461: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  tot, n = tot + float(loss), n + 1
+epoch 1/40  loss 0.5775  val da 0.9494 ll 0.8106  (best da 0.9494 ll 0.8106)  81s
+epoch 2/40  loss 0.5367  val da 0.9527 ll 0.8098  (best da 0.9527 ll 0.8106)  78s
+epoch 3/40  loss 0.5257  val da 0.9508 ll 0.8169  (best da 0.9527 ll 0.8169)  79s
+epoch 4/40  loss 0.5092  val da 0.9502 ll 0.8235  (best da 0.9527 ll 0.8235)  78s
+epoch 5/40  loss 0.5029  val da 0.9551 ll 0.8204  (best da 0.9551 ll 0.8235)  78s
+epoch 6/40  loss 0.4992  val da 0.9503 ll 0.8235  (best da 0.9551 ll 0.8235)  78s
+epoch 7/40  loss 0.4892  val da 0.9510 ll 0.8188  (best da 0.9551 ll 0.8235)  77s
+epoch 8/40  loss 0.4768  val da 0.9463 ll 0.8222  (best da 0.9551 ll 0.8235)  78s
+epoch 9/40  loss 0.4681  val da 0.9546 ll 0.8223  (best da 0.9551 ll 0.8235)  78s
+epoch 10/40  loss 0.4720  val da 0.9545 ll 0.8236  (best da 0.9551 ll 0.8236)  78s
+epoch 11/40  loss 0.4663  val da 0.9500 ll 0.8240  (best da 0.9551 ll 0.8240)  78s
+epoch 12/40  loss 0.4755  val da 0.9519 ll 0.8238  (best da 0.9551 ll 0.8240)  77s
+epoch 13/40  loss 0.4612  val da 0.9426 ll 0.8207  (best da 0.9551 ll 0.8240)  77s
+epoch 14/40  loss 0.4553  val da 0.9554 ll 0.8241  (best da 0.9554 ll 0.8241)  78s
+epoch 15/40  loss 0.4475  val da 0.9541 ll 0.8263  (best da 0.9554 ll 0.8263)  78s
+epoch 16/40  loss 0.4501  val da 0.9532 ll 0.8250  (best da 0.9554 ll 0.8263)  78s
+epoch 17/40  loss 0.4523  val da 0.9534 ll 0.8269  (best da 0.9554 ll 0.8269)  77s
+epoch 18/40  loss 0.4456  val da 0.9542 ll 0.8299  (best da 0.9554 ll 0.8299)  77s
+epoch 19/40  loss 0.4501  val da 0.9502 ll 0.8293  (best da 0.9554 ll 0.8299)  77s
+epoch 20/40  loss 0.4417  val da 0.9526 ll 0.8292  (best da 0.9554 ll 0.8299)  78s
+epoch 21/40  loss 0.4429  val da 0.9557 ll 0.8292  (best da 0.9557 ll 0.8299)  79s
+epoch 22/40  loss 0.4359  val da 0.9533 ll 0.8213  (best da 0.9557 ll 0.8299)  78s
+epoch 23/40  loss 0.4401  val da 0.9539 ll 0.8298  (best da 0.9557 ll 0.8299)  78s
+epoch 24/40  loss 0.4287  val da 0.9551 ll 0.8242  (best da 0.9557 ll 0.8299)  78s
+epoch 25/40  loss 0.4317  val da 0.9569 ll 0.8315  (best da 0.9569 ll 0.8315)  78s
+epoch 26/40  loss 0.4292  val da 0.9554 ll 0.8290  (best da 0.9569 ll 0.8315)  77s
+epoch 27/40  loss 0.4337  val da 0.9546 ll 0.8306  (best da 0.9569 ll 0.8315)  78s
+epoch 28/40  loss 0.4289  val da 0.9554 ll 0.8313  (best da 0.9569 ll 0.8315)  79s
+epoch 29/40  loss 0.4267  val da 0.9551 ll 0.8302  (best da 0.9569 ll 0.8315)  78s
+epoch 30/40  loss 0.4227  val da 0.9567 ll 0.8306  (best da 0.9569 ll 0.8315)  78s
+epoch 31/40  loss 0.4156  val da 0.9535 ll 0.8308  (best da 0.9569 ll 0.8315)  77s
+epoch 32/40  loss 0.4230  val da 0.9555 ll 0.8302  (best da 0.9569 ll 0.8315)  77s
+epoch 33/40  loss 0.4203  val da 0.9560 ll 0.8310  (best da 0.9569 ll 0.8315)  77s
+조기 종료: 8 epoch 동안 val da+ll이 0.001 이상 안 오름 (best epoch 25)
+test_venue (best_da): {"all": {"da_iou": 0.9353, "ll_iou": 0.4994, "n": 143}, "top": {"da_iou": 0.9483, "ll_iou": 0.5762, "n": 30}, "right": {"da_iou": 0.9006, "ll_iou": 0.3704, "n": 30}, "bottom_3lane_ab": {"da_iou": 0.9315, "ll_iou": 0.4684, "n": 37}, "left": {"da_iou": 0.9173, "ll_iou": 0.3689, "n": 16}, "second": {"da_iou": 0.9706, "ll_iou": 0.5987, "n": 30}}
+test (best_da): {"all": {"da_iou": 0.9557, "ll_iou": 0.8229, "n": 542}, "curve": {"da_iou": 0.9316, "ll_iou": 0.8086, "n": 264}, "straight": {"da_iou": 0.9782, "ll_iou": 0.8343, "n": 278}}

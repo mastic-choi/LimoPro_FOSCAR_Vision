@@ -5,6 +5,9 @@
 2. 모델마다 실제 batch로 forward/backward 한 번 -> 메모리가 모자라면 batch를 절반으로 (8 -> 4 -> 2)
 3. scripts/train_all.py로 순서대로 학습. 다시 실행하면 끝난 모델은 건너뛰고 last.pt에서 이어서
 4. 끝나면 가져갈 결과만 results_<PC이름>.zip으로 묶음 (best_da.pt, best_ll.pt, log.csv, test.json, train.log)
+
+3차부터: 대회장 조명 증강(--venue-ref-dir, 번들에 견본 폴더가 있으면 자동으로 켬), 대회장 test(test_venue) 채점,
+이전 라운드 가중치에서 시작(--init v2가 기본, v1 | none, 번들의 weights/ 폴더). bundle.json의 gpu_duty가 GPU_DUTY 기본값.
 """
 import argparse
 import json
@@ -82,8 +85,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="*", default=["hybridnets", "tln_large", "yolop", "yolopv2"],
                     help="이 순서로 학습. 시간이 모자라면 앞쪽 모델만 끝나도 됨")
-    ap.add_argument("--data", default=os.path.join(ROOT, "dataset", "ego_v2"))
-    ap.add_argument("--suffix", default="_v2")
+    ap.add_argument("--data", default=os.path.join(ROOT, "dataset", "ego_v3"))
+    ap.add_argument("--suffix", default="_v3")
+    ref = os.path.join(ROOT, "dataset", "venue_ref_20261106")
+    ap.add_argument("--venue-ref-dir", default=ref if os.path.isdir(ref) else None, help="대회장 조명 증강 견본 폴더 (none이면 끔)")
+    ap.add_argument("--venue-p", type=float, default=0.7, help="대회장 조명 증강 적용 비율")
+    ap.add_argument("--init", choices=["none", "v1", "v2"], default="v2", help="시작 가중치: v2 = 2차 best_da에서 이어서 (기본), v1 = 1차, none = BDD100K 사전학습")
     ap.add_argument("--seeds", type=int, nargs="*", default=[0])
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--batch", type=int, default=8)
@@ -96,6 +103,11 @@ def main():
         return preflight(args.models, args.batch, args.allow_cpu)
 
     assert os.path.isdir(os.path.join(args.data, "train", "images")), f"데이터셋이 없습니다: {args.data}"
+    bj = os.path.join(ROOT, "bundle.json")
+    if os.path.exists(bj) and "GPU_DUTY" not in os.environ:
+        with open(bj, encoding="utf-8") as f:
+            os.environ["GPU_DUTY"] = str(json.load(f).get("gpu_duty", 0.9))
+    print(f"GPU_DUTY {os.environ.get('GPU_DUTY', '0.9')}, 데이터 {args.data}, 대회장 조명 증강 {args.venue_ref_dir}, 시작 가중치 {args.init}", flush=True)
     keep_awake()
     env = dict(os.environ, PYTHONUTF8="1", PYTHONUNBUFFERED="1")
     cmd = [sys.executable, os.path.abspath(__file__), "--preflight-only", "--batch", str(args.batch), "--models", *args.models]
@@ -110,10 +122,17 @@ def main():
     out = os.path.join(ROOT, "outputs", "train")
     t0 = time.time()
     for name in args.models:
+        extra = []
+        if args.venue_ref_dir and args.venue_ref_dir != "none":
+            extra += ["--venue-ref-dir", args.venue_ref_dir, "--venue-p", str(args.venue_p)]
+        if args.init != "none":
+            w = os.path.join(ROOT, "weights", f"{'yolop_chbce' if name == 'yolop' and args.init == 'v1' else name}_{args.init}_best_da.pt")
+            assert os.path.exists(w), f"시작 가중치가 없습니다: {w}"
+            extra += ["--init", w]
         rc = subprocess.call([sys.executable, os.path.join(HERE, "train_all.py"), "--data", args.data, "--models", name,
                               "--suffix", args.suffix, "--out", out, "--seeds", *map(str, args.seeds), "--",
                               "--batch", str(batches[name]), "--epochs", str(args.epochs), "--workers", str(args.workers),
-                              *(["--loss", "channel"] if name == "yolop" else [])],  # 1차에서 채널별 BCE가 더 좋았음
+                              *(["--loss", "channel"] if name == "yolop" else []), *extra],  # yolop: 1차에서 채널별 BCE가 더 좋았음
                              cwd=ROOT, env=env)
         if rc:
             print(f"{name}: train_all.py 비정상 종료 (종료 코드 {rc})", flush=True)
@@ -132,8 +151,10 @@ def main():
                 tj = os.path.join(out, d, "test.json")
                 if os.path.exists(tj):
                     with open(tj, encoding="utf-8") as f:
-                        t = json.load(f)["test"]["all"]
-                    summary.append(f"{d}: test da {t['da_iou']:.4f}, ll {t['ll_iou']:.4f}")
+                        j = json.load(f)
+                    t = j["test"]["all"]; v = j.get("test_venue", {}).get("all")
+                    summary.append(f"{d}: test da {t['da_iou']:.4f}, ll {t['ll_iou']:.4f}"
+                                   + (f" | 대회장 test da {v['da_iou']:.4f}, ll {v['ll_iou']:.4f}" if v else ""))
                     done += 1
                 else:
                     summary.append(f"{d}: 실패 ({os.path.join(out, d, 'train.log')} 확인)")

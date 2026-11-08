@@ -141,16 +141,25 @@ def track_wrinkle(img):
 # 데이터 (DataLoader worker가 import하므로 여기선 make_model_compare_gif를 import하지 않음: CUDA 초기화 방지)
 # ---------------------------------------------------------------------------
 class EgoDataset(torch.utils.data.Dataset):
-    def __init__(self, root, split, train, rgb, imagenet_norm):
+    def __init__(self, root, split, train, rgb, imagenet_norm, venue_ref_dir=None, venue_p=0.7, venue_v4=0.8):
         self.dir = os.path.join(root, split)
         self.names = sorted(os.listdir(os.path.join(self.dir, "images")))
         self.train, self.rgb, self.norm = train, rgb, imagenet_norm
+        self.venue = (venue_ref_dir, venue_p, venue_v4) if venue_ref_dir else None  # 대회장 조명 증강 (venue_aug.py)
 
     def __len__(self):
         return len(self.names)
 
     def augment(self, img, da, ll):
         h, w = da.shape
+        venue = getattr(self, "venue", None)
+        lit = False
+        if venue and random.random() < venue[1]:  # 대회장 색 조명: v4(실제 조명 분포를 옮김) 또는 v3. 라벨은 그대로
+            import venue_aug as va
+            if not va.REFS:
+                va.set_refs(venue[0])
+            fn = va.v4 if random.random() < venue[2] else va.v3
+            img, lit = fn(img, va.random_ref(), da > 0, ll > 0), True
         if random.random() < 0.5:  # 좌우 반전: ego lane 개념은 좌우 대칭
             img, da, ll = img[:, ::-1], da[:, ::-1], ll[:, ::-1]
         if random.random() < 0.5:  # 작은 회전/확대/이동 (차가 차선과 평행하지 않은 경우 흉내)
@@ -170,9 +179,10 @@ class EgoDataset(torch.utils.data.Dataset):
             img = lane_gap(img, ll)
         if random.random() < 0.25:
             img = track_wrinkle(img)
-        if random.random() < 0.15:
+        weak = 0.3 if lit else 1.0  # 대회장 조명 위에 노출 과다·번짐을 그대로 얹으면 하얗게 날아가서 확률을 줄임
+        if random.random() < 0.15 * weak:
             img = overexpose(img)
-        if random.random() < 0.25:
+        if random.random() < 0.25 * weak:
             img = light_bloom(img)
         if random.random() < 0.2:
             img = floor_streak(img)
@@ -367,10 +377,16 @@ def main():
                     help="prob: 전경 확률에 BCE+Dice (전 모델 공통) / channel: 채널별 BCE (yolop만)")
     ap.add_argument("--ll-weight", type=float, default=2.0, help="ll 손실 가중치 (KMU에서 2.0이 효과 있었음)")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--venue-ref-dir", default=None, help="대회장 조명 증강 견본 사진 폴더 (없으면 끔). 대회장 test 사진은 넣지 말 것")
+    ap.add_argument("--venue-p", type=float, default=0.7, help="학습 사진 중 대회장 조명 증강을 적용할 비율")
+    ap.add_argument("--venue-v4", type=float, default=0.8, help="대회장 조명 증강 중 v4 비율 (나머지 v3)")
     ap.add_argument("--patience", type=int, default=8, help="val da+ll이 이 epoch 수 동안 안 오르면 조기 종료 (0 = 끔)")
     ap.add_argument("--min-delta", type=float, default=0.001, help="조기 종료 판정의 '오름' 최소 폭")
     ap.add_argument("--out", default=None, help="기본: outputs/train/<model>_seed<seed>")
     ap.add_argument("--fresh", action="store_true", help="last.pt가 있어도 무시하고 처음부터")
+    ap.add_argument("--init", default=None, help="시작 가중치 (기본: BDD100K 사전학습). 예: 2차 best_da.pt")
+    ap.add_argument("--extra-tests", nargs="*", default=["test_venue"],
+                    help="test 말고 따로 채점할 split 폴더 (있을 때만). 결과는 test.json의 <split> 항목, manifest의 section별로도 냄")
     args = ap.parse_args()
 
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -386,12 +402,18 @@ def main():
     lr0 = args.lr or DEFAULT_LR[args.model]
 
     model, rgb, norm, fwd, save = ADAPTERS[args.model](m)
+    if args.init:  # 이전 라운드 가중치(best_da.pt 등)에서 시작. 재개(last.pt)가 있으면 그쪽이 우선
+        if args.model == "yolopv2":
+            model = load_yolopv2_trainable(args.init, m.device)
+        else:
+            model.load_state_dict(torch.load(args.init, map_location="cpu"))
+        print(f"시작 가중치: {args.init}", flush=True)
     model = model.to(m.device)
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=lr0, weight_decay=5e-4)
 
     mk = lambda split, train: torch.utils.data.DataLoader(
-        EgoDataset(args.data, split, train, rgb, norm), batch_size=args.batch, shuffle=train, drop_last=train,
+        EgoDataset(args.data, split, train, rgb, norm, *((args.venue_ref_dir, args.venue_p, args.venue_v4) if train and args.venue_ref_dir else ())), batch_size=args.batch, shuffle=train, drop_last=train,
         num_workers=args.workers, persistent_workers=args.workers > 0, pin_memory=True)
     train_loader, val_loader, test_loader = mk("train", True), mk("val", False), mk("test", False)
 
@@ -469,9 +491,25 @@ def main():
     res = evaluate(model, fwd, test_loader, m.device, groups)
     for g in res:
         res[g]["n"] = len(test_loader.dataset) if g == "all" else len(groups[g])
+    extra = {}
+    for split in args.extra_tests:
+        if not os.path.isdir(os.path.join(args.data, split, "images")):
+            continue
+        with open(os.path.join(args.data, "manifest.csv"), encoding="utf-8") as f:
+            man = [r for r in csv.DictReader(f) if r["split"] == split]
+        sec = {}
+        for r in man:
+            if r.get("section"):
+                sec.setdefault(r["section"], set()).add(r["frame"] + ".png")
+        loader = mk(split, False)
+        extra[split] = evaluate(model, fwd, loader, m.device, sec or None)
+        for g in extra[split]:
+            extra[split][g]["n"] = len(loader.dataset) if g == "all" else len(sec[g])
+        print(f"{split} (best_da):", json.dumps(extra[split]), flush=True)
     def write_json(p):
         with open(p, "w", encoding="utf-8") as f:
-            json.dump({"model": args.model, "seed": args.seed, "best_val": best, "test": res}, f, indent=2)
+            json.dump({"model": args.model, "seed": args.seed, "init": args.init, "venue_aug": args.venue_ref_dir and
+                       {"p": args.venue_p, "v4": args.venue_v4}, "best_val": best, "test": res, **extra}, f, indent=2)
     atomic(write_json, os.path.join(out, "test.json"))
     print("test (best_da):", json.dumps(res), flush=True)
 
