@@ -1,0 +1,33 @@
+시작 가중치: /home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/weights/yolop_v2_best_da.pt
+[yolop seed 0] train 3988 / val 324 / test 542, lr 0.0001, batch 8, epochs 40 -> /home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/outputs/train/yolop_v3_seed0
+/home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/scripts/train_seg.py:461: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  tot, n = tot + float(loss), n + 1
+/home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/.venv/lib/python3.10/site-packages/torch/functional.py:505: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at /pytorch/aten/src/ATen/native/TensorShape.cpp:4381.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+epoch 1/40  loss 3.9571  val da 0.9358 ll 0.7881  (best da 0.9358 ll 0.7881)  42s
+epoch 2/40  loss 3.9360  val da 0.9372 ll 0.7910  (best da 0.9372 ll 0.7910)  43s
+epoch 3/40  loss 3.9242  val da 0.9388 ll 0.7882  (best da 0.9388 ll 0.7910)  42s
+epoch 4/40  loss 3.9217  val da 0.9412 ll 0.7879  (best da 0.9412 ll 0.7910)  42s
+epoch 5/40  loss 3.9147  val da 0.9397 ll 0.7832  (best da 0.9412 ll 0.7910)  42s
+epoch 6/40  loss 3.9110  val da 0.9420 ll 0.7887  (best da 0.9420 ll 0.7910)  43s
+epoch 7/40  loss 3.9071  val da 0.9420 ll 0.7861  (best da 0.9420 ll 0.7910)  43s
+epoch 8/40  loss 3.9071  val da 0.9411 ll 0.7865  (best da 0.9420 ll 0.7910)  43s
+epoch 9/40  loss 3.9040  val da 0.9414 ll 0.7898  (best da 0.9420 ll 0.7910)  43s
+epoch 10/40  loss 3.9016  val da 0.9432 ll 0.7863  (best da 0.9432 ll 0.7910)  43s
+epoch 11/40  loss 3.8995  val da 0.9424 ll 0.7871  (best da 0.9432 ll 0.7910)  42s
+epoch 12/40  loss 3.8970  val da 0.9426 ll 0.7846  (best da 0.9432 ll 0.7910)  43s
+epoch 13/40  loss 3.8948  val da 0.9437 ll 0.7900  (best da 0.9437 ll 0.7910)  43s
+epoch 14/40  loss 3.8906  val da 0.9442 ll 0.7879  (best da 0.9442 ll 0.7910)  44s
+epoch 15/40  loss 3.8891  val da 0.9450 ll 0.7922  (best da 0.9450 ll 0.7922)  44s
+epoch 16/40  loss 3.8878  val da 0.9441 ll 0.7891  (best da 0.9450 ll 0.7922)  43s
+epoch 17/40  loss 3.8883  val da 0.9458 ll 0.7881  (best da 0.9458 ll 0.7922)  43s
+epoch 18/40  loss 3.8891  val da 0.9450 ll 0.7910  (best da 0.9458 ll 0.7922)  42s
+epoch 19/40  loss 3.8867  val da 0.9439 ll 0.7885  (best da 0.9458 ll 0.7922)  43s
+epoch 20/40  loss 3.8869  val da 0.9420 ll 0.7912  (best da 0.9458 ll 0.7922)  43s
+epoch 21/40  loss 3.8839  val da 0.9433 ll 0.7896  (best da 0.9458 ll 0.7922)  42s
+epoch 22/40  loss 3.8832  val da 0.9443 ll 0.7921  (best da 0.9458 ll 0.7922)  42s
+epoch 23/40  loss 3.8819  val da 0.9423 ll 0.7902  (best da 0.9458 ll 0.7922)  43s
+조기 종료: 8 epoch 동안 val da+ll이 0.001 이상 안 오름 (best epoch 15)
+test_venue (best_da): {"all": {"da_iou": 0.926, "ll_iou": 0.442, "n": 143}, "top": {"da_iou": 0.9479, "ll_iou": 0.5461, "n": 30}, "right": {"da_iou": 0.8895, "ll_iou": 0.3083, "n": 30}, "bottom_3lane_ab": {"da_iou": 0.9106, "ll_iou": 0.4107, "n": 37}, "left": {"da_iou": 0.9056, "ll_iou": 0.4065, "n": 16}, "second": {"da_iou": 0.9671, "ll_iou": 0.4913, "n": 30}}
+test (best_da): {"all": {"da_iou": 0.9446, "ll_iou": 0.7825, "n": 542}, "curve": {"da_iou": 0.9188, "ll_iou": 0.7672, "n": 264}, "straight": {"da_iou": 0.969, "ll_iou": 0.7948, "n": 278}}

@@ -30,3 +30,5 @@ outputs/train_*.log
 outputs/*.log
 outputs/pseudo_ft_*/
 outputs/train_v2_foscar/results_foscar.zip
+outputs/train_v3_h100/*.zip
+outputs/share/

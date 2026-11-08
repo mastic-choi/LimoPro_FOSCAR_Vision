@@ -1,0 +1,65 @@
+{
+  "model": "tln_large",
+  "seed": 0,
+  "init": "/home/guest6/Desktop/smoony/autorace2026/LimoPro_train_v3_h100_v2init/LimoPro_train/weights/tln_large_v2_best_da.pt",
+  "venue_aug": {
+    "p": 0.7,
+    "v4": 0.8
+  },
+  "best_val": {
+    "da": 0.9477,
+    "ll": 0.8141,
+    "score": 1.7606,
+    "epoch": 3,
+    "stopped": true
+  },
+  "test": {
+    "all": {
+      "da_iou": 0.948,
+      "ll_iou": 0.8042,
+      "n": 542
+    },
+    "curve": {
+      "da_iou": 0.9223,
+      "ll_iou": 0.7924,
+      "n": 264
+    },
+    "straight": {
+      "da_iou": 0.9721,
+      "ll_iou": 0.8136,
+      "n": 278
+    }
+  },
+  "test_venue": {
+    "all": {
+      "da_iou": 0.9195,
+      "ll_iou": 0.3861,
+      "n": 143
+    },
+    "top": {
+      "da_iou": 0.9425,
+      "ll_iou": 0.4863,
+      "n": 30
+    },
+    "right": {
+      "da_iou": 0.8831,
+      "ll_iou": 0.3011,
+      "n": 30
+    },
+    "bottom_3lane_ab": {
+      "da_iou": 0.9116,
+      "ll_iou": 0.3336,
+      "n": 37
+    },
+    "left": {
+      "da_iou": 0.9095,
+      "ll_iou": 0.4009,
+      "n": 16
+    },
+    "second": {
+      "da_iou": 0.9464,
+      "ll_iou": 0.3937,
+      "n": 30
+    }
+  }
+}
