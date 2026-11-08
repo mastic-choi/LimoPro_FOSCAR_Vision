@@ -1,0 +1,20 @@
+{
+  "model": "hybridnets",
+  "weights": "outputs/train/hybridnets_v3_seed0/best_da.pt",
+  "data": "dataset/ego_v4",
+  "test": {
+    "da_iou": 0.9557,
+    "ll_iou": 0.8229,
+    "n": 542
+  },
+  "test_venue": {
+    "da_iou": 0.9353,
+    "ll_iou": 0.4995,
+    "n": 143
+  },
+  "test_bag": {
+    "da_iou": 0.8782,
+    "ll_iou": 0.6622,
+    "n": 42
+  }
+}

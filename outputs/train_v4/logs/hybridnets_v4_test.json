@@ -1,0 +1,78 @@
+{
+  "model": "hybridnets",
+  "seed": 0,
+  "init": "outputs/train/hybridnets_v3_seed0/best_da.pt",
+  "venue_aug": {
+    "p": 0.7,
+    "v4": 0.8,
+    "v5": 0.25
+  },
+  "best_val": {
+    "da": 0.9563,
+    "ll": 0.8274,
+    "score": 1.7812999999999999,
+    "epoch": 4,
+    "stopped": true
+  },
+  "test": {
+    "all": {
+      "da_iou": 0.9513,
+      "ll_iou": 0.819,
+      "n": 542
+    },
+    "curve": {
+      "da_iou": 0.9224,
+      "ll_iou": 0.8041,
+      "n": 264
+    },
+    "straight": {
+      "da_iou": 0.9784,
+      "ll_iou": 0.8309,
+      "n": 278
+    }
+  },
+  "test_venue": {
+    "all": {
+      "da_iou": 0.9306,
+      "ll_iou": 0.495,
+      "n": 143
+    },
+    "top": {
+      "da_iou": 0.9507,
+      "ll_iou": 0.5789,
+      "n": 30
+    },
+    "right": {
+      "da_iou": 0.9,
+      "ll_iou": 0.3542,
+      "n": 30
+    },
+    "bottom_3lane_ab": {
+      "da_iou": 0.915,
+      "ll_iou": 0.4808,
+      "n": 37
+    },
+    "left": {
+      "da_iou": 0.9241,
+      "ll_iou": 0.401,
+      "n": 16
+    },
+    "second": {
+      "da_iou": 0.9635,
+      "ll_iou": 0.5721,
+      "n": 30
+    }
+  },
+  "test_bag": {
+    "all": {
+      "da_iou": 0.9818,
+      "ll_iou": 0.8164,
+      "n": 42
+    },
+    "blue6": {
+      "da_iou": 0.9818,
+      "ll_iou": 0.8164,
+      "n": 42
+    }
+  }
+}

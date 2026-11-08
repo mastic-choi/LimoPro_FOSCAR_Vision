@@ -141,11 +141,11 @@ def track_wrinkle(img):
 # 데이터 (DataLoader worker가 import하므로 여기선 make_model_compare_gif를 import하지 않음: CUDA 초기화 방지)
 # ---------------------------------------------------------------------------
 class EgoDataset(torch.utils.data.Dataset):
-    def __init__(self, root, split, train, rgb, imagenet_norm, venue_ref_dir=None, venue_p=0.7, venue_v4=0.8):
+    def __init__(self, root, split, train, rgb, imagenet_norm, venue_ref_dir=None, venue_p=0.7, venue_v4=0.8, venue_v5=0.0):
         self.dir = os.path.join(root, split)
         self.names = sorted(os.listdir(os.path.join(self.dir, "images")))
         self.train, self.rgb, self.norm = train, rgb, imagenet_norm
-        self.venue = (venue_ref_dir, venue_p, venue_v4) if venue_ref_dir else None  # 대회장 조명 증강 (venue_aug.py)
+        self.venue = (venue_ref_dir, venue_p, venue_v4, venue_v5) if venue_ref_dir else None  # 대회장 조명 증강 (venue_aug.py)
 
     def __len__(self):
         return len(self.names)
@@ -159,6 +159,8 @@ class EgoDataset(torch.utils.data.Dataset):
             if not va.REFS:
                 va.set_refs(venue[0])
             fn = va.v4 if random.random() < venue[2] else va.v3
+            if len(venue) > 3 and random.random() < venue[3]:  # 4차: 실제 11/07 어둠·색 조명 주행의 색을 옮김 (v5)
+                fn = va.v5
             img, lit = fn(img, va.random_ref(), da > 0, ll > 0), True
         if random.random() < 0.5:  # 좌우 반전: ego lane 개념은 좌우 대칭
             img, da, ll = img[:, ::-1], da[:, ::-1], ll[:, ::-1]
@@ -380,12 +382,13 @@ def main():
     ap.add_argument("--venue-ref-dir", default=None, help="대회장 조명 증강 견본 사진 폴더 (없으면 끔). 대회장 test 사진은 넣지 말 것")
     ap.add_argument("--venue-p", type=float, default=0.7, help="학습 사진 중 대회장 조명 증강을 적용할 비율")
     ap.add_argument("--venue-v4", type=float, default=0.8, help="대회장 조명 증강 중 v4 비율 (나머지 v3)")
+    ap.add_argument("--venue-v5", type=float, default=0.0, help="대회장 조명 증강 중 v5(실제 bag 색 옮김) 비율. 4차 0.25")
     ap.add_argument("--patience", type=int, default=8, help="val da+ll이 이 epoch 수 동안 안 오르면 조기 종료 (0 = 끔)")
     ap.add_argument("--min-delta", type=float, default=0.001, help="조기 종료 판정의 '오름' 최소 폭")
     ap.add_argument("--out", default=None, help="기본: outputs/train/<model>_seed<seed>")
     ap.add_argument("--fresh", action="store_true", help="last.pt가 있어도 무시하고 처음부터")
     ap.add_argument("--init", default=None, help="시작 가중치 (기본: BDD100K 사전학습). 예: 2차 best_da.pt")
-    ap.add_argument("--extra-tests", nargs="*", default=["test_venue"],
+    ap.add_argument("--extra-tests", nargs="*", default=["test_venue", "test_bag"],
                     help="test 말고 따로 채점할 split 폴더 (있을 때만). 결과는 test.json의 <split> 항목, manifest의 section별로도 냄")
     args = ap.parse_args()
 
@@ -413,7 +416,7 @@ def main():
     opt = torch.optim.AdamW(params, lr=lr0, weight_decay=5e-4)
 
     mk = lambda split, train: torch.utils.data.DataLoader(
-        EgoDataset(args.data, split, train, rgb, norm, *((args.venue_ref_dir, args.venue_p, args.venue_v4) if train and args.venue_ref_dir else ())), batch_size=args.batch, shuffle=train, drop_last=train,
+        EgoDataset(args.data, split, train, rgb, norm, *((args.venue_ref_dir, args.venue_p, args.venue_v4, args.venue_v5) if train and args.venue_ref_dir else ())), batch_size=args.batch, shuffle=train, drop_last=train,
         num_workers=args.workers, persistent_workers=args.workers > 0, pin_memory=True)
     train_loader, val_loader, test_loader = mk("train", True), mk("val", False), mk("test", False)
 
@@ -509,7 +512,7 @@ def main():
     def write_json(p):
         with open(p, "w", encoding="utf-8") as f:
             json.dump({"model": args.model, "seed": args.seed, "init": args.init, "venue_aug": args.venue_ref_dir and
-                       {"p": args.venue_p, "v4": args.venue_v4}, "best_val": best, "test": res, **extra}, f, indent=2)
+                       {"p": args.venue_p, "v4": args.venue_v4, "v5": args.venue_v5}, "best_val": best, "test": res, **extra}, f, indent=2)
     atomic(write_json, os.path.join(out, "test.json"))
     print("test (best_da):", json.dumps(res), flush=True)
 
