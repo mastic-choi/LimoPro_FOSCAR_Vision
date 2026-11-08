@@ -160,3 +160,51 @@ def v4(img, ref, da=None, ll=None):
     if random.random() < 0.4:                                    # 어두운 조명에서 늘어나는 센서 노이즈
         out = out + np.random.normal(0, random.uniform(2, 6), out.shape)
     return np.clip(out, 0, 255).astype(np.uint8)
+
+
+# ---------------- v5 = 실제 어둠·색 조명 주행의 색을 그대로 옮김 (2026-11-08, 4차) ----------------
+# 11/07 실차 bag 중 어둠·색 조명 주행 5개(darkout3, dark4, redout5, blue6, purple7)에서 1초마다
+# 벽(0~110행) / 먼 바닥(200~250행) / 가까운 바닥(300~360행)의 중앙값 색을 모아 둔 표(v5_bag_colors.json, 336개)를 쓴다.
+# 학습 사진의 같은 세 구역 중앙값을 그 실제 값으로 맞추는 채널별 배율을 행마다 이어 붙여 곱한다.
+#   - 실제 빨강 조명: 매트가 탁한 진빨강, 차선은 분홍빛, 조명 받은 벽은 분홍~흰색으로 날아감 -> 배율이 커서 R이 포화되며 저절로 생김
+#   - 실제 어둠: 바닥 중앙값 10~30, 카메라가 노이즈를 지워 매끈함 -> 노이즈는 아주 약하게만
+# 첫 시안(단색 배율·웅덩이를 손으로 정함)은 벽이 하얗게 날아가고 바닥 색이 실제보다 선명했고, 어둠은 덜 어두웠다.
+# 라벨은 그대로.
+_BAG = []
+
+
+def _bag_colors():
+    if not _BAG:
+        import json
+        _BAG.extend(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "v5_bag_colors.json"))))
+    return _BAG
+
+
+def _rows_gain(h, g_wall, g_far, g_near):
+    """행마다 채널별 배율: 0~130행 벽, 130~225 벽->먼 바닥, 225~330 먼->가까운 바닥."""
+    y = np.arange(h, dtype=np.float32)
+    def ramp(a, b): return np.clip((y - a) / (b - a), 0, 1)[:, None]
+    g = g_wall + (g_far - g_wall) * ramp(130, 225)
+    return g + (g_near - g) * ramp(225, 330)
+
+
+def v5(img, ref=None, da=None, ll=None):
+    """ref는 쓰지 않음 (train_seg의 다른 증강과 같은 호출 모양)."""
+    h, w = img.shape[:2]
+    c = random.choice(_bag_colors())
+    x = img.astype(np.float32)
+    med = lambda a, b: np.median(x[a:b].reshape(-1, 3), 0) + 3.0
+    j = lambda: np.random.uniform(0.9, 1.1, 3)                        # 같은 실제 장면 안에서 조금씩 흔들기
+    gains = [np.clip((np.float32(c[k]) + 3.0) * j() / med(a, b), 0.03, 8.0)
+             for k, (a, b) in (("wall", (0, 110)), ("far", (200, 250)), ("near", (300, 360)))]
+    g = _rows_gain(h, *gains)[:, None, :]                             # (h, 1, 3)
+    if random.random() < 0.5:                                         # 조명이 한쪽으로 치우침 (좌우 기울기)
+        g = g * np.linspace(random.uniform(0.7, 1.0), random.uniform(1.0, 1.3), w, dtype=np.float32)[None, :, None][:, ::random.choice([1, -1])]
+    out = x * g
+    over = np.clip(out.max(2, keepdims=True) - 255, 0, None)          # 포화된 빛이 다른 채널로 번짐 -> 분홍/흰색
+    out = out + over * random.uniform(0.15, 0.4)
+    if random.random() < 0.5:
+        out = out + np.random.normal(0, random.uniform(0.3, 1.2), out.shape[:2])[..., None]
+    if random.random() < 0.3:                                         # 저조도 카메라의 노이즈 제거로 살짝 뭉개짐
+        out = cv2.GaussianBlur(out, (0, 0), random.uniform(0.5, 1.0))
+    return np.clip(out, 0, 255).astype(np.uint8)
