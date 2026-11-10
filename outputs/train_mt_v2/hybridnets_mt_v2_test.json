@@ -1,0 +1,121 @@
+{
+  "best": {
+    "score": 2.6786,
+    "epoch": 14,
+    "stopped": false,
+    "val": {
+      "da_iou": 0.9522,
+      "ll_iou": 0.82,
+      "sl_iou": null,
+      "ap50": {
+        "pedestrian": 0.928,
+        "sign_A": 0.8653,
+        "sign_B": 0.8609,
+        "bump": 0.9651,
+        "slow": 0.9944,
+        "parking": 0.9051,
+        "traffic_light": 0.9801,
+        "light_red": 0.9801,
+        "light_yellow": 0.9827,
+        "light_green": 0.9887,
+        "limo": null,
+        "cone": 0.5938
+      },
+      "map50": 0.9064
+    }
+  },
+  "args": {
+    "seg_data": "dataset/synth_signs_v2",
+    "det_data": "dataset/cones_v1",
+    "cone_train_n": 2500,
+    "cone_val_n": 300,
+    "init": "outputs/train/hybridnets_mt_v1_seed0/best.pt",
+    "epochs": 15,
+    "batch": 32,
+    "lr": 0.0001,
+    "ll_weight": 2.0,
+    "sl_weight": 2.0,
+    "det_weight": 2.0,
+    "workers": 16,
+    "venue_ref_dir": "dataset/venue_ref_20261106",
+    "venue_p": 0.5,
+    "venue_v4": 0.8,
+    "venue_v5": 0.25,
+    "patience": 8,
+    "amp": true,
+    "max_steps": 0,
+    "val_max": 0,
+    "seed": 0,
+    "out": "outputs/train/hybridnets_mt_expA",
+    "fresh": false,
+    "head_lr_mult": 10.0,
+    "enc_skip": false,
+    "warmup_steps": 500
+  },
+  "test": {
+    "all": {
+      "da_iou": 0.9546,
+      "ll_iou": 0.8164,
+      "sl_iou": null,
+      "ap50": {
+        "pedestrian": 0.9575,
+        "sign_A": 0.8061,
+        "sign_B": 0.8867,
+        "bump": 0.9671,
+        "slow": 0.994,
+        "parking": 0.8529,
+        "traffic_light": 0.9882,
+        "light_red": 0.9775,
+        "light_yellow": 0.9503,
+        "light_green": 0.9844,
+        "limo": null,
+        "cone": 0.5712
+      },
+      "map50": 0.8947
+    }
+  },
+  "test_venue": {
+    "all": {
+      "da_iou": 0.9346,
+      "ll_iou": 0.4862,
+      "sl_iou": 0.6042,
+      "ap50": {
+        "pedestrian": 0.99,
+        "sign_A": 0.8388,
+        "sign_B": 0.8752,
+        "bump": 0.9048,
+        "slow": 0.9967,
+        "parking": 0.905,
+        "traffic_light": 0.9855,
+        "light_red": 0.9478,
+        "light_yellow": 1.0,
+        "light_green": 0.9733,
+        "limo": null,
+        "cone": null
+      },
+      "map50": 0.9368
+    }
+  },
+  "test_bag": {
+    "all": {
+      "da_iou": 0.9808,
+      "ll_iou": 0.8256,
+      "sl_iou": null,
+      "ap50": {
+        "pedestrian": 0.8333,
+        "sign_A": 0.9583,
+        "sign_B": 0.8833,
+        "bump": 1.0,
+        "slow": 0.9643,
+        "parking": 0.9286,
+        "traffic_light": 1.0,
+        "light_red": 1.0,
+        "light_yellow": 1.0,
+        "light_green": 1.0,
+        "limo": null,
+        "cone": null
+      },
+      "map50": 0.952
+    }
+  }
+}

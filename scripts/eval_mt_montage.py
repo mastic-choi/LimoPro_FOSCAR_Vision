@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """다중 작업 모델(best.pt)로 test 사진에 검출 박스를 그려 몽타주를 만든다.
 예측은 클래스별 색(점수 0.4 이상), 정답은 흰 얇은 선. test / test_venue / test_bag 24장씩, 콘 test 16장.
-사용: python scripts/eval_mt_montage.py . <best.pt> <출력 폴더>
+사용: python scripts/eval_mt_montage.py . <best.pt> <출력 폴더> [제목]
 """
 import os, sys
 root, ckpt, out = [os.path.abspath(p) for p in sys.argv[1:4]]
+TITLE = sys.argv[4] if len(sys.argv) > 4 else os.path.basename(os.path.dirname(ckpt)) + " best.pt"
 sys.path.insert(0, os.path.join(root, "scripts"))
 import cv2, numpy as np, torch
 import train_multitask as tm
@@ -63,7 +64,7 @@ def run(name, items, n):
         tiles.append(np.zeros((TH, TW, 3), np.uint8))
     grid = np.vstack([np.hstack(tiles[r:r + COLS]) for r in range(0, len(tiles), COLS)])
     head = np.full((44, grid.shape[1], 3), 30, np.uint8)
-    cv2.putText(head, f"hybridnets_mt_v1 best.pt | {name} | {len(ds)} imgs | pred(color, score>={THR}) / GT(white thin)",
+    cv2.putText(head, f"{TITLE} | {name} | {len(ds)} imgs | pred(color, score>={THR}) / GT(white thin)",
                 (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
     p = os.path.join(out, f"montage_{name}.jpg")
     cv2.imwrite(p, np.vstack([head, grid]), [cv2.IMWRITE_JPEG_QUALITY, 88])
