@@ -13,7 +13,7 @@ AutoRace 2026 참가팀 FOSCAR의 차선 인식 모델 저장소입니다. BDD10
 
 ## 현재 상태 (2026-11-10)
 
-- **다중 작업 1차 [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1):** HybridNets 하나로 차선, 흰 가로선, 표지판·신호등·라바콘 검출을 같이 합니다. 차선은 4차와 같은 수준이고 신호등은 잘 잡지만, **표지판은 종류를 헷갈리고 A/B는 거의 구분하지 못합니다.** 아래 [다중 작업 1차](#다중-작업-1차-2026-11-10)를 보세요.
+- **다중 작업 1차 [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1):** HybridNets 하나로 차선, 흰 가로선, 표지판·신호등·라바콘 검출을 같이 합니다. 차선은 4차와 같은 수준이고 신호등은 잘 잡지만, **표지판은 종류를 헷갈리고 A/B는 거의 구분하지 못합니다.** 원인은 데이터가 아니라 학습과 BiFPN 쪽으로 확인했고(백본 특징은 A/B를 약 95% 구분), HybridNets를 고치는 실험 A·B를 돌리는 중입니다. 아래 [다중 작업 1차](#다중-작업-1차-2026-11-10)를 보세요.
 - 1·2·3차 파인튜닝을 마쳤고 가중치는 [Releases](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases)에 있습니다. **최신은 HybridNets만 다시 학습한 [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4)이고, 모델 4개는 [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3)에 있습니다.**
 - 4차(HybridNets만)는 11/07 실차 주행에서 3차 HybridNets가 코너 안쪽 da를 깎던 프레임과 트랙 밖 프레임을 라벨링해 더했습니다. 실차 코너 test da가 0.878 → 0.982로 올랐고, 기존 test와 대회장 test는 0.004~0.005 떨어졌습니다. 아래 [4차 결과](#4차-hybridnets만-2026-11-08)를 보세요.
 - 3차는 2차 가중치에서 이어서, 11/06 대회장 조명 사진과 대회장 조명 증강을 더해 학습했습니다. 대회장 test da가 2차보다 0.02~0.19 올랐고, 기존 test 점수도 떨어지지 않았습니다.
@@ -233,6 +233,7 @@ gh release download ego-lane-v4 -p "hybridnets_v4_best_da.pt"
 | `scripts/eval_splits.py` | 가중치 하나를 여러 test split에서 채점 |
 | `scripts/train_multitask.py`, `prepare_cones.py`, `synth_klein_refine.py`, `synth_preview.py`, `pack_dataset_mt.py` | 다중 작업 학습(분할 + 검출), 라바콘 데이터 정리, Klein 다듬기, 합성 미리보기, 데이터셋 묶기 |
 | `scripts/eval_mt_montage.py`, `eval_mt_det_diag.py`, `eval_mt_ab.py`, `eval_mt_train_crops.py` | 다중 작업 검출 몽타주, 혼동·크기 진단, A/B 구분 확인, 학습 라벨 확인 |
+| `scripts/eval_mt_ab_crop_cls.py`, `eval_mt_feature_probe.py`, `run_mt_exp_ab.sh`, `summarize_mt_exp.py` | 잘라 낸 표지판 분류기 실험, 특징 linear probe, HybridNets 개선 실험 A·B 실행과 비교표 |
 | `outputs/train_mt_v1/` | 다중 작업 1차 로그, 결과, 몽타주 |
 | `outputs/eval_clean/` | 1차와 2차 재채점 결과 |
 

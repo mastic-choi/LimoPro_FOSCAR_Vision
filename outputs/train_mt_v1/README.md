@@ -120,6 +120,16 @@ train의 A / B / P 표지판을 줄별로 잘라 봤습니다. A는 왼쪽 화�
 
 ![train A/B/P (원본)](montages/ab_train_crops_orig.jpg)
 
+## 추가 확인 실험
+
+자세한 내용은 [`docs/MULTITASK_DETECTION_ANALYSIS.md`](../../docs/MULTITASK_DETECTION_ANALYSIS.md) 5~8절에 있습니다.
+
+- **잘라 낸 표지판으로 작은 CNN 분류기 학습** (`ab_crop_cls.json`): 같은 사진·해상도에서 A/B/P를 train 99.8%, test 세트 전부 100% 구분합니다. 정보는 사진에 있습니다. 다만 train과 test가 같은 표지판 그림으로 합성돼 쉬운 시험입니다.
+- **HybridNets 특징 linear probe** (`probe.txt`): 백본 p2·p3 특징은 A/B를 약 95% 구분하는데, 검출 머리가 받는 BiFPN P3에서는 약 85%로 줄고, 검출 머리 출력은 58%입니다.
+- **HybridNets 개선 실험 A·B** (`scripts/run_mt_exp_ab.sh`): 검출 머리·BiFPN 학습 강화(A), A + 백본 p3 지름길(B). 진행 중입니다.
+
+![잘라 낸 표지판 분류기, 대회장 test](montages/ab_crop_cls_test_venue.jpg)
+
 ## 다시 만들기
 
 학습 번들 폴더(데이터셋과 `models/HybridNets`가 있는 곳)에서:
@@ -129,6 +139,8 @@ python scripts/eval_mt_montage.py . hybridnets_mt_v1_best.pt outputs/train_mt_v1
 python scripts/eval_mt_det_diag.py . hybridnets_mt_v1_best.pt > outputs/train_mt_v1/diag_det.txt
 python scripts/eval_mt_ab.py . hybridnets_mt_v1_best.pt outputs/train_mt_v1/montages
 python -I scripts/eval_mt_train_crops.py . outputs/train_mt_v1/montages
+python -I scripts/eval_mt_ab_crop_cls.py . outputs/train/ab_crop_cls_v1
+python scripts/eval_mt_feature_probe.py . hybridnets_mt_v1_best.pt > outputs/train_mt_v1/probe.txt
 ```
 
 `eval_mt_ab.py`는 `ab_stats.json`을 출력 폴더에 씁니다.

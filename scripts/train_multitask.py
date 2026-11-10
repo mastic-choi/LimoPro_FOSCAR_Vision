@@ -195,7 +195,17 @@ def det_items(root, split, n_max, seed, positives_only=True):
 
 
 # ---------------------------------------------------------------------------
-def build_model(m, init):
+def add_det_skip(model):
+    """실험 B: 백본 p3(stride 8) 특징을 1x1 conv로 BiFPN P3에 더해 검출 머리에만 넣는 지름길.
+    linear probe에서 백본 p3는 A/B를 약 95% 구분하는데 BiFPN P3는 약 85%라, 고운 특징을 검출 머리에 직접 준다.
+    가중치·편향을 0으로 시작해서 처음에는 원래 모델과 출력이 같다. 분할(bifpndecoder)에는 원래 BiFPN 특징을 쓴다."""
+    c_in = model.encoder.out_channels[-3]
+    c_out = model.fpn_num_filters[model.compound_coef]
+    model.det_skip = torch.nn.Conv2d(c_in, c_out, 1)
+    torch.nn.init.zeros_(model.det_skip.weight); torch.nn.init.zeros_(model.det_skip.bias)
+
+
+def build_model(m, init, enc_skip=False):
     repo = os.path.join(m.MODELS_DIR, "HybridNets")
     HB = m.import_from_repo(repo, "backbone", "HybridNetsBackbone")
     model = HB(compound_coef=3, num_classes=NC, ratios=[(0.62, 1.58), (1.0, 1.0), (1.58, 0.62)],
@@ -203,6 +213,8 @@ def build_model(m, init):
     sd = torch.load(init, map_location="cpu")
     if isinstance(sd, dict) and "model" in sd and not any(k.startswith("encoder.") for k in sd):
         sd = sd["model"]
+    if enc_skip or any(k.startswith("det_skip.") for k in sd):
+        add_det_skip(model)
     own = model.state_dict()
     new = {}
     for k, v in sd.items():
@@ -232,8 +244,18 @@ def build_model(m, init):
     return model
 
 
+def forward_mt(model, x):
+    """HybridNetsBackbone.forward 와 같고, det_skip 이 있으면 검출 머리에 들어가는 P3에만 더한다."""
+    p2, p3, p4, p5 = model.encoder(x)[-4:]
+    feats = model.bifpn((p3, p4, p5))
+    seg = model.segmentation_head(model.bifpndecoder((p2, *feats)))
+    if hasattr(model, "det_skip"):
+        feats = (feats[0] + model.det_skip(p3), *feats[1:])
+    return feats, model.regressor(feats), model.classifier(feats), model.anchors(x, x.dtype), seg
+
+
 def heads(model, x):
-    _, reg, cls, anchors, seg = model(x)
+    _, reg, cls, anchors, seg = forward_mt(model, x)
     p = torch.softmax(seg.float(), 1)
     return reg, cls, anchors, p[:, 1] + p[:, 2] + p[:, 3], p[:, 2], p[:, 3]
 
@@ -351,6 +373,10 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="outputs/train/hybridnets_mt_v1_seed0")
     ap.add_argument("--fresh", action="store_true")
+    ap.add_argument("--head-lr-mult", type=float, default=1.0,
+                    help="검출 머리(regressor, classifier)·BiFPN·det_skip 의 lr 배수 (실험 A/B: 10)")
+    ap.add_argument("--enc-skip", action="store_true", help="실험 B: 백본 p3 -> 검출 머리 지름길(det_skip) 추가")
+    ap.add_argument("--warmup-steps", type=int, default=0, help="처음 이 step 동안 lr을 0에서 선형으로 올림")
     a = ap.parse_args()
 
     import make_model_compare_gif as m   # 장치·ZLUDA 설정
@@ -375,8 +401,14 @@ def main():
         num_workers=a.workers, persistent_workers=a.workers > 0, pin_memory=True, collate_fn=collate)
     tl, vl = mk(tr, True), mk(va_, False)
 
-    model = build_model(m, a.init).to(dev)
-    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=a.lr, weight_decay=5e-4)
+    model = build_model(m, a.init, a.enc_skip).to(dev)
+    head_names = ("regressor.", "classifier.", "bifpn.", "det_skip.")
+    g_head = [p for n, p in model.named_parameters() if p.requires_grad and n.startswith(head_names)]
+    g_rest = [p for n, p in model.named_parameters() if p.requires_grad and not n.startswith(head_names)]
+    opt = torch.optim.AdamW([{"params": g_rest, "mult": 1.0}, {"params": g_head, "mult": a.head_lr_mult}],
+                            lr=a.lr, weight_decay=5e-4)
+    print(f"param groups: rest {sum(p.numel() for p in g_rest) / 1e6:.1f}M x1, "
+          f"head+bifpn {sum(p.numel() for p in g_head) / 1e6:.1f}M x{a.head_lr_mult}", flush=True)
     focal = FocalLoss()
     start, best = 0, {"score": -1.0, "epoch": 0, "stopped": False}
     if not a.fresh and os.path.exists(os.path.join(a.out, "last.pt")):
@@ -395,12 +427,16 @@ def main():
             break
         lr = a.lr * (1 - ep / a.epochs) ** 1.5
         for g in opt.param_groups:
-            g["lr"] = lr
+            g["lr"] = lr * g.get("mult", 1.0)
         model.train()
         t0, n, acc = time.time(), 0, np.zeros(5)
         for step, (x, da, ll, sl, slv, segv, slf, ann, _) in enumerate(tl):
             if a.max_steps and step >= a.max_steps:
                 break
+            gstep = ep * len(tl) + step
+            if a.warmup_steps and gstep <= a.warmup_steps:
+                for g in opt.param_groups:
+                    g["lr"] = lr * g.get("mult", 1.0) * min(1.0, (gstep + 1) / a.warmup_steps)
             with limiter:
                 x, da, ll, sl, slv = x.to(dev), da.to(dev), ll.to(dev), sl.to(dev), slv.to(dev)
                 segv, slf, ann = segv.to(dev), slf.to(dev), ann.to(dev)
