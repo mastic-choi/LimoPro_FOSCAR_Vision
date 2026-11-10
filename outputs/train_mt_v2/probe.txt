@@ -1,0 +1,8 @@
+
+##### outputs/train/hybridnets_mt_expA/best.pt
+boxes: train 4526, test 260, test_venue 66, test_bag 20
+layer         dim  train 3종 | test 3종 / A/B | test_venue 3종 / A/B | test_bag 3종 / A/B
+enc_p2        288     0.979 | 0.969 / 0.971 | 0.955 / 0.932 | 1.000 / 1.000
+enc_p3        432     0.966 | 0.954 / 0.971 | 0.924 / 0.977 | 0.950 / 1.000
+bifpn_P3     1440     0.934 | 0.873 / 0.903 | 0.848 / 0.841 | 0.950 / 1.000
+bifpn_P4     1440     0.854 | 0.773 / 0.823 | 0.803 / 0.773 | 0.900 / 0.846
