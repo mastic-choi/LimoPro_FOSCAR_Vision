@@ -1,0 +1,41 @@
+
+===== test  (클래스 무시 AP50 = 0.958)
+class           AP50   GT    크기중앙(px)  p10     앵커매칭가능   혼동(점수>=0.3, IoU>=0.5 예측)
+pedestrian      0.48   87        21.8   15        94%   bump 48, pedestrian 30, (놓침) 9
+sign_A          0.34   86        20.9   15        97%   sign_A 31, parking 28, sign_B 15, (놓침) 9
+sign_B          0.37   89        23.7   15        97%   parking 31, sign_A 24, sign_B 21, (놓침) 9
+bump            0.62   91        23.9   16        96%   bump 72, pedestrian 15, (놓침) 4
+slow            0.98   82        22.6   15        95%   slow 77, (놓침) 5
+parking         0.36   85        21.8   14        94%   parking 32, sign_A 25, sign_B 14, (놓침) 12
+traffic_light   0.99  260        40.6   27        98%   traffic_light 256, (놓침) 4
+light_red       0.98   85        13.4    9        81%   light_red 74, (놓침) 11
+light_yellow    0.95   86        12.2    9        84%   light_yellow 73, (놓침) 13
+light_green     0.98   88        13.2    9        93%   light_green 84, (놓침) 4
+
+===== test_venue  (클래스 무시 AP50 = 0.966)
+class           AP50   GT    크기중앙(px)  p10     앵커매칭가능   혼동(점수>=0.3, IoU>=0.5 예측)
+pedestrian      0.59   24        24.5   15       100%   bump 14, pedestrian 9, slow 1
+sign_A          0.48   23        21.2   14        91%   parking 9, sign_A 8, sign_B 3, (놓침) 2
+sign_B          0.40   21        21.8   16       100%   parking 9, sign_B 7, sign_A 4, traffic_light 1
+bump            0.53   22        21.2   14        95%   bump 12, pedestrian 8, (놓침) 2
+slow            0.94   24        19.4   15        92%   slow 22, (놓침) 2
+parking         0.57   22        23.2   15        95%   parking 17, sign_B 3, (놓침) 2
+traffic_light   0.99   69        35.8   27       100%   traffic_light 68, (놓침) 1
+light_red       0.93   21        12.7    9        76%   light_red 17, (놓침) 4
+light_yellow    1.00   24        10.8    8        83%   light_yellow 22, (놓침) 2
+light_green     0.98   24        11.8    9        83%   light_green 21, (놓침) 3
+
+===== test_bag  (클래스 무시 AP50 = 0.960)
+class           AP50   GT    크기중앙(px)  p10     앵커매칭가능   혼동(점수>=0.3, IoU>=0.5 예측)
+pedestrian      0.50    6        14.4   13        83%   pedestrian 3, (놓침) 2, bump 1
+sign_A          0.48    6        21.6   15       100%   (놓침) 2, parking 2, sign_B 1, sign_A 1
+sign_B          0.47    7        23.2   15       100%   parking 2, sign_A 2, sign_B 2, (놓침) 1
+bump            0.90    6        18.2   15        83%   bump 4, (놓침) 1, pedestrian 1
+slow            0.94    7        18.4   14       100%   slow 6, (놓침) 1
+parking         0.46    7        28.0   19       100%   sign_B 2, sign_A 2, parking 2, traffic_light 1
+traffic_light   1.00   20        47.6   27        95%   traffic_light 20
+light_red       1.00    6        12.8    7       100%   light_red 5, (놓침) 1
+light_yellow    1.00    6        25.4    8       100%   light_yellow 6
+light_green     1.00    8        15.3   10       100%   light_green 8
+
+앵커 크기(√면적) 최소 9.9px, 종류 [9.9, 10.0, 16.1, 16.2, 19.8, 20.0] ...
