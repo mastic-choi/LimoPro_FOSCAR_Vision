@@ -199,6 +199,7 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 | 릴리즈 | 내용 |
 |---|---|
 | [`multitask-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2) | **다중 작업 2차 HybridNets (최신)**, 검출 mAP50 0.90~0.95, A/B 구분 84~92% |
+| [`multitask-v2-skip`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2-skip) | 참고용: 2차 + 백본 지름길(실험 B). 성능은 2차와 비슷, 추론에 `forward_mt` 필요 |
 | [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1) | 다중 작업 1차 HybridNets (차선 + 흰 가로선 + 검출 12종), 학습 데이터셋, 학습 코드 |
 | [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4) | **4차 HybridNets (차선만, 최신)**, 실차 코너 test 채점 |
 | [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3) | 3차 모델 4개, 대회장 test 채점 |
@@ -248,7 +249,7 @@ gh release download ego-lane-v4 -p "hybridnets_v4_best_da.pt"
 | `scripts/train_multitask.py`, `prepare_cones.py`, `synth_klein_refine.py`, `synth_preview.py`, `pack_dataset_mt.py` | 다중 작업 학습(분할 + 검출), 라바콘 데이터 정리, Klein 다듬기, 합성 미리보기, 데이터셋 묶기 |
 | `scripts/eval_mt_montage.py`, `eval_mt_det_diag.py`, `eval_mt_ab.py`, `eval_mt_train_crops.py` | 다중 작업 검출 몽타주, 혼동·크기 진단, A/B 구분 확인, 학습 라벨 확인 |
 | `scripts/eval_mt_ab_crop_cls.py`, `eval_mt_feature_probe.py`, `run_mt_exp_ab.sh`, `summarize_mt_exp.py` | 잘라 낸 표지판 분류기 실험, 특징 linear probe, HybridNets 개선 실험 A·B 실행과 비교표 |
-| `outputs/train_mt_v1/`, `outputs/train_mt_v2/` | 다중 작업 1차, 2차 로그, 결과, 몽타주 |
+| `outputs/train_mt_v1/`, `outputs/train_mt_v2/`, `outputs/train_mt_expB/` | 다중 작업 1차, 2차, 실험 B 로그, 결과, 몽타주 |
 | `outputs/eval_clean/` | 1차와 2차 재채점 결과 |
 
 ## 문서
