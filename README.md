@@ -11,8 +11,9 @@ AutoRace 2026 참가팀 FOSCAR의 차선 인식 모델 저장소입니다. BDD10
 
 *11/06 대회장 조명 사진 중 학습에 쓰지 않은 test 프레임입니다. 초록은 da, 분홍은 ll이고, 칸 아래 숫자는 정답과 비교한 da IoU입니다. 색 조명과 섞이지 않게 흑백 위에 그렸습니다.*
 
-## 현재 상태 (2026-11-08)
+## 현재 상태 (2026-11-10)
 
+- **다중 작업 1차 [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1):** HybridNets 하나로 차선, 흰 가로선, 표지판·신호등·라바콘 검출을 같이 합니다. 차선은 4차와 같은 수준이고 신호등은 잘 잡지만, **표지판은 종류를 헷갈리고 A/B는 거의 구분하지 못합니다.** 아래 [다중 작업 1차](#다중-작업-1차-2026-11-10)를 보세요.
 - 1·2·3차 파인튜닝을 마쳤고 가중치는 [Releases](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases)에 있습니다. **최신은 HybridNets만 다시 학습한 [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4)이고, 모델 4개는 [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3)에 있습니다.**
 - 4차(HybridNets만)는 11/07 실차 주행에서 3차 HybridNets가 코너 안쪽 da를 깎던 프레임과 트랙 밖 프레임을 라벨링해 더했습니다. 실차 코너 test da가 0.878 → 0.982로 올랐고, 기존 test와 대회장 test는 0.004~0.005 떨어졌습니다. 아래 [4차 결과](#4차-hybridnets만-2026-11-08)를 보세요.
 - 3차는 2차 가중치에서 이어서, 11/06 대회장 조명 사진과 대회장 조명 증강을 더해 학습했습니다. 대회장 test da가 2차보다 0.02~0.19 올랐고, 기존 test 점수도 떨어지지 않았습니다.
@@ -146,6 +147,28 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 
 ![실차 코너에서 3차와 4차 HybridNets 비교](outputs/montages/bag_corner_v3_vs_v4.jpg)
 
+### 다중 작업 1차 (2026-11-10)
+
+4차 HybridNets에서 이어서, 분할을 4채널(배경 / 도로 / 차선 / **흰 가로선**)로 늘리고 **검출 12종**(pedestrian, sign_A, sign_B, bump, slow, parking, traffic_light, light_red/yellow/green, limo, cone)을 붙여 H100에서 40 epoch 학습했습니다. 학습 데이터는 ego_v4 프레임에 표지판·신호등을 합성하고 FLUX 3 Klein으로 다듬은 사진과, 공개 라바콘 데이터(TraCon, FSOCO)입니다.
+
+| | 4차 | 다중 작업 1차 |
+|---|---|---|
+| 차선 da / ll, 기존 test | 0.951 / 0.819 | 0.952 / 0.819 |
+| 차선 da / ll, 대회장 test | 0.931 / 0.495 | 0.934 / 0.493 |
+| 차선 da / ll, test_bag | 0.982 / 0.816 | 0.981 / 0.820 |
+| 검출 mAP50 (기존 / 대회장 / bag) | - | 0.651 / 0.714 / 0.751 |
+
+- 신호등, 켜진 불, slow는 AP50 0.93~1.00입니다.
+- 표지판은 "있다"는 찾지만(클래스 무시 AP50 0.96), 빨간 삼각형(보행자·방지턱)과 파란 사각형(A·B·주차)끼리 헷갈립니다.
+- **A/B는 A와 B 점수만 비교해도 정답률이 57%이고, train 사진에서도 59%입니다.** 외운 게 아니라 배우지 못한 것(언더피팅)입니다.
+- test의 표지판도 합성이라 실제 표지판 성능은 아직 모릅니다.
+
+결과와 그림은 [`outputs/train_mt_v1/README.md`](outputs/train_mt_v1/README.md), 분석은 [`docs/MULTITASK_DETECTION_ANALYSIS.md`](docs/MULTITASK_DETECTION_ANALYSIS.md)에 있습니다.
+
+![대회장 test A/B 표지판 분류 확인](outputs/train_mt_v1/montages/ab_crops_test_venue.jpg)
+
+*대회장 test의 정답 A/B 표지판을 잘라 확대했습니다. 초록 테두리 = 맞음, 빨강 = 틀림, 주황 = 놓침. 큰 표지판도 A/B/P 점수가 0.33~0.38로 비슷합니다.*
+
 ## 한계
 
 - 일반 조명 데이터는 주행 1회, 대회장 조명 데이터는 2.5분 주행 1회에서 나왔고 시드도 1개입니다. ±0.01 안팎의 차이는 우연일 수 있습니다.
@@ -162,7 +185,8 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 
 | 릴리즈 | 내용 |
 |---|---|
-| [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4) | **4차 HybridNets (최신)**, 실차 코너 test 채점 |
+| [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1) | 다중 작업 1차 HybridNets (차선 + 흰 가로선 + 검출 12종), 학습 데이터셋, 학습 코드 |
+| [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4) | **4차 HybridNets (차선만, 최신)**, 실차 코너 test 채점 |
 | [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3) | 3차 모델 4개, 대회장 test 채점 |
 | [`ego-lane-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v2) | 2차 모델 4개, 보고서, 이 학습에 쓴 코드 |
 | [`ego-lane-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v1) | 1차 모델 4개 |
@@ -207,11 +231,15 @@ gh release download ego-lane-v4 -p "hybridnets_v4_best_da.pt"
 | `outputs/train_v2_foscar/`, `outputs/train_v3_h100/`, `outputs/train_v4/` | 2차, 3차, 4차 학습 로그와 결과 |
 | `scripts/review_bag_events.py`, `round4_candidates.py`, `review_round4.py`, `wide_to_ego.py`, `build_train_dataset_v4.py` | 실차 rosbag 문제 순간 분류, 4차 후보 뽑기와 사람 검토, 4차 데이터셋 |
 | `scripts/eval_splits.py` | 가중치 하나를 여러 test split에서 채점 |
+| `scripts/train_multitask.py`, `prepare_cones.py`, `synth_klein_refine.py`, `synth_preview.py`, `pack_dataset_mt.py` | 다중 작업 학습(분할 + 검출), 라바콘 데이터 정리, Klein 다듬기, 합성 미리보기, 데이터셋 묶기 |
+| `scripts/eval_mt_montage.py`, `eval_mt_det_diag.py`, `eval_mt_ab.py`, `eval_mt_train_crops.py` | 다중 작업 검출 몽타주, 혼동·크기 진단, A/B 구분 확인, 학습 라벨 확인 |
+| `outputs/train_mt_v1/` | 다중 작업 1차 로그, 결과, 몽타주 |
 | `outputs/eval_clean/` | 1차와 2차 재채점 결과 |
 
 ## 문서
 
 - [`docs/ENSEMBLE_FINETUNE.md`](docs/ENSEMBLE_FINETUNE.md): 파인튜닝 방법과 결과 상세
+- [`docs/MULTITASK_DETECTION_ANALYSIS.md`](docs/MULTITASK_DETECTION_ANALYSIS.md): 다중 작업 1차 검출 점수 분석 (A/B 언더피팅)
 - [`docs/EGO_LANE_PSEUDO_LABEL.md`](docs/EGO_LANE_PSEUDO_LABEL.md): 첫 라벨 생성 방법
 - [`docs/LANE_MODEL_WORKFLOW.md`](docs/LANE_MODEL_WORKFLOW.md): 참고 프로젝트의 작업 흐름
 - [`docs/EARLY_EXPLORATION.md`](docs/EARLY_EXPLORATION.md): 공개 모델 비교 기록
