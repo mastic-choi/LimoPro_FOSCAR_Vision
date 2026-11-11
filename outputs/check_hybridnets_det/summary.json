@@ -1,0 +1,239 @@
+{
+  "official_obj_list": [
+    "car"
+  ],
+  "conf": 0.25,
+  "checkpoints": {
+    "official": {
+      "path": "models\\HybridNets\\weights\\hybridnets.pth",
+      "det_classes": 1,
+      "classifier_out_ch": 9,
+      "regressor_out_ch": 36,
+      "seg_classes": 3,
+      "diff_vs_official": {
+        "encoder": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/338"
+          },
+          "bn_stat": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/156"
+          }
+        },
+        "bifpn": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/312"
+          },
+          "bn_stat": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/108"
+          }
+        },
+        "bifpndecoder": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/128"
+          },
+          "bn_stat": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/64"
+          }
+        },
+        "segmentation_head": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/2"
+          }
+        },
+        "regressor": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/55"
+          },
+          "bn_stat": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/40"
+          }
+        },
+        "classifier": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/55"
+          },
+          "bn_stat": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/40"
+          }
+        }
+      },
+      "detections": {
+        "demo": {
+          "images": 6,
+          "mean_boxes": 17.0,
+          "mean_max_score": 0.9039804538091024
+        },
+        "limo": {
+          "images": 6,
+          "mean_boxes": 0.0,
+          "mean_max_score": 0.17608011762301126
+        }
+      }
+    },
+    "hybridnets_seed0": {
+      "path": "outputs\\train\\hybridnets_seed0\\best_da.pt",
+      "det_classes": 1,
+      "classifier_out_ch": 9,
+      "regressor_out_ch": 36,
+      "seg_classes": 3,
+      "diff_vs_official": {
+        "encoder": {
+          "param": {
+            "rel_change": 0.028797928178955847,
+            "changed_tensors": "335/338"
+          },
+          "bn_stat": {
+            "rel_change": 0.02334843636995863,
+            "changed_tensors": "154/156"
+          }
+        },
+        "bifpn": {
+          "param": {
+            "rel_change": 0.031297333066456726,
+            "changed_tensors": "312/312"
+          },
+          "bn_stat": {
+            "rel_change": 0.16586338779159243,
+            "changed_tensors": "107/108"
+          }
+        },
+        "bifpndecoder": {
+          "param": {
+            "rel_change": 0.05221810519101563,
+            "changed_tensors": "128/128"
+          },
+          "bn_stat": {
+            "rel_change": 0.12892497487002855,
+            "changed_tensors": "64/64"
+          }
+        },
+        "segmentation_head": {
+          "param": {
+            "rel_change": 0.051521455607606625,
+            "changed_tensors": "2/2"
+          }
+        },
+        "regressor": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/55"
+          },
+          "bn_stat": {
+            "rel_change": 0.045744653337332665,
+            "changed_tensors": "40/40"
+          }
+        },
+        "classifier": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/55"
+          },
+          "bn_stat": {
+            "rel_change": 0.007813030298899256,
+            "changed_tensors": "40/40"
+          }
+        }
+      },
+      "detections": {
+        "demo": {
+          "images": 6,
+          "mean_boxes": 14.5,
+          "mean_max_score": 0.7798271179199219
+        },
+        "limo": {
+          "images": 6,
+          "mean_boxes": 9.166666666666666,
+          "mean_max_score": 0.5012434422969818
+        }
+      }
+    },
+    "hybridnets_v2_seed0": {
+      "path": "outputs\\train\\hybridnets_v2_seed0\\best_da.pt",
+      "det_classes": 1,
+      "classifier_out_ch": 9,
+      "regressor_out_ch": 36,
+      "seg_classes": 3,
+      "diff_vs_official": {
+        "encoder": {
+          "param": {
+            "rel_change": 0.09040654488439055,
+            "changed_tensors": "335/338"
+          },
+          "bn_stat": {
+            "rel_change": 0.033442160579626824,
+            "changed_tensors": "154/156"
+          }
+        },
+        "bifpn": {
+          "param": {
+            "rel_change": 0.08694639729513493,
+            "changed_tensors": "312/312"
+          },
+          "bn_stat": {
+            "rel_change": 0.24231156356337424,
+            "changed_tensors": "107/108"
+          }
+        },
+        "bifpndecoder": {
+          "param": {
+            "rel_change": 0.11021009046391372,
+            "changed_tensors": "128/128"
+          },
+          "bn_stat": {
+            "rel_change": 0.21049797202111703,
+            "changed_tensors": "64/64"
+          }
+        },
+        "segmentation_head": {
+          "param": {
+            "rel_change": 0.18259939964121688,
+            "changed_tensors": "2/2"
+          }
+        },
+        "regressor": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/55"
+          },
+          "bn_stat": {
+            "rel_change": 0.05675517677307108,
+            "changed_tensors": "40/40"
+          }
+        },
+        "classifier": {
+          "param": {
+            "rel_change": 0.0,
+            "changed_tensors": "0/55"
+          },
+          "bn_stat": {
+            "rel_change": 0.009615281362621153,
+            "changed_tensors": "40/40"
+          }
+        }
+      },
+      "detections": {
+        "demo": {
+          "images": 6,
+          "mean_boxes": 6.666666666666667,
+          "mean_max_score": 0.6386286069949468
+        },
+        "limo": {
+          "images": 6,
+          "mean_boxes": 10.166666666666666,
+          "mean_max_score": 0.4148210436105728
+        }
+      }
+    }
+  }
+}
