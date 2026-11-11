@@ -102,14 +102,21 @@ Guo et al. 2017 *On Calibration of Modern Neural Networks*의 결론은 "학습�
   - 학습 전에 시작 가중치(v2)를 val로 재 둡니다.
   - val da+ll IoU가 그보다 0.01 넘게 낮은 epoch은 val loss가 최저여도 `best.pt`로 고르지 않습니다.
   - 끝까지 그러면 시작 가중치가 `best.pt`로 남습니다.
+  - 그래도 그 epoch은 버리지 않습니다. val loss 최저 가중치는 차선 보호와 상관없이 항상 `best_val_loss.pt`에 저장합니다. 학습이 끝나면 `best.pt`와 epoch이 다른 후보(`best_val_loss.pt`, `best_score.pt`)도 같은 test 3종으로 채점해 `test.json`의 `candidates`에 넣습니다. 검출은 좋아졌는데 차선이 나빠진 경우, 이 표를 보고 어느 쪽을 쓸지 정합니다. 다른 후보를 고르면 temperature는 `scripts/eval_mt_calib.py`로 그 가중치에 맞춰 다시 구해야 합니다.
+  - 어느 쪽이 나빠졌는지 보이게 `log.csv`에 val loss를 차선(`val_seg`), 흰 가로선(`val_sl`), 검출(`val_det`)로 나눠 기록합니다.
+
+**4차 차선(ego-lane-v4)에서 시작하는 안**: `INIT=weights/hybridnets_v4_best_da.pt bash run_v3.sh`로 할 수 있습니다(v2 서버 폴더에 있음). 기본으로 하지 않은 이유는 다음과 같습니다.
+
+- 아래 표처럼 v2의 차선은 4차와 거의 같아서(대회장 ll −0.009, test_bag ll +0.010), 이어서 학습한 탓에 차선이 나빠졌다는 근거가 없습니다.
+- 4차 가중치에는 검출 머리와 흰 가로선 채널이 없어서 처음부터 다시 배워야 합니다. multitask v1은 4차에서 시작해 40 epoch 동안 val mAP50 0.69까지 갔고, v2(검출 머리 lr ×10)가 그 위에서 15 epoch을 더 해 0.91이 됐습니다.
 
 지금까지 차선 IoU (같은 test 세트):
 
 | | 4차 차선 | multitask v1 | multitask v2 |
 |---|---|---|---|
 | test da / ll | 0.951 / 0.819 | 0.952 / 0.819 | 0.955 / 0.816 |
-| 대회장 test da / ll | - | 0.934 / 0.493 | 0.935 / 0.486 |
-| test_bag da / ll | - | 0.981 / 0.820 | 0.981 / 0.826 |
+| 대회장 test da / ll | 0.931 / 0.495 | 0.934 / 0.493 | 0.935 / 0.486 |
+| test_bag da / ll | 0.982 / 0.816 | 0.981 / 0.820 | 0.981 / 0.826 |
 
 ## 6. v2와 바뀐 설정 전체
 
@@ -141,7 +148,8 @@ bash run_v3.sh                      # 학습 -> 모니터 시험 -> results_v3_<
 
 ## 8. 결과가 오면 볼 것
 
-1. `log.csv`의 train loss / val loss 곡선, 멈춘 이유(`test.json`의 `best.stop_reason`), `best.pt`와 `best_score.pt` epoch 차이
+1. `log.csv`의 train loss / val loss 곡선(차선·가로선·검출로 나눈 val loss 포함), 멈춘 이유(`test.json`의 `best.stop_reason`), 차선 보호로 빠진 epoch(`best.lane_guard_skipped`)
+2. `test.json`의 `candidates`: `best.pt` / `best_val_loss.pt` / `best_score.pt`의 test 3종 차선·검출 점수
 2. 차선: test / 대회장 test / test_bag의 da·ll IoU가 v2(위 표)보다 나빠지지 않았는지
 3. 검출: A/B/주차 AP, 작은 박스를 무시한 효과
 4. 모니터 시험: `eval_monitor/v3.json`과 v2(3절 표)의 땡땡이 가짜 불빛·가짜 신호등 수

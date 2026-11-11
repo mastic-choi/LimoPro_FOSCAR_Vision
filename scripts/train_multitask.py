@@ -562,7 +562,7 @@ def main():
     log = os.path.join(a.out, "log.csv")
     if start == 0:
         with open(log, "w", encoding="utf-8") as f:
-            f.write("epoch,lr,loss,seg,sl,cls,reg,cal,val_loss,val_da,val_ll,val_map50,val_ece,val_mce,val_nll,sec\n")
+            f.write("epoch,lr,loss,seg,sl,cls,reg,cal,val_loss,val_seg,val_sl,val_det,val_da,val_ll,val_map50,val_ece,val_mce,val_nll,sec\n")
     limiter = m.GpuDutyLimiter()
     if a.lane_guard > 0 and "start_val" not in best:   # 시작 가중치의 val 차선 IoU (차선 보호 기준)
         s0 = evaluate(model, vl, dev, util, amp, loss_fn=val_loss_fn)["all"]
@@ -613,20 +613,23 @@ def main():
             ts.save_state(model, os.path.join(a.out, "best_score.pt"))
         if vloss < best.get("best_val_loss", float("inf")) - a.es_min_delta:   # val loss 최저 = best.pt
             best.update(best_val_loss=vloss, best_loss_epoch=ep + 1, val=v, best_train_loss=float(acc[0]))
+            ts.save_state(model, os.path.join(a.out, "best_val_loss.pt"))   # 차선 보호와 상관없이 val loss 최저는 항상 남김
             lane_ok = True
             if a.lane_guard > 0 and "start_val" in best:   # 차선(da+ll IoU)이 시작 가중치보다 lane_guard 넘게 나빠진 epoch은 best.pt로 안 씀
                 s0 = best["start_val"]
                 lane_ok = v["da_iou"] + v["ll_iou"] >= s0["da_iou"] + s0["ll_iou"] - a.lane_guard
                 if not lane_ok:
                     print(f"  차선 보호: val loss는 최저지만 da+ll {v['da_iou'] + v['ll_iou']:.4f} < 시작 "
-                          f"{s0['da_iou'] + s0['ll_iou']:.4f} - {a.lane_guard} 라 best.pt로 저장하지 않음", flush=True)
+                          f"{s0['da_iou'] + s0['ll_iou']:.4f} - {a.lane_guard} 라 best.pt로 고르지 않음 "
+                          f"(best_val_loss.pt에는 저장)", flush=True)
+                    best.setdefault("lane_guard_skipped", []).append(ep + 1)
             if a.best_by == "val_loss" and lane_ok:
                 best["best_pt_epoch"] = ep + 1
                 ts.save_state(model, os.path.join(a.out, "best.pt"))
         if a.best_by == "score" and best.get("best_score_epoch") == ep + 1:
             best["best_pt_epoch"] = ep + 1
             ts.save_state(model, os.path.join(a.out, "best.pt"))
-        best.setdefault("loss_log", []).append(dict(epoch=ep + 1, train_loss=round(float(acc[0]), 5), val_loss=vloss,
+        best.setdefault("loss_log", []).append(dict(epoch=ep + 1, train_loss=round(float(acc[0]), 5), val_loss=vloss, val_parts=v["loss_parts"],
                                                     score=round(score, 4)))
         stop_valloss = a.es_val_loss > 0 and ep + 1 - best["best_loss_epoch"] >= a.es_val_loss
         hist = best.setdefault("hist", []); hist.append(score)
@@ -650,9 +653,9 @@ def main():
         ts.atomic(lambda p: torch.save(ck, p), os.path.join(a.out, "last.pt"))
         sec = time.time() - t0
         with open(log, "a", encoding="utf-8") as f:
-            cb = v["calib"]
+            cb = v["calib"]; lp = v["loss_parts"]
             f.write(f"{ep + 1},{lr:.3g},{acc[0]:.4f},{acc[1]:.4f},{acc[2]:.4f},{acc[3]:.4f},{acc[4]:.4f},{acc[5]:.4f},"
-                    f"{vloss},{v['da_iou']},{v['ll_iou']},{v['map50']},{cb.get('ece')},{cb.get('mce')},{cb.get('nll')},{sec:.0f}\n")
+                    f"{vloss},{lp['seg']},{lp['sl']},{round(lp['cls'] + lp['reg'], 5)},{v['da_iou']},{v['ll_iou']},{v['map50']},{cb.get('ece')},{cb.get('mce')},{cb.get('nll')},{sec:.0f}\n")
         print(f"epoch {ep + 1}/{a.epochs} loss {acc[0]:.4f} val_loss {vloss} | val da {v['da_iou']:.4f} ll {v['ll_iou']:.4f} "
               f"mAP50 {v['map50']} | ECE {v['calib'].get('ece')} NLL {v['calib'].get('nll')} | "
               f"AP {json.dumps(v['ap50'])} | {sec:.0f}s", flush=True)
@@ -669,14 +672,32 @@ def main():
     ts.atomic(lambda p: json.dump(calib, open(p, "w", encoding="utf-8"), indent=1), os.path.join(a.out, "calib.json"))
     print("calib:", json.dumps(calib, ensure_ascii=False), flush=True)
     res = {"best": best, "args": vars(a), "calib": calib}
+    test_sets = {}
     for split in ("test", "test_venue", "test_bag"):
         items = seg_items(a.seg_data, split)
         if split == "test":
             items += det_items(a.det_data, "test", 0, a.seed) + det_items(a.det_data, "val", 0, a.seed)[a.cone_val_n:]
         if items:
+            test_sets[split] = items
             res[split] = evaluate(model, mk(items, False), dev, util, amp, T_cls=T_cls)
             res[split].pop("_raw", None)
             print(split, json.dumps(res[split]["all"]), flush=True)
+    # 다른 후보 가중치도 같은 test로 채점 (best.pt와 epoch이 다를 때만): 차선 보호로 빠진 val loss 최저, 점수 최고
+    cands = {"best_val_loss.pt": best.get("best_loss_epoch"), "best_score.pt": best.get("best_score_epoch")}
+    res["candidates"] = {"best.pt": {"epoch": best.get("best_pt_epoch")}}
+    for fn, epn in cands.items():
+        p = os.path.join(a.out, fn)
+        if not os.path.exists(p) or epn == best.get("best_pt_epoch"):
+            continue
+        model.load_state_dict(torch.load(p, map_location=dev))
+        r = {"epoch": epn}
+        for split, items in test_sets.items():
+            e = evaluate(model, mk(items, False), dev, util, amp)["all"]
+            r[split] = {k: e.get(k) for k in ("da_iou", "ll_iou", "sl_iou", "map50", "ap50")}
+        res["candidates"][fn] = r
+        print("후보", fn, json.dumps({s: {k: r[s][k] for k in ("da_iou", "ll_iou", "map50")} for s in test_sets}), flush=True)
+    for split in test_sets:
+        res["candidates"]["best.pt"][split] = {k: res[split]["all"].get(k) for k in ("da_iou", "ll_iou", "sl_iou", "map50", "ap50")}
     ts.atomic(lambda p: json.dump(res, open(p, "w", encoding="utf-8"), indent=2, default=str), os.path.join(a.out, "test.json"))
 
 
