@@ -18,6 +18,8 @@
 #          LANE_GUARD(0.01) 차선 보호: val da+ll IoU가 시작(v2)보다 0.01 넘게 낮은 epoch은 best.pt로 안 고름 /
 #          IGNORE_SMALL(14) 이 px 미만 박스 무시 / OVERSAMPLE_AB(2) / CALIB_LOSS(none; sece|mdca|both) /
 #          CALIB_WEIGHT(0 = 학습 중 보정 손실 끔, 학습 후 val temperature만 씀) / BATCH(32) / WORKERS(16) / TORCH_INDEX
+#   시작:  INIT(weights/hybridnets_mt_v2_best.pt). v2 서버 폴더의 weights/hybridnets_v4_best_da.pt(4차 차선)도 가능
+#          (검출 머리·흰 가로선 채널은 새로 시작, 차선 보호 기준도 그 가중치)
 set -eo pipefail   # 학습이 실패하면(tee 앞 명령 실패 포함) 결과 묶기까지 가지 않고 멈춤
 cd "$(dirname "$0")"
 ROOT="$(pwd)"
@@ -26,7 +28,7 @@ TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu128}"
 BATCH="${BATCH:-32}"
 WORKERS="${WORKERS:-16}"
 DATA=dataset/synth_signs_v2
-INIT=weights/hybridnets_mt_v2_best.pt
+INIT="${INIT:-weights/hybridnets_mt_v2_best.pt}"   # 4차 차선(ego-lane-v4)에서 시작: INIT=weights/hybridnets_v4_best_da.pt
 OUTD=outputs/train/hybridnets_mt_v3_seed0
 PY="$ROOT/.venv/bin/python"
 mkdir -p logs
@@ -60,7 +62,7 @@ check() {   # v2 데이터가 서버에 남아 있는지 확인 (없으면 v2 �
 }
 
 run_train() {
-  log "학습 시작: multitask-v2 best에서 이어서, 최대 ${EPOCHS:-120} epoch, val loss ${ES_PATIENCE:-5} epoch 안 내려가면 정지, 모니터 p=${MONITOR_P:-0.4}(땡땡이 ${DOTS_P:-0.5}, 효과 ${MONITOR_REAL:-all}) 케이블 p=${CABLE_P:-0} (로그: $OUTD/train.log)"
+  log "학습 시작: $INIT 에서 이어서, 최대 ${EPOCHS:-120} epoch, val loss ${ES_PATIENCE:-5} epoch 안 내려가면 정지, 모니터 p=${MONITOR_P:-0.4}(땡땡이 ${DOTS_P:-0.5}, 효과 ${MONITOR_REAL:-all}) 케이블 p=${CABLE_P:-0} (로그: $OUTD/train.log)"
   mkdir -p "$OUTD"
   "$PY" scripts/train_multitask.py --seg-data "$DATA" --det-data dataset/cones_v1 \
     --venue-ref-dir dataset/venue_ref_20261106 --init "$INIT" \
@@ -88,7 +90,7 @@ pack() {
 import os, sys, zipfile
 out, outd = sys.argv[1], sys.argv[2]
 with zipfile.ZipFile(out, "w", zipfile.ZIP_STORED) as z:
-    for f in ("best.pt", "best_score.pt", "last.pt", "log.csv", "test.json", "calib.json", "train.log", "eval_monitor.log"):
+    for f in ("best.pt", "best_val_loss.pt", "best_score.pt", "last.pt", "log.csv", "test.json", "calib.json", "train.log", "eval_monitor.log"):
         p = os.path.join(outd, f)
         if os.path.exists(p) and not (f == "last.pt" and os.path.getsize(p) > 3e8):
             z.write(p)
