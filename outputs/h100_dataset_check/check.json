@@ -1,0 +1,304 @@
+{
+ "zip": "C:\\Users\\Admin\\Downloads\\LimoPro_dataset_mt_v1.zip",
+ "bytes": 5118641426,
+ "sha256": "89d63edd25b0b21ea4825edcd49b0ad950f78c1f5cbf1070a285d09817ee86ae",
+ "prefix": "LimoPro_dataset_mt_v1/",
+ "top": [
+  "README.md",
+  "cones_v1",
+  "synth_signs_v2",
+  "venue_ref_20261106"
+ ],
+ "compare": {
+  "train": {
+   "images": 9304,
+   "labels": {
+    "server": 9304,
+    "local": 9304,
+    "same": 9304,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "da_masks": {
+    "server": 9304,
+    "local": 9304,
+    "same": 9304,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "ll_masks": {
+    "server": 9304,
+    "local": 9304,
+    "same": 9304,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_masks": {
+    "server": 554,
+    "local": 554,
+    "same": 554,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_valid": {
+    "server": 554,
+    "local": 554,
+    "same": 554,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   }
+  },
+  "val": {
+   "images": 326,
+   "labels": {
+    "server": 326,
+    "local": 326,
+    "same": 326,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "da_masks": {
+    "server": 326,
+    "local": 326,
+    "same": 326,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "ll_masks": {
+    "server": 326,
+    "local": 326,
+    "same": 326,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_masks": {
+    "server": 0,
+    "local": 0,
+    "same": 0,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_valid": {
+    "server": 0,
+    "local": 0,
+    "same": 0,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   }
+  },
+  "test": {
+   "images": 542,
+   "labels": {
+    "server": 542,
+    "local": 542,
+    "same": 542,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "da_masks": {
+    "server": 542,
+    "local": 542,
+    "same": 542,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "ll_masks": {
+    "server": 542,
+    "local": 542,
+    "same": 542,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_masks": {
+    "server": 0,
+    "local": 0,
+    "same": 0,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_valid": {
+    "server": 0,
+    "local": 0,
+    "same": 0,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   }
+  },
+  "test_venue": {
+   "images": 143,
+   "labels": {
+    "server": 143,
+    "local": 143,
+    "same": 143,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "da_masks": {
+    "server": 143,
+    "local": 143,
+    "same": 143,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "ll_masks": {
+    "server": 143,
+    "local": 143,
+    "same": 143,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_masks": {
+    "server": 72,
+    "local": 72,
+    "same": 72,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_valid": {
+    "server": 72,
+    "local": 72,
+    "same": 72,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   }
+  },
+  "test_bag": {
+   "images": 42,
+   "labels": {
+    "server": 42,
+    "local": 42,
+    "same": 42,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "da_masks": {
+    "server": 42,
+    "local": 42,
+    "same": 42,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "ll_masks": {
+    "server": 42,
+    "local": 42,
+    "same": 42,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_masks": {
+    "server": 0,
+    "local": 0,
+    "same": 0,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   },
+   "sl_valid": {
+    "server": 0,
+    "local": 0,
+    "same": 0,
+    "diff": 0,
+    "diff_ex": [],
+    "only_server": 0,
+    "only_local": 0
+   }
+  }
+ },
+ "klein": {
+  "csv": [
+   "LimoPro_dataset_mt_v1/synth_signs_v2/train/klein_refine.csv",
+   "LimoPro_dataset_mt_v1/synth_signs_v2/train/klein_refine_s0.csv",
+   "LimoPro_dataset_mt_v1/synth_signs_v2/train/klein_refine_s1.csv",
+   "LimoPro_dataset_mt_v1/synth_signs_v2/train/klein_refine_s2.csv",
+   "LimoPro_dataset_mt_v1/synth_signs_v2/train/klein_refine_s3.csv"
+  ],
+  "status": {
+   "kept": 6986,
+   "reverted": 207
+  },
+  "kept": 6986
+ },
+ "monitor_on_klein": {
+  "tl_images": 400,
+  "drawn": 235,
+  "rate": 0.588,
+  "tl_fg_ratio_median": 0.749,
+  "tl_fg_none_or_lt20pct": 0,
+  "tl_boxes": 416
+ },
+ "cones": {
+  "label_files": 12112,
+  "image_files": 12112,
+  "no_image": 0,
+  "boxes": 221809,
+  "small_lt14": 177055,
+  "small_rate": 0.798,
+  "by_src": {
+   "tracon": 947,
+   "fsoco": 220862
+  },
+  "small_by_src": {
+   "tracon": 80,
+   "fsoco": 176975
+  }
+ },
+ "synth_small_lt14": {
+  "pedestrian": "49/1513",
+  "sign_A": "105/1510",
+  "sign_B": "101/1511",
+  "bump": "52/1515",
+  "slow": "91/1500",
+  "parking": "113/1505",
+  "traffic_light": "1/4531",
+  "light_red": "843/1503",
+  "light_yellow": "820/1509",
+  "light_green": "831/1503"
+ }
+}

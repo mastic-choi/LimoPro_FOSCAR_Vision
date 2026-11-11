@@ -16,7 +16,26 @@
       (화살표 방향이 바뀌어 라벨이 틀어짐). 회전·확대는 박스도 같이 변환.
 평가(매 epoch, val): da/ll IoU, 클래스별 AP50(합성 val + 콘 val). best는 da+ll IoU + 표지판·불빛 mAP50 합으로 고름.
      끝나면 best로 test / test_venue(가로선 IoU 포함) / test_bag 채점 -> test.json
-저장: <out>/best.pt, last.pt(재개), log.csv, test.json. 같은 명령을 다시 실행하면 last.pt부터 이어서.
+저장: <out>/best.pt, last.pt(재개), log.csv, test.json, calib.json. 같은 명령을 다시 실행하면 last.pt부터 이어서.
+
+v3 옵션 (기본값이면 v2와 같은 학습)
+  --ignore-small PX   √(박스 넓이) < PX인 박스는 '무시'(검출 손실에서 빠짐, 맞혀도 틀려도 벌 없음). 먼 물체는 차에서 안 쓰므로.
+                      불빛(light_red/yellow/green)은 원래 작아서 제외
+  --oversample-ab W   A/B/주차가 들어간 이미지를 W배 자주 뽑음 (헷갈리는 세 클래스에 집중)
+  --calib-loss {none,mdca,sece,both} --calib-weight λ
+                      학습 중 보정 손실 (mt_det_loss.DetLoss, 검출 분류 점수에만). sece = 미분 가능한 ECE(soft-binned)
+  --patience N --min-delta d --es-smooth k   정체 정지: 최근 k epoch 평균 점수가 N epoch 동안 d 이상 안 오르면 멈춤 (0 = 끔)
+  --overfit-drop g --overfit-epochs m   과적합 정지: train loss는 best 때보다 낮은데 val 점수가 best보다 g 넘게 낮은
+                      epoch이 m번 연속이면 멈춤
+  --es-val-loss N --es-min-delta d --best-by val_loss   val loss 조기 종료: 매 epoch val에서 학습과 같은 손실(증강 없음,
+                      같은 작은 박스 무시)을 재고, 최저 epoch 뒤 N epoch 동안 d 넘게 안 낮아지면 멈춤. best.pt = val loss 최저.
+                      점수(da+ll IoU+mAP50) 최고 가중치는 항상 best_score.pt
+  흰 케이블 음성 샘플: <split>/neg_sl/<이름>.png가 있으면 그 픽셀은 '가로선 아님'(sl=0, 믿을 픽셀)으로 학습
+  --aug-monitor-p p --aug-cable-p q   이미 만든 합성 이미지(v2)에 학습 중 바로 그려 넣는 음성 샘플(mt_online_aug.py):
+                      신호등 뒤 단색 방해 모니터(확률 p, 신호등이 있는 이미지만), 트랙 위 흰 케이블(확률 q)
+  --aug-monitor-dots r  그린 모니터 중 비율 r은 땡땡이 화면(켜진 불과 다른 색의 불빛 크기 원)
+  --aug-monitor-real    모니터를 실제 카메라처럼(match,persp,screen,jitter 또는 all). 비교 그림: preview_monitor_real.py
+  매 epoch val 검출 점수 보정 지표(D-ECE, MCE, NLL)를 log.csv에 기록, 학습 후 val로 temperature를 맞춰 calib.json에 저장
 
 사용 예:
   python scripts/train_multitask.py --seg-data dataset/synth_signs_v2 --det-data dataset/cones_v1 \\
@@ -32,12 +51,15 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import train_seg as ts  # 사진 증강 함수, seg_loss, IoU (CUDA 초기화 없음)
+import mt_calib as mc   # 검출 점수 보정 지표·temperature
+from mt_det_loss import DetLoss
 
 PAD = ts.PAD
 H_IN, W_IN = 360, 640
 CLASSES = ["pedestrian", "sign_A", "sign_B", "bump", "slow", "parking",
            "traffic_light", "light_red", "light_yellow", "light_green", "limo", "cone"]
 NC = len(CLASSES)
+LAMP_CLS = [CLASSES.index(c) for c in ("light_red", "light_yellow", "light_green")]   # --ignore-small 제외
 AB = {CLASSES.index("sign_A"), CLASSES.index("sign_B")}
 MEAN, STD = np.array([0.485, 0.456, 0.406], np.float32), np.array([0.229, 0.224, 0.225], np.float32)
 MAX_BOX = 64
@@ -72,8 +94,11 @@ def affine_boxes(b, M, W, H, min_vis=0.4):
 class Items(torch.utils.data.Dataset):
     """items: dict(img, da?, ll?, lab, sl?, slv?, kind='seg'|'det')"""
 
-    def __init__(self, items, train, venue=None):
-        self.items, self.train, self.venue = items, train, venue
+    def __init__(self, items, train, venue=None, ignore_small=0.0, aug_monitor_p=0.0, aug_cable_p=0.0, aug_dots_p=0.0,
+                 aug_real=()):
+        self.items, self.train, self.venue, self.ignore_small = items, train, venue, ignore_small
+        self.aug_monitor_p, self.aug_cable_p, self.aug_dots_p = aug_monitor_p, aug_cable_p, aug_dots_p
+        self.aug_real = tuple(aug_real)
 
     def __len__(self):
         return len(self.items)
@@ -95,7 +120,12 @@ class Items(torch.utils.data.Dataset):
         h, w = img.shape[:2]
         assert (h, w) == (H_IN, W_IN), it["img"]
         rd = lambda p: (cv2.imread(p, 0) > 0).astype(np.uint8) if p and os.path.exists(p) else np.zeros((H_IN, W_IN), np.uint8)
-        return img, rd(it["da"]), rd(it["ll"]), rd(it.get("sl")), rd(it.get("slv")), read_yolo(it["lab"], w, h)
+        sl, slv = rd(it.get("sl")), rd(it.get("slv"))
+        if it.get("neg"):   # 흰 케이블 등: 이 픽셀은 가로선이 아님(믿을 수 있음)
+            ng = rd(it["neg"]) > 0
+            sl[ng] = 0
+            slv[ng] = 1
+        return img, rd(it["da"]), rd(it["ll"]), sl, slv, read_yolo(it["lab"], w, h)
 
     def augment(self, img, masks, b, seg):
         h, w = img.shape[:2]
@@ -149,6 +179,14 @@ class Items(torch.utils.data.Dataset):
         it = self.items[i]
         img, da, ll, sl, slv, b = self.load(it)
         seg = it["kind"] == "seg"
+        neg_aug = False
+        if self.train and seg and (self.aug_monitor_p > 0 or self.aug_cable_p > 0):
+            import mt_online_aug as oa
+            r = np.random.default_rng()
+            if len(b) and r.random() < self.aug_monitor_p:
+                oa.add_monitor(img, da, ll, sl, slv, b, r, self.aug_dots_p, real=self.aug_real)
+            if r.random() < self.aug_cable_p:
+                neg_aug = oa.add_cable(img, sl, slv, r)
         if self.train:
             img, (da, ll, sl, slv), b = self.augment(img, [da, ll, sl, slv], b, seg)
         img = cv2.copyMakeBorder(img, PAD, PAD, 0, 0, cv2.BORDER_CONSTANT, value=(114, 114, 114))
@@ -156,10 +194,15 @@ class Items(torch.utils.data.Dataset):
         ann = np.full((MAX_BOX, 5), -1, np.float32)
         if len(b):
             b = b[:MAX_BOX].copy(); b[:, [1, 3]] += PAD
+            if self.ignore_small > 0:   # 먼(작은) 물체는 무시 박스(-2)로. 불빛(light_*)은 신호등 몸체의 일부라 원래 작아서(중앙값 13px) 제외
+                small = np.sqrt(np.clip(b[:, 2] - b[:, 0], 0, None) * np.clip(b[:, 3] - b[:, 1], 0, None)) < self.ignore_small
+                small &= ~np.isin(b[:, 4], LAMP_CLS)
+                b[small, 4] = -2
             ann[:len(b)] = b
         t = lambda a: torch.from_numpy(np.ascontiguousarray(a)).float()
         return (torch.from_numpy(x.transpose(2, 0, 1).copy()), t(da), t(ll), t(sl), t(slv),
-                torch.tensor(float(seg)), torch.tensor(float(it.get("sl") is not None)), torch.from_numpy(ann), it["name"])
+                torch.tensor(float(seg)), torch.tensor(float(it.get("sl") is not None or bool(it.get("neg")) or neg_aug)),
+                torch.from_numpy(ann), it["name"])
 
 
 def seg_items(root, split):
@@ -171,10 +214,12 @@ def seg_items(root, split):
         stem = n[:-4]
         sl = os.path.join(d, "sl_masks", n)
         has_sl = os.path.exists(sl)
+        neg = os.path.join(d, "neg_sl", n)
         out.append(dict(kind="seg", name=f"{split}/{stem}", img=os.path.join(d, "images", n),
                         da=os.path.join(d, "da_masks", n), ll=os.path.join(d, "ll_masks", n),
                         lab=os.path.join(d, "labels", stem + ".txt"),
-                        sl=sl if has_sl else None, slv=os.path.join(d, "sl_valid", n) if has_sl else None))
+                        sl=sl if has_sl else None, slv=os.path.join(d, "sl_valid", n) if has_sl else None,
+                        neg=neg if os.path.exists(neg) else None))
     return out
 
 
@@ -268,6 +313,33 @@ def masked_seg_loss(p, t, v):
     return bce + dice.mean()
 
 
+def ignore_small_ann(ann, px):
+    """ann (B,M,5) torch: √넓이 < px인 박스는 무시(-2). 불빛(light_*)과 빈 칸(-1)은 그대로. 학습 Items와 같은 규칙."""
+    if px <= 0:
+        return ann
+    ann = ann.clone()
+    w, h = (ann[..., 2] - ann[..., 0]).clamp(min=0), (ann[..., 3] - ann[..., 1]).clamp(min=0)
+    c = ann[..., 4]
+    small = ((w * h).sqrt() < px) & (c >= 0)
+    for k in LAMP_CLS:
+        small &= c != k
+    ann[..., 4] = torch.where(small, torch.full_like(c, -2), c)
+    return ann
+
+
+def compute_loss(a, focal, reg, cls, anchors, pda, pll, psl, da, ll, sl, slv, segv, slf, ann):
+    """학습과 val에서 같이 쓰는 손실. p* 는 crop 한 확률 (B,H,W). 반환: (loss, [seg, sl, cls, reg, cal])"""
+    zero = pda.sum() * 0
+    sv = segv > 0
+    l_seg = (ts.seg_loss(pda[sv], da[sv]) + a.ll_weight * ts.seg_loss(pll[sv], ll[sv])) if sv.any() else zero
+    lv = (slf > 0)
+    l_sl = masked_seg_loss(psl[lv], sl[lv], slv[lv]) if lv.any() else zero
+    c_l, r_l, k_l = focal(cls.float(), reg.float(), anchors.float(), ann)
+    l_det = c_l.mean() + r_l.mean()
+    loss = l_seg + a.sl_weight * l_sl + a.det_weight * l_det + a.calib_weight * k_l.mean()
+    return loss, [l_seg, l_sl, c_l.mean(), r_l.mean(), k_l.mean()]
+
+
 # ---------------------------------------------------------------------------
 def ap50(dets, gts, ncls):
     """dets: [(img_id, cls, score, box)], gts: {img_id: array(N,5)} -> {cls: AP or None}"""
@@ -304,7 +376,9 @@ def ap50(dets, gts, ncls):
 
 
 @torch.no_grad()
-def evaluate(model, loader, device, util, amp, groups=None):
+def evaluate(model, loader, device, util, amp, groups=None, T_cls=None, loss_fn=None):
+    """T_cls가 있으면 그 temperature로 보정한 점수의 보정 지표도 같이 낸다(res['all']['calib_T']).
+    loss_fn(reg, cls, anchors, pda, pll, psl, da, ll, sl, slv, segv, slf, ann) -> 학습과 같은 손실. 주면 res['all']['loss']."""
     model.eval()
     reg_t, clip_t = util.BBoxTransform(), util.ClipBoxes()
     iou = {"all": [ts.IoU(), ts.IoU()]}
@@ -312,10 +386,17 @@ def evaluate(model, loader, device, util, amp, groups=None):
         iou[g] = [ts.IoU(), ts.IoU()]
     sl_iou = ts.IoU()
     dets, gts = [], {}
+    loss_sum, loss_parts, loss_n = 0.0, np.zeros(5), 0
     for x, da, ll, sl, slv, segv, slf, ann, names in loader:
         x = x.to(device)
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=amp):
             reg, cls, anchors, pda, pll, psl = heads(model, x)
+        if loss_fn is not None:
+            td = lambda t: t.to(device)
+            lo, parts = loss_fn(reg, cls, anchors, ts.crop(pda).float(), ts.crop(pll).float(), ts.crop(psl).float(),
+                                td(da), td(ll), td(sl), td(slv), td(segv), td(slf), td(ann))
+            loss_sum += float(lo) * len(names); loss_parts += np.array([float(p) for p in parts]) * len(names)
+            loss_n += len(names)
         pda, pll, psl = ts.crop(pda).float().cpu(), ts.crop(pll).float().cpu(), ts.crop(psl).float().cpu()
         out = util.postprocess(x, anchors.float(), reg.float(), cls.float(), reg_t, clip_t, 0.05, 0.5)
         for k in range(len(names)):
@@ -335,11 +416,25 @@ def evaluate(model, loader, device, util, amp, groups=None):
                 bb = np.array(b, np.float32); bb[[1, 3]] -= PAD
                 dets.append((names[k], int(c), float(s), bb))
     ap = ap50(dets, gts, NC)
+    by_img = {}   # 검출 점수 보정 지표: 예측마다 맞음/틀림
+    for k, c, s, b in dets:
+        by_img.setdefault(k, []).append((s, c, b))
+    cs, cc, cy = [], [], []
+    for k, d in by_img.items():
+        y = mc.match(d, gts[k])
+        cs += [x[0] for x in d]; cc += [x[1] for x in d]; cy += list(y)
     res = {g: {"da_iou": round(a.value(), 4), "ll_iou": round(b.value(), 4)} for g, (a, b) in iou.items()}
+    res["all"]["calib"] = {k: v for k, v in mc.metrics(cs, cy).items() if k != "rel"}
+    if T_cls:
+        res["all"]["calib_T"] = {k: v for k, v in mc.metrics(mc.apply_T_cls(cs, cc, T_cls, CLASSES), cy).items() if k != "rel"}
+    res["_raw"] = (np.array(cs), np.array(cc, int), np.array(cy))
     res["all"]["sl_iou"] = round(sl_iou.value(), 4) if (sl_iou.tp + sl_iou.fn) else None
     res["all"]["ap50"] = {CLASSES[c]: (round(v, 4) if v is not None else None) for c, v in ap.items()}
     sign_ap = [v for c, v in ap.items() if v is not None and CLASSES[c] not in ("traffic_light",)]
     res["all"]["map50"] = round(float(np.mean(sign_ap)), 4) if sign_ap else None
+    if loss_n:
+        res["all"]["loss"] = round(loss_sum / loss_n, 5)
+        res["all"]["loss_parts"] = dict(zip(("seg", "sl", "cls", "reg", "cal"), np.round(loss_parts / loss_n, 5).tolist()))
     return res
 
 
@@ -377,6 +472,32 @@ def main():
                     help="검출 머리(regressor, classifier)·BiFPN·det_skip 의 lr 배수 (실험 A/B: 10)")
     ap.add_argument("--enc-skip", action="store_true", help="실험 B: 백본 p3 -> 검출 머리 지름길(det_skip) 추가")
     ap.add_argument("--warmup-steps", type=int, default=0, help="처음 이 step 동안 lr을 0에서 선형으로 올림")
+    ap.add_argument("--min-delta", type=float, default=1e-3, help="조기 종료: 이만큼 이상 올라야 '오름'")
+    ap.add_argument("--es-smooth", type=int, default=1, help="조기 종료 판단에 쓰는 최근 epoch 평균 개수 (1 = 그 epoch만)")
+    ap.add_argument("--ignore-small", type=float, default=0.0, help="√넓이가 이 px 미만인 박스는 무시 (0 = 끔)")
+    ap.add_argument("--oversample-ab", type=float, default=1.0, help="A/B/주차가 든 이미지를 이 배수로 자주 뽑음")
+    ap.add_argument("--calib-loss", choices=["none", "mdca", "sece", "both"], default="none",
+                    help="학습 중 보정 손실 (검출 분류 점수에만). sece = 미분 가능한 ECE")
+    ap.add_argument("--calib-weight", type=float, default=0.0, help="학습 중 보정 손실 비중")
+    ap.add_argument("--aug-monitor-p", type=float, default=0.0, help="신호등이 있는 이미지에 뒤 단색 모니터를 그릴 확률")
+    ap.add_argument("--aug-monitor-dots", type=float, default=0.0,
+                    help="그린 모니터 중 화면을 땡땡이(켜진 불과 다른 색 원)로 할 비율")
+    ap.add_argument("--aug-monitor-real", default="",
+                    help="모니터를 실제 카메라처럼: match(선명도·노이즈),persp(원근),screen(비네팅·반사·날아감),jitter(땡땡이 흔들기) "
+                         "중 쉼표로. 'all' = 전부")
+    ap.add_argument("--overfit-drop", type=float, default=0.0,
+                    help="과적합 정지: val 점수가 best보다 이만큼 넘게 낮고 train loss는 best 때보다 낮은 epoch이 "
+                         "--overfit-epochs번 연속이면 멈춤 (0 = 끔)")
+    ap.add_argument("--overfit-epochs", type=int, default=3)
+    ap.add_argument("--es-val-loss", type=int, default=0,
+                    help="val loss 조기 종료: val loss 최저 epoch 뒤로 이만큼 epoch 동안 더 낮아지지 않으면(= 올라가기 시작) 멈춤 (0 = 끔)")
+    ap.add_argument("--es-min-delta", type=float, default=0.0, help="val loss가 최저보다 이만큼 넘게 낮아야 '새 최저'")
+    ap.add_argument("--best-by", choices=["score", "val_loss"], default="score",
+                    help="best.pt 기준: score = da+ll IoU+mAP50 최고, val_loss = val loss 최저. 점수 최고는 항상 best_score.pt에도 저장")
+    ap.add_argument("--lane-guard", type=float, default=0.0,
+                    help="차선 보호: val da+ll IoU가 시작 가중치보다 이만큼 넘게 낮은 epoch은 best.pt로 고르지 않음 (0 = 끔). "
+                         "학습 전에 시작 가중치를 val로 한 번 잼")
+    ap.add_argument("--aug-cable-p", type=float, default=0.0, help="흰 케이블을 그릴 확률 (그 자리는 흰 가로선 아님)")
     a = ap.parse_args()
 
     import make_model_compare_gif as m   # 장치·ZLUDA 설정
@@ -390,6 +511,11 @@ def main():
     amp = a.amp and dev.type == "cuda"
 
     venue = (a.venue_ref_dir, a.venue_p, a.venue_v4, a.venue_v5) if a.venue_ref_dir and a.venue_ref_dir != "none" else None
+    import mt_online_aug as oa
+    real = oa.REAL_ALL if a.aug_monitor_real.strip() == "all" else tuple(x for x in a.aug_monitor_real.split(",") if x.strip())
+    bad = [x for x in real if x not in oa.REAL_ALL]
+    if bad:
+        raise SystemExit(f"--aug-monitor-real에 모르는 값 {bad} (가능: {','.join(oa.REAL_ALL)}, all)")
     tr = seg_items(a.seg_data, "train") + det_items(a.det_data, "train", a.cone_train_n, a.seed)
     va_ = seg_items(a.seg_data, "val") + det_items(a.det_data, "val", a.cone_val_n, a.seed)
     if a.val_max:
@@ -397,9 +523,23 @@ def main():
     print(f"train {len(tr)} (seg {sum(i['kind'] == 'seg' for i in tr)}, sl {sum(i.get('sl') is not None for i in tr)}, "
           f"cone {sum(i['kind'] == 'det' for i in tr)}) / val {len(va_)}", flush=True)
     mk = lambda items, train: torch.utils.data.DataLoader(
-        Items(items, train, venue if train else None), batch_size=a.batch, shuffle=train, drop_last=train,
-        num_workers=a.workers, persistent_workers=a.workers > 0, pin_memory=True, collate_fn=collate)
+        Items(items, train, venue if train else None, a.ignore_small if train else 0.0,
+              a.aug_monitor_p if train else 0.0, a.aug_cable_p if train else 0.0, a.aug_monitor_dots, real), batch_size=a.batch,
+        shuffle=train, drop_last=train, num_workers=a.workers, persistent_workers=a.workers > 0, pin_memory=True,
+        collate_fn=collate)
     tl, vl = mk(tr, True), mk(va_, False)
+    if a.oversample_ab != 1.0:   # A/B/주차가 든 이미지를 더 자주
+        ABP = {CLASSES.index(c) for c in ("sign_A", "sign_B", "parking")}
+        has = [bool(it.get("lab")) and os.path.exists(it["lab"])
+               and any(int(l.split()[0]) in ABP for l in open(it["lab"]) if l.strip()) for it in tr]
+        w = torch.tensor([a.oversample_ab if h else 1.0 for h in has], dtype=torch.double)
+        sampler = torch.utils.data.WeightedRandomSampler(w, num_samples=len(tr), replacement=True,
+                                                         generator=torch.Generator().manual_seed(a.seed))
+        tl = torch.utils.data.DataLoader(Items(tr, True, venue, a.ignore_small, a.aug_monitor_p, a.aug_cable_p, a.aug_monitor_dots, real),
+                                         batch_size=a.batch, sampler=sampler,
+                                         drop_last=True, num_workers=a.workers, persistent_workers=a.workers > 0,
+                                         pin_memory=True, collate_fn=collate)
+        print(f"oversample A/B/P x{a.oversample_ab}: {sum(has)} images", flush=True)
 
     model = build_model(m, a.init, a.enc_skip).to(dev)
     head_names = ("regressor.", "classifier.", "bifpn.", "det_skip.")
@@ -409,7 +549,10 @@ def main():
                             lr=a.lr, weight_decay=5e-4)
     print(f"param groups: rest {sum(p.numel() for p in g_rest) / 1e6:.1f}M x1, "
           f"head+bifpn {sum(p.numel() for p in g_head) / 1e6:.1f}M x{a.head_lr_mult}", flush=True)
-    focal = FocalLoss()
+    focal = DetLoss(calib=a.calib_loss if a.calib_weight > 0 else "none")
+    # val loss: 학습과 같은 손실(같은 가중치, 같은 작은 박스 무시). val은 증강 없음
+    val_loss_fn = lambda reg, cls, anchors, pda, pll, psl, da, ll, sl, slv, segv, slf, ann: compute_loss(
+        a, focal, reg, cls, anchors, pda, pll, psl, da, ll, sl, slv, segv, slf, ignore_small_ann(ann, a.ignore_small))
     start, best = 0, {"score": -1.0, "epoch": 0, "stopped": False}
     if not a.fresh and os.path.exists(os.path.join(a.out, "last.pt")):
         ck = torch.load(os.path.join(a.out, "last.pt"), map_location=dev, weights_only=False)
@@ -419,8 +562,15 @@ def main():
     log = os.path.join(a.out, "log.csv")
     if start == 0:
         with open(log, "w", encoding="utf-8") as f:
-            f.write("epoch,lr,loss,seg,sl,cls,reg,val_da,val_ll,val_map50,sec\n")
+            f.write("epoch,lr,loss,seg,sl,cls,reg,cal,val_loss,val_da,val_ll,val_map50,val_ece,val_mce,val_nll,sec\n")
     limiter = m.GpuDutyLimiter()
+    if a.lane_guard > 0 and "start_val" not in best:   # 시작 가중치의 val 차선 IoU (차선 보호 기준)
+        s0 = evaluate(model, vl, dev, util, amp, loss_fn=val_loss_fn)["all"]
+        best["start_val"] = {k: s0[k] for k in ("da_iou", "ll_iou", "map50", "loss")}
+        print(f"시작 가중치 val: da {s0['da_iou']} ll {s0['ll_iou']} mAP50 {s0['map50']} val_loss {s0['loss']}", flush=True)
+        if a.best_by == "val_loss":   # 학습해도 차선이 계속 나빠지면 시작 가중치가 best.pt로 남음
+            best.update(best_pt_epoch=0)
+            ts.save_state(model, os.path.join(a.out, "best.pt"))
 
     for ep in range(start, a.epochs):
         if best["stopped"]:
@@ -429,7 +579,7 @@ def main():
         for g in opt.param_groups:
             g["lr"] = lr * g.get("mult", 1.0)
         model.train()
-        t0, n, acc = time.time(), 0, np.zeros(5)
+        t0, n, acc = time.time(), 0, np.zeros(6)
         for step, (x, da, ll, sl, slv, segv, slf, ann, _) in enumerate(tl):
             if a.max_steps and step >= a.max_steps:
                 break
@@ -443,48 +593,89 @@ def main():
                 with torch.autocast("cuda", dtype=torch.bfloat16, enabled=amp):
                     reg, cls, anchors, pda, pll, psl = heads(model, x)
                 pda, pll, psl = ts.crop(pda).float(), ts.crop(pll).float(), ts.crop(psl).float()
-                zero = x.sum() * 0
-                sv = segv > 0
-                l_seg = (ts.seg_loss(pda[sv], da[sv]) + a.ll_weight * ts.seg_loss(pll[sv], ll[sv])) if sv.any() else zero
-                lv = (slf > 0)
-                l_sl = masked_seg_loss(psl[lv], sl[lv], slv[lv]) if lv.any() else zero
-                c_l, r_l = focal(cls.float(), reg.float(), anchors.float(), ann)
-                l_det = c_l.mean() + r_l.mean()
-                loss = l_seg + a.sl_weight * l_sl + a.det_weight * l_det
+                loss, (l_seg, l_sl, c_l, r_l, k_l) = compute_loss(a, focal, reg, cls, anchors, pda, pll, psl,
+                                                                  da, ll, sl, slv, segv, slf, ann)
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
                 opt.step()
-            acc += [float(loss), float(l_seg), float(l_sl), float(c_l.mean()), float(r_l.mean())]
+            acc += [float(loss), float(l_seg), float(l_sl), float(c_l), float(r_l), float(k_l)]
             n += 1
             if step % 100 == 0:
                 print(f"  ep {ep + 1} step {step}/{len(tl)} loss {float(loss):.3f} seg {float(l_seg):.3f} "
-                      f"sl {float(l_sl):.3f} cls {float(c_l.mean()):.3f} reg {float(r_l.mean()):.3f}", flush=True)
+                      f"sl {float(l_sl):.3f} cls {float(c_l):.3f} reg {float(r_l):.3f}", flush=True)
         acc /= max(n, 1)
-        v = evaluate(model, vl, dev, util, amp)["all"]
+        v = evaluate(model, vl, dev, util, amp, loss_fn=val_loss_fn)["all"]
         score = v["da_iou"] + v["ll_iou"] + (v["map50"] or 0)
-        if score > best["score"] + 1e-3:
-            best.update(score=score, epoch=ep + 1, val=v)
+        vloss = v["loss"]
+        if score > best.get("raw_best", -1.0):   # 점수가 가장 높은 가중치 (참고용 best_score.pt)
+            best.update(raw_best=score, best_score_epoch=ep + 1, val_at_best_score=v)
+            ts.save_state(model, os.path.join(a.out, "best_score.pt"))
+        if vloss < best.get("best_val_loss", float("inf")) - a.es_min_delta:   # val loss 최저 = best.pt
+            best.update(best_val_loss=vloss, best_loss_epoch=ep + 1, val=v, best_train_loss=float(acc[0]))
+            lane_ok = True
+            if a.lane_guard > 0 and "start_val" in best:   # 차선(da+ll IoU)이 시작 가중치보다 lane_guard 넘게 나빠진 epoch은 best.pt로 안 씀
+                s0 = best["start_val"]
+                lane_ok = v["da_iou"] + v["ll_iou"] >= s0["da_iou"] + s0["ll_iou"] - a.lane_guard
+                if not lane_ok:
+                    print(f"  차선 보호: val loss는 최저지만 da+ll {v['da_iou'] + v['ll_iou']:.4f} < 시작 "
+                          f"{s0['da_iou'] + s0['ll_iou']:.4f} - {a.lane_guard} 라 best.pt로 저장하지 않음", flush=True)
+            if a.best_by == "val_loss" and lane_ok:
+                best["best_pt_epoch"] = ep + 1
+                ts.save_state(model, os.path.join(a.out, "best.pt"))
+        if a.best_by == "score" and best.get("best_score_epoch") == ep + 1:
+            best["best_pt_epoch"] = ep + 1
             ts.save_state(model, os.path.join(a.out, "best.pt"))
-        best["stopped"] = a.patience > 0 and ep + 1 - best["epoch"] >= a.patience
+        best.setdefault("loss_log", []).append(dict(epoch=ep + 1, train_loss=round(float(acc[0]), 5), val_loss=vloss,
+                                                    score=round(score, 4)))
+        stop_valloss = a.es_val_loss > 0 and ep + 1 - best["best_loss_epoch"] >= a.es_val_loss
+        hist = best.setdefault("hist", []); hist.append(score)
+        sm = float(np.mean(hist[-a.es_smooth:]))   # 정체 정지(--patience)는 최근 es_smooth epoch 평균으로
+        if sm > best["score"] + a.min_delta:
+            best.update(score=sm, epoch=ep + 1)
+        # 과적합 의심: train loss는 best 때보다 더 내려갔는데 val 점수는 best보다 overfit_drop 넘게 낮음
+        sus = a.overfit_drop > 0 and score < best["raw_best"] - a.overfit_drop and acc[0] < best.get("best_train_loss", float("inf"))
+        best["overfit_run"] = best.get("overfit_run", 0) + 1 if sus else 0
+        best.setdefault("overfit_log", []).append(dict(epoch=ep + 1, score=round(score, 4), train_loss=round(float(acc[0]), 4),
+                                                       gap=round(best["raw_best"] - score, 4), suspect=bool(sus)))
+        stop_plateau = a.patience > 0 and ep + 1 - best["epoch"] >= a.patience
+        stop_overfit = a.overfit_drop > 0 and best["overfit_run"] >= a.overfit_epochs
+        best["stopped"] = stop_plateau or stop_overfit or stop_valloss
+        if best["stopped"]:
+            best["stop_reason"] = "val_loss" if stop_valloss else ("overfit" if stop_overfit else "plateau")
+            print(f"조기 종료 ({best['stop_reason']}): best.pt epoch {best.get('best_pt_epoch')}, "
+                  f"val loss 최저 {best.get('best_val_loss')} (epoch {best.get('best_loss_epoch')}) -> 지금 {vloss}, "
+                  f"점수 최고 {best['raw_best']:.4f} (epoch {best.get('best_score_epoch')}) -> 지금 {score:.4f}", flush=True)
         ck = {"model": model.state_dict(), "opt": opt.state_dict(), "epoch": ep + 1, "best": best}
         ts.atomic(lambda p: torch.save(ck, p), os.path.join(a.out, "last.pt"))
         sec = time.time() - t0
         with open(log, "a", encoding="utf-8") as f:
-            f.write(f"{ep + 1},{lr:.3g},{acc[0]:.4f},{acc[1]:.4f},{acc[2]:.4f},{acc[3]:.4f},{acc[4]:.4f},"
-                    f"{v['da_iou']},{v['ll_iou']},{v['map50']},{sec:.0f}\n")
-        print(f"epoch {ep + 1}/{a.epochs} loss {acc[0]:.4f} | val da {v['da_iou']:.4f} ll {v['ll_iou']:.4f} "
-              f"mAP50 {v['map50']} | AP {json.dumps(v['ap50'])} | {sec:.0f}s", flush=True)
+            cb = v["calib"]
+            f.write(f"{ep + 1},{lr:.3g},{acc[0]:.4f},{acc[1]:.4f},{acc[2]:.4f},{acc[3]:.4f},{acc[4]:.4f},{acc[5]:.4f},"
+                    f"{vloss},{v['da_iou']},{v['ll_iou']},{v['map50']},{cb.get('ece')},{cb.get('mce')},{cb.get('nll')},{sec:.0f}\n")
+        print(f"epoch {ep + 1}/{a.epochs} loss {acc[0]:.4f} val_loss {vloss} | val da {v['da_iou']:.4f} ll {v['ll_iou']:.4f} "
+              f"mAP50 {v['map50']} | ECE {v['calib'].get('ece')} NLL {v['calib'].get('nll')} | "
+              f"AP {json.dumps(v['ap50'])} | {sec:.0f}s", flush=True)
 
     # test: best 가중치로 test / test_venue / test_bag
     model.load_state_dict(torch.load(os.path.join(a.out, "best.pt"), map_location=dev))
-    res = {"best": best, "args": vars(a)}
+    # 학습 후 보정: val 예측으로 temperature(전체, 클래스별)를 맞춰 calib.json에 저장. 차에서는 p' = sigmoid(logit(p) / T)
+    vres = evaluate(model, vl, dev, util, amp)
+    s_, c_, y_ = vres["_raw"]
+    T_all, T_cls = mc.fit_T_per_class(s_, y_, c_, CLASSES)
+    calib = {"T_all": T_all, "T_cls": T_cls, "how": "p_calibrated = sigmoid(logit(p) / T_cls[class])",
+             "val_raw": {k: v for k, v in mc.metrics(s_, y_).items() if k != "rel"},
+             "val_T": {k: v for k, v in mc.metrics(mc.apply_T_cls(s_, c_, T_cls, CLASSES), y_).items() if k != "rel"}}
+    ts.atomic(lambda p: json.dump(calib, open(p, "w", encoding="utf-8"), indent=1), os.path.join(a.out, "calib.json"))
+    print("calib:", json.dumps(calib, ensure_ascii=False), flush=True)
+    res = {"best": best, "args": vars(a), "calib": calib}
     for split in ("test", "test_venue", "test_bag"):
         items = seg_items(a.seg_data, split)
         if split == "test":
             items += det_items(a.det_data, "test", 0, a.seed) + det_items(a.det_data, "val", 0, a.seed)[a.cone_val_n:]
         if items:
-            res[split] = evaluate(model, mk(items, False), dev, util, amp)
+            res[split] = evaluate(model, mk(items, False), dev, util, amp, T_cls=T_cls)
+            res[split].pop("_raw", None)
             print(split, json.dumps(res[split]["all"]), flush=True)
     ts.atomic(lambda p: json.dump(res, open(p, "w", encoding="utf-8"), indent=2, default=str), os.path.join(a.out, "test.json"))
 

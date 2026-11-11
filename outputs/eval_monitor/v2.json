@@ -1,0 +1,204 @@
+{
+ "weights": "outputs/train/hybridnets_mt_v2/hybridnets_mt_v2_best.pt",
+ "n_images": 193,
+ "real": [],
+ "n_lamps": 203,
+ "clean": {
+  "ap50": {
+   "traffic_light": 0.9998,
+   "light_red": 0.9772,
+   "light_yellow": 0.9712,
+   "light_green": 0.9777
+  },
+  "thr0.3": {
+   "lamp_correct": 0.8621,
+   "lamp_wrong_color": 0.0,
+   "lamp_missed": 0.1379,
+   "fake_lamps": 1,
+   "fake_lamps_on_monitor": 0,
+   "images_with_fake_lamp_on_monitor": 0,
+   "fake_tl_on_monitor": 0,
+   "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+    [
+     56,
+     0,
+     0,
+     10
+    ],
+    [
+     0,
+     58,
+     0,
+     11
+    ],
+    [
+     0,
+     0,
+     61,
+     7
+    ]
+   ]
+  },
+  "thr0.5": {
+   "lamp_correct": 0.7685,
+   "lamp_wrong_color": 0.0,
+   "lamp_missed": 0.2315,
+   "fake_lamps": 0,
+   "fake_lamps_on_monitor": 0,
+   "images_with_fake_lamp_on_monitor": 0,
+   "fake_tl_on_monitor": 0,
+   "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+    [
+     47,
+     0,
+     0,
+     19
+    ],
+    [
+     0,
+     52,
+     0,
+     17
+    ],
+    [
+     0,
+     0,
+     57,
+     11
+    ]
+   ]
+  }
+ },
+ "solid": {
+  "ap50": {
+   "traffic_light": 0.9998,
+   "light_red": 0.9634,
+   "light_yellow": 0.9585,
+   "light_green": 0.9776
+  },
+  "thr0.3": {
+   "lamp_correct": 0.8571,
+   "lamp_wrong_color": 0.0,
+   "lamp_missed": 0.1429,
+   "fake_lamps": 2,
+   "fake_lamps_on_monitor": 2,
+   "images_with_fake_lamp_on_monitor": 2,
+   "fake_tl_on_monitor": 0,
+   "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+    [
+     56,
+     0,
+     0,
+     10
+    ],
+    [
+     0,
+     56,
+     0,
+     13
+    ],
+    [
+     0,
+     0,
+     62,
+     6
+    ]
+   ]
+  },
+  "thr0.5": {
+   "lamp_correct": 0.7586,
+   "lamp_wrong_color": 0.0,
+   "lamp_missed": 0.2414,
+   "fake_lamps": 0,
+   "fake_lamps_on_monitor": 0,
+   "images_with_fake_lamp_on_monitor": 0,
+   "fake_tl_on_monitor": 0,
+   "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+    [
+     47,
+     0,
+     0,
+     19
+    ],
+    [
+     0,
+     51,
+     0,
+     18
+    ],
+    [
+     0,
+     0,
+     56,
+     12
+    ]
+   ]
+  }
+ },
+ "dots": {
+  "ap50": {
+   "traffic_light": 0.9766,
+   "light_red": 0.8958,
+   "light_yellow": 0.8852,
+   "light_green": 0.9241
+  },
+  "thr0.3": {
+   "lamp_correct": 0.8621,
+   "lamp_wrong_color": 0.0,
+   "lamp_missed": 0.1379,
+   "fake_lamps": 64,
+   "fake_lamps_on_monitor": 61,
+   "images_with_fake_lamp_on_monitor": 36,
+   "fake_tl_on_monitor": 45,
+   "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+    [
+     56,
+     0,
+     0,
+     10
+    ],
+    [
+     0,
+     57,
+     0,
+     12
+    ],
+    [
+     0,
+     0,
+     62,
+     6
+    ]
+   ]
+  },
+  "thr0.5": {
+   "lamp_correct": 0.7488,
+   "lamp_wrong_color": 0.0,
+   "lamp_missed": 0.2512,
+   "fake_lamps": 8,
+   "fake_lamps_on_monitor": 8,
+   "images_with_fake_lamp_on_monitor": 8,
+   "fake_tl_on_monitor": 20,
+   "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+    [
+     46,
+     0,
+     0,
+     20
+    ],
+    [
+     0,
+     52,
+     0,
+     17
+    ],
+    [
+     0,
+     0,
+     54,
+     14
+    ]
+   ]
+  }
+ }
+}
