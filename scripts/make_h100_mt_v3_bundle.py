@@ -14,7 +14,7 @@ import argparse, hashlib, os, time, zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOP = "LimoPro_mt"
 SCRIPTS = ("train_multitask.py", "train_seg.py", "make_model_compare_gif.py", "venue_aug.py", "v5_bag_colors.json",
-           "mt_online_aug.py", "mt_calib.py", "mt_det_loss.py", "eval_mt_monitor.py", "preview_monitor_real.py")
+           "mt_online_aug.py", "mt_calib.py", "mt_det_loss.py", "eval_mt_monitor.py", "eval_mt_calib.py", "preview_monitor_real.py")
 V3 = os.path.join(ROOT, "tools", "h100_mt_v3")
 
 
