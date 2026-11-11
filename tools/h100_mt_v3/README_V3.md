@@ -30,8 +30,9 @@ bash run_v3.sh                        # 학습 -> 모니터 시험 -> results_v3
 | 작은 박스 | √넓이 14px 미만은 무시. 불빛(light_red/yellow/green)은 원래 작아서 제외 |
 | A/B/주차 | 들어간 이미지를 2배 자주 뽑음 |
 | 보정 | 학습 중 보정 손실은 끔. 학습 후 val로 클래스별 temperature를 맞춰 `calib.json`에 저장 (차에서 p' = sigmoid(logit(p) / T)) |
-| 조기 종료 | 최대 120 epoch. 매 epoch val에서 학습과 같은 손실(val loss)을 재고, val loss 최저 epoch 뒤로 5 epoch 동안 더 낮아지지 않으면(올라가기 시작하면) 멈춤. est.pt = val loss 최저 epoch, est_score.pt = 점수(da+ll IoU+mAP50) 최고 epoch (참고) |
-| 차선 보호 | 학습 전에 시작 가중치(v2)를 val로 재 두고, val da+ll IoU가 그보다 0.01 넘게 낮은 epoch은 val loss가 최저여도 est.pt로 고르지 않음. 끝까지 그러면 시작 가중치가 est.pt로 남음 |
+| 조기 종료 | 최대 120 epoch. 매 epoch val에서 학습과 같은 손실(val loss)을 재고, val loss 최저 epoch 뒤로 5 epoch 동안 더 낮아지지 않으면(올라가기 시작하면) 멈춤. `best.pt` = val loss 최저 epoch(차선 보호 통과), `best_val_loss.pt` = val loss 최저 epoch(항상), `best_score.pt` = 점수(da+ll IoU+mAP50) 최고 epoch. `log.csv`에 val loss를 차선·가로선·검출로 나눠 기록 |
+| 차선 보호 | 학습 전에 시작 가중치를 val로 재 두고, val da+ll IoU가 그보다 0.01 넘게 낮은 epoch은 val loss가 최저여도 `best.pt`로 고르지 않음. 끝까지 그러면 시작 가중치가 `best.pt`로 남음. 후보 가중치들은 test 3종으로 채점해 `test.json`의 `candidates`에 넣으니, 검출이 좋아졌는데 차선이 나빠진 경우 이 표를 보고 고름 (다른 후보를 쓰면 temperature는 `scripts/eval_mt_calib.py`로 다시 구함) |
+| 시작 가중치 | 기본은 multitask-v2 best. `INIT=weights/hybridnets_v4_best_da.pt bash run_v3.sh`면 4차 차선(ego-lane-v4)에서 시작 (검출 머리·흰 가로선 채널은 새로 배움) |
 | 모니터 시험 | 학습 후 test·test_venue 신호등 사진에 원본/단색/땡땡이 모니터를 같은 자리에 그려 가짜 불빛·불빛 색을 잼(`eval_monitor/`). v2와 같은 seed라 바로 비교 가능 |
 
 값은 환경변수로 바꿀 수 있습니다(`run_v3.sh` 맨 위 설명). 예: `EPOCHS=150 ES_PATIENCE=8 DOTS_P=0.3 MONITOR_REAL=match,persp bash run_v3.sh`
