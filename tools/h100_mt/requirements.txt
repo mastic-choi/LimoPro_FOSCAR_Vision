@@ -1,0 +1,17 @@
+# torch/torchvision은 run.sh가 CUDA 12.8 빌드로 따로 설치
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+pillow==11.0.0
+scipy==1.15.3
+tqdm==4.67.1
+PyYAML==6.0.2
+yacs==0.1.8
+timm==0.5.4
+pretrainedmodels==0.7.4
+efficientnet_pytorch==0.7.1
+matplotlib==3.10.0
+prefetch-generator==1.0.3
+webcolors==25.10.0
+tensorboardX==2.6.5
+seaborn==0.13.2
+pandas==2.3.1
