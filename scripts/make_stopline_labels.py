@@ -29,6 +29,8 @@ def main():
     ap.add_argument("--ego", default="dataset/ego_v4")
     ap.add_argument("--max-score", type=float, default=30.0)
     ap.add_argument("--min-fit", type=float, default=0.5)
+    ap.add_argument("--out", default=None, help="라벨을 쓸 폴더 (기본 --data). --data를 ego_v4로 주고 --out을 따로 주면 "
+                    "합성 물체 없는 프레임별 깨끗한 라벨만 뽑힘(도면 없이 다른 PC에서 합성할 때 synth_signs_ego.py --sl-labels로 사용)")
     a = ap.parse_args()
     os.chdir(ROOT)
     os.environ["TRACK_LABEL_WORK"] = TL
@@ -36,13 +38,14 @@ def main():
     import render_stopline as RS
     P = json.load(open(os.path.join(TL, "results", "poses_route.json")))
     rows, K = [], np.ones((3, 3), np.uint8)
+    out = a.out or a.data
     splits = [s for s in sorted(os.listdir(a.data)) if os.path.isdir(os.path.join(a.data, s, "images"))]
     for split in splits:
         names = [n for n in sorted(os.listdir(os.path.join(a.data, split, "images"))) if n.startswith("v1106_")]
         if not names:
             continue
         for sub in ("sl_masks", "sl_valid"):
-            os.makedirs(os.path.join(a.data, split, sub), exist_ok=True)
+            os.makedirs(os.path.join(out, split, sub), exist_ok=True)
         for n in names:
             stem = n[:-4]
             i = int(stem.split("_")[1])
@@ -75,10 +78,10 @@ def main():
             changed = np.abs(img.astype(np.int16) - ego.astype(np.int16)).max(2) > 25   # 합성 물체가 덮은 곳
             changed = cv2.dilate(changed.astype(np.uint8), K) > 0
             sl &= ~changed
-            cv2.imwrite(os.path.join(a.data, split, "sl_masks", n), sl.astype(np.uint8) * 255)
-            cv2.imwrite(os.path.join(a.data, split, "sl_valid", n), valid.astype(np.uint8) * 255)
+            cv2.imwrite(os.path.join(out, split, "sl_masks", n), sl.astype(np.uint8) * 255)
+            cv2.imwrite(os.path.join(out, split, "sl_valid", n), valid.astype(np.uint8) * 255)
             rows.append(dict(split=split, image=stem, status="ok", lines=n_ok, px=int(sl.sum())))
-    with open(os.path.join(a.data, "stopline_labels.csv"), "w", newline="", encoding="utf-8") as fh:
+    with open(os.path.join(out, "stopline_labels.csv"), "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
