@@ -1,6 +1,8 @@
 # multitask-v3 학습 준비 (2026-11-11)
 
-multitask-v2 best에서 이어서 학습하는 v3의 설정, 근거, 서버 실행 방법을 정리합니다. 학습은 H100 서버에서 할 예정이며 아직 결과는 없습니다.
+multitask-v2 best에서 이어서 학습하는 v3의 설정, 근거, 서버 실행 방법을 정리합니다.
+
+> **결과 (2026-11-12):** H100에서 학습해 epoch 11 가중치를 [`multitask-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3)로 릴리즈했습니다. 차선 보호에 val loss 최저 epoch이 모두 걸려 `best.pt`는 v2 그대로였고, 후보 중 epoch 11(`best_score.pt`)을 골랐습니다. 결과와 고른 이유는 [`outputs/train_mt_v3/README.md`](../outputs/train_mt_v3/README.md)에 있습니다. 아래는 학습 전에 쓴 계획입니다.
 
 ## 요약
 

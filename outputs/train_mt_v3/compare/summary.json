@@ -1,0 +1,1724 @@
+{
+ "thr": 0.4,
+ "models": {
+  "v2": "outputs/train/hybridnets_mt_v3_seed0/best.pt",
+  "v3 ep7": "outputs/train/hybridnets_mt_v3_seed0/best_val_loss.pt",
+  "v3 ep11": "outputs/train/hybridnets_mt_v3_seed0/best_score.pt"
+ },
+ "summary": {
+  "test": {
+   "v2": {
+    "n_img": 542,
+    "n_gt": 1039,
+    "ok": 892,
+    "wrong": 30,
+    "miss": 117,
+    "fa": 1,
+    "n_big": 1019,
+    "miss_big": 107,
+    "da_iou": 0.9546019431928747,
+    "ll_iou": 0.8163021914415012,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 0.9706259106906898,
+     "sign_A": 0.8082347541313699,
+     "sign_B": 0.8907361234141219,
+     "bump": 0.9824121520906849,
+     "slow": 0.9975910380933233,
+     "parking": 0.8710741253339563,
+     "traffic_light": 0.9882832032405764,
+     "light_red": 0.9780784154801562,
+     "light_yellow": 0.9520006317626131,
+     "light_green": 0.9843569537043774,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.9723425928332307,
+     "sign_A": 0.819134172839452,
+     "sign_B": 0.9032049677965772,
+     "bump": 0.9824121520906849,
+     "slow": 0.9976202160412687,
+     "parking": 0.8850211429318884,
+     "traffic_light": 0.9882832032405764,
+     "light_red": 0.9780784154801562,
+     "light_yellow": 0.9520006317626131,
+     "light_green": 0.9843569537043774,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.942339330794187
+   },
+   "v3 ep7": {
+    "n_img": 542,
+    "n_gt": 1039,
+    "ok": 931,
+    "wrong": 15,
+    "miss": 93,
+    "fa": 3,
+    "n_big": 1019,
+    "miss_big": 81,
+    "da_iou": 0.9519636944195649,
+    "ll_iou": 0.8050194599475572,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 0.968512977828681,
+     "sign_A": 0.9536429152104443,
+     "sign_B": 0.9354995901350392,
+     "bump": 0.9909344847291266,
+     "slow": 0.9828794951109424,
+     "parking": 0.9489696457583779,
+     "traffic_light": 0.9882839973021661,
+     "light_red": 0.9801978571391687,
+     "light_yellow": 0.9567446697977168,
+     "light_green": 0.97947396794616,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.9738713530547376,
+     "sign_A": 0.9529461516483408,
+     "sign_B": 0.9473235766390832,
+     "bump": 0.9909344847291266,
+     "slow": 0.9856909756909757,
+     "parking": 0.9531837913334381,
+     "traffic_light": 0.9882839973021661,
+     "light_red": 0.9801978571391687,
+     "light_yellow": 0.9567446697977168,
+     "light_green": 0.97947396794616,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9685139600957822
+   },
+   "v3 ep11": {
+    "n_img": 542,
+    "n_gt": 1039,
+    "ok": 932,
+    "wrong": 9,
+    "miss": 98,
+    "fa": 1,
+    "n_big": 1019,
+    "miss_big": 90,
+    "da_iou": 0.9515444445163975,
+    "ll_iou": 0.8019997306034483,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 0.9678803560239738,
+     "sign_A": 0.9707910291616668,
+     "sign_B": 0.9716452026737259,
+     "bump": 0.9975459085302893,
+     "slow": 0.9977151013211633,
+     "parking": 0.9530149620496704,
+     "traffic_light": 0.9880805402117642,
+     "light_red": 0.9767135268242065,
+     "light_yellow": 0.9492548995395946,
+     "light_green": 0.9789392143356184,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.9753032937784932,
+     "sign_A": 0.9749474912280732,
+     "sign_B": 0.9821685607928495,
+     "bump": 0.9975459085302893,
+     "slow": 0.9974326748520298,
+     "parking": 0.9532652343917404,
+     "traffic_light": 0.9880805402117642,
+     "light_red": 0.9767135268242065,
+     "light_yellow": 0.9492548995395946,
+     "light_green": 0.9789392143356184,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9751580740671673
+   }
+  },
+  "test_venue": {
+   "v2": {
+    "n_img": 143,
+    "n_gt": 274,
+    "ok": 236,
+    "wrong": 5,
+    "miss": 33,
+    "fa": 0,
+    "n_big": 268,
+    "miss_big": 33,
+    "da_iou": 0.934650035333016,
+    "ll_iou": 0.48636278738986605,
+    "sl_iou": 0.6048388723078164,
+    "ap50": {
+     "pedestrian": 0.9899665551839465,
+     "sign_A": 0.8388279949661024,
+     "sign_B": 0.8737197907810743,
+     "bump": 0.9008264462809917,
+     "slow": 0.9966666666666666,
+     "parking": 0.9049586776859504,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.947845804988662,
+     "light_yellow": 0.9999999999999999,
+     "light_green": 0.9727806915306915,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.9927410207939508,
+     "sign_A": 0.8388279949661024,
+     "sign_B": 0.8737197907810743,
+     "bump": 0.9421052631578947,
+     "slow": 0.9963768115942029,
+     "parking": 0.9002267573696145,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.947845804988662,
+     "light_yellow": 0.9999999999999999,
+     "light_green": 0.9727806915306915,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9411099874460896
+   },
+   "v3 ep7": {
+    "n_img": 143,
+    "n_gt": 274,
+    "ok": 241,
+    "wrong": 4,
+    "miss": 29,
+    "fa": 1,
+    "n_big": 268,
+    "miss_big": 26,
+    "da_iou": 0.933839830397402,
+    "ll_iou": 0.48022402890695576,
+    "sl_iou": 0.6203041770107739,
+    "ap50": {
+     "pedestrian": 0.9935897435897435,
+     "sign_A": 0.9791064913347522,
+     "sign_B": 0.9437888198757763,
+     "bump": 0.9552819865319866,
+     "slow": 0.9949999999999999,
+     "parking": 0.9901185770750989,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9437229437229437,
+     "light_yellow": 0.9999999999999999,
+     "light_green": 0.962594776453472,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.9930434782608695,
+     "sign_A": 0.9791064913347522,
+     "sign_B": 0.9437888198757763,
+     "bump": 0.9631892230576441,
+     "slow": 0.9945652173913043,
+     "parking": 0.9913419913419914,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9437229437229437,
+     "light_yellow": 0.9999999999999999,
+     "light_green": 0.962594776453472,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9748710584960584
+   },
+   "v3 ep11": {
+    "n_img": 143,
+    "n_gt": 274,
+    "ok": 247,
+    "wrong": 2,
+    "miss": 25,
+    "fa": 0,
+    "n_big": 268,
+    "miss_big": 23,
+    "da_iou": 0.9316100604430649,
+    "ll_iou": 0.4832261359319995,
+    "sl_iou": 0.6446779690854234,
+    "ap50": {
+     "pedestrian": 0.9983333333333333,
+     "sign_A": 0.9460869565217391,
+     "sign_B": 0.9913419913419914,
+     "bump": 0.9859006734006733,
+     "slow": 0.9999999999999999,
+     "parking": 1.0,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9455782312925168,
+     "light_yellow": 0.9983333333333333,
+     "light_green": 0.9460328907203908,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 1.0,
+     "sign_A": 0.9460869565217391,
+     "sign_B": 0.9913419913419914,
+     "bump": 0.992822966507177,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9455782312925168,
+     "light_yellow": 0.9983333333333333,
+     "light_green": 0.9460328907203908,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.979711465632079
+   }
+  },
+  "test_bag": {
+   "v2": {
+    "n_img": 42,
+    "n_gt": 79,
+    "ok": 68,
+    "wrong": 0,
+    "miss": 11,
+    "fa": 0,
+    "n_big": 73,
+    "miss_big": 8,
+    "da_iou": 0.9808414972958621,
+    "ll_iou": 0.8255548241489562,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 0.8333333333333334,
+     "sign_A": 0.9583333333333334,
+     "sign_B": 0.9682539682539683,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 0.9285714285714286,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.75,
+     "sign_A": 0.9428571428571428,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 0.9285714285714286,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9688492063492063
+   },
+   "v3 ep7": {
+    "n_img": 42,
+    "n_gt": 79,
+    "ok": 70,
+    "wrong": 0,
+    "miss": 9,
+    "fa": 0,
+    "n_big": 73,
+    "miss_big": 7,
+    "da_iou": 0.9782921218355686,
+    "ll_iou": 0.810324456966282,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 0.9761904761904762,
+     "sign_A": 1.0,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 0.8571428571428571,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 0.9761904761904762,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.95,
+     "sign_A": 1.0,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 0.9761904761904762,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.980952380952381
+   },
+   "v3 ep11": {
+    "n_img": 42,
+    "n_gt": 79,
+    "ok": 69,
+    "wrong": 2,
+    "miss": 8,
+    "fa": 0,
+    "n_big": 73,
+    "miss_big": 6,
+    "da_iou": 0.9786819823420635,
+    "ll_iou": 0.8097364265303053,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 1.0,
+     "sign_A": 0.9761904761904762,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 0.9097744360902256,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 1.0,
+     "sign_A": 1.0,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9885964912280703
+   }
+  },
+  "cone": {
+   "v2": {
+    "n_img": 1363,
+    "n_gt": 24127,
+    "ok": 11860,
+    "wrong": 0,
+    "miss": 12267,
+    "fa": 2365,
+    "n_big": 4379,
+    "miss_big": 438,
+    "da_iou": null,
+    "ll_iou": null,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": null,
+     "sign_A": null,
+     "sign_B": null,
+     "bump": null,
+     "slow": null,
+     "parking": null,
+     "traffic_light": null,
+     "light_red": null,
+     "light_yellow": null,
+     "light_green": null,
+     "limo": null,
+     "cone": 0.5718273664695029
+    },
+    "ap50_14px": {
+     "pedestrian": null,
+     "sign_A": null,
+     "sign_B": null,
+     "bump": null,
+     "slow": null,
+     "parking": null,
+     "traffic_light": null,
+     "light_red": null,
+     "light_yellow": null,
+     "light_green": null,
+     "limo": null,
+     "cone": 0.8869020034122326
+    },
+    "map50_no_cone": null
+   },
+   "v3 ep7": {
+    "n_img": 1363,
+    "n_gt": 24127,
+    "ok": 4730,
+    "wrong": 5,
+    "miss": 19392,
+    "fa": 204,
+    "n_big": 4379,
+    "miss_big": 367,
+    "da_iou": null,
+    "ll_iou": null,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": null,
+     "sign_A": null,
+     "sign_B": null,
+     "bump": null,
+     "slow": null,
+     "parking": null,
+     "traffic_light": null,
+     "light_red": null,
+     "light_yellow": null,
+     "light_green": null,
+     "limo": null,
+     "cone": 0.2610091679686174
+    },
+    "ap50_14px": {
+     "pedestrian": null,
+     "sign_A": null,
+     "sign_B": null,
+     "bump": null,
+     "slow": null,
+     "parking": null,
+     "traffic_light": null,
+     "light_red": null,
+     "light_yellow": null,
+     "light_green": null,
+     "limo": null,
+     "cone": 0.9711232985296847
+    },
+    "map50_no_cone": null
+   },
+   "v3 ep11": {
+    "n_img": 1363,
+    "n_gt": 24127,
+    "ok": 4623,
+    "wrong": 0,
+    "miss": 19504,
+    "fa": 189,
+    "n_big": 4379,
+    "miss_big": 413,
+    "da_iou": null,
+    "ll_iou": null,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": null,
+     "sign_A": null,
+     "sign_B": null,
+     "bump": null,
+     "slow": null,
+     "parking": null,
+     "traffic_light": null,
+     "light_red": null,
+     "light_yellow": null,
+     "light_green": null,
+     "limo": null,
+     "cone": 0.26607644060390734
+    },
+    "ap50_14px": {
+     "pedestrian": null,
+     "sign_A": null,
+     "sign_B": null,
+     "bump": null,
+     "slow": null,
+     "parking": null,
+     "traffic_light": null,
+     "light_red": null,
+     "light_yellow": null,
+     "light_green": null,
+     "limo": null,
+     "cone": 0.9701665802049324
+    },
+    "map50_no_cone": null
+   }
+  }
+ },
+ "monitor": {
+  "v2": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 0.9998,
+     "light_red": 0.9772,
+     "light_yellow": 0.9712,
+     "light_green": 0.9777
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8621,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1379,
+     "fake_lamps": 1,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       58,
+       0,
+       11
+      ],
+      [
+       0,
+       0,
+       61,
+       7
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7685,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2315,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       47,
+       0,
+       0,
+       19
+      ],
+      [
+       0,
+       52,
+       0,
+       17
+      ],
+      [
+       0,
+       0,
+       57,
+       11
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 0.9998,
+     "light_red": 0.9634,
+     "light_yellow": 0.9585,
+     "light_green": 0.9776
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8571,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1429,
+     "fake_lamps": 2,
+     "fake_lamps_on_monitor": 2,
+     "images_with_fake_lamp_on_monitor": 2,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       56,
+       0,
+       13
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7586,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2414,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       47,
+       0,
+       0,
+       19
+      ],
+      [
+       0,
+       51,
+       0,
+       18
+      ],
+      [
+       0,
+       0,
+       56,
+       12
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9766,
+     "light_red": 0.8958,
+     "light_yellow": 0.8852,
+     "light_green": 0.9241
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8621,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1379,
+     "fake_lamps": 64,
+     "fake_lamps_on_monitor": 61,
+     "images_with_fake_lamp_on_monitor": 36,
+     "fake_tl_on_monitor": 45,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       57,
+       0,
+       12
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7488,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2512,
+     "fake_lamps": 8,
+     "fake_lamps_on_monitor": 8,
+     "images_with_fake_lamp_on_monitor": 8,
+     "fake_tl_on_monitor": 20,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       46,
+       0,
+       0,
+       20
+      ],
+      [
+       0,
+       52,
+       0,
+       17
+      ],
+      [
+       0,
+       0,
+       54,
+       14
+      ]
+     ]
+    }
+   }
+  },
+  "v3 ep7": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 0.9999,
+     "light_red": 0.9802,
+     "light_yellow": 0.9746,
+     "light_green": 0.9779
+    },
+    "thr0.3": {
+     "lamp_correct": 0.9064,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.0936,
+     "fake_lamps": 3,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       59,
+       0,
+       0,
+       7
+      ],
+      [
+       0,
+       61,
+       0,
+       8
+      ],
+      [
+       0,
+       0,
+       64,
+       4
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7931,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2069,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       51,
+       0,
+       0,
+       15
+      ],
+      [
+       0,
+       53,
+       0,
+       16
+      ],
+      [
+       0,
+       0,
+       57,
+       11
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 0.9999,
+     "light_red": 0.9781,
+     "light_yellow": 0.9721,
+     "light_green": 0.9699
+    },
+    "thr0.3": {
+     "lamp_correct": 0.9064,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.0936,
+     "fake_lamps": 6,
+     "fake_lamps_on_monitor": 1,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 1,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       60,
+       0,
+       0,
+       6
+      ],
+      [
+       0,
+       61,
+       0,
+       8
+      ],
+      [
+       0,
+       0,
+       63,
+       5
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7734,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2266,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       50,
+       0,
+       0,
+       16
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       57,
+       11
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9997,
+     "light_red": 0.9745,
+     "light_yellow": 0.9694,
+     "light_green": 0.9632
+    },
+    "thr0.3": {
+     "lamp_correct": 0.9015,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.0985,
+     "fake_lamps": 7,
+     "fake_lamps_on_monitor": 2,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 1,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       59,
+       0,
+       0,
+       7
+      ],
+      [
+       0,
+       61,
+       0,
+       8
+      ],
+      [
+       0,
+       0,
+       63,
+       5
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7488,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2512,
+     "fake_lamps": 1,
+     "fake_lamps_on_monitor": 1,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       45,
+       0,
+       0,
+       21
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       57,
+       11
+      ]
+     ]
+    }
+   }
+  },
+  "v3 ep11": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 0.9997,
+     "light_red": 0.9799,
+     "light_yellow": 0.9702,
+     "light_green": 0.9665
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8374,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1626,
+     "fake_lamps": 2,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       53,
+       0,
+       0,
+       13
+      ],
+      [
+       0,
+       56,
+       0,
+       13
+      ],
+      [
+       0,
+       0,
+       61,
+       7
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7241,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2759,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       44,
+       0,
+       0,
+       22
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       53,
+       15
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 0.9997,
+     "light_red": 0.9726,
+     "light_yellow": 0.9606,
+     "light_green": 0.966
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8522,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1478,
+     "fake_lamps": 5,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       55,
+       0,
+       14
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7241,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2759,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       44,
+       0,
+       0,
+       22
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       53,
+       15
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9985,
+     "light_red": 0.9623,
+     "light_yellow": 0.9537,
+     "light_green": 0.9553
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8374,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1626,
+     "fake_lamps": 6,
+     "fake_lamps_on_monitor": 4,
+     "images_with_fake_lamp_on_monitor": 3,
+     "fake_tl_on_monitor": 5,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       55,
+       0,
+       0,
+       11
+      ],
+      [
+       0,
+       55,
+       0,
+       14
+      ],
+      [
+       0,
+       0,
+       60,
+       8
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7143,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2857,
+     "fake_lamps": 2,
+     "fake_lamps_on_monitor": 2,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       43,
+       0,
+       0,
+       23
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       52,
+       16
+      ]
+     ]
+    }
+   }
+  },
+  "v2 실제처럼": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 0.9998,
+     "light_red": 0.9779,
+     "light_yellow": 0.9706,
+     "light_green": 0.9777
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8621,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1379,
+     "fake_lamps": 1,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       57,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       57,
+       0,
+       11
+      ],
+      [
+       0,
+       0,
+       61,
+       7
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7685,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2315,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       48,
+       0,
+       0,
+       19
+      ],
+      [
+       0,
+       51,
+       0,
+       17
+      ],
+      [
+       0,
+       0,
+       57,
+       11
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 0.9998,
+     "light_red": 0.9639,
+     "light_yellow": 0.9515,
+     "light_green": 0.9762
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8473,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1527,
+     "fake_lamps": 2,
+     "fake_lamps_on_monitor": 2,
+     "images_with_fake_lamp_on_monitor": 2,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       11
+      ],
+      [
+       0,
+       54,
+       0,
+       14
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7586,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2414,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       48,
+       0,
+       0,
+       19
+      ],
+      [
+       0,
+       50,
+       0,
+       18
+      ],
+      [
+       0,
+       0,
+       56,
+       12
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9829,
+     "light_red": 0.8628,
+     "light_yellow": 0.8624,
+     "light_green": 0.9177
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8571,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1429,
+     "fake_lamps": 77,
+     "fake_lamps_on_monitor": 76,
+     "images_with_fake_lamp_on_monitor": 39,
+     "fake_tl_on_monitor": 55,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       57,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       55,
+       0,
+       13
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.734,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.266,
+     "fake_lamps": 16,
+     "fake_lamps_on_monitor": 15,
+     "images_with_fake_lamp_on_monitor": 9,
+     "fake_tl_on_monitor": 9,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       44,
+       0,
+       0,
+       23
+      ],
+      [
+       0,
+       49,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       56,
+       12
+      ]
+     ]
+    }
+   }
+  },
+  "v3 ep7 실제처럼": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 0.9999,
+     "light_red": 0.9813,
+     "light_yellow": 0.9743,
+     "light_green": 0.978
+    },
+    "thr0.3": {
+     "lamp_correct": 0.9064,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.0936,
+     "fake_lamps": 3,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       60,
+       0,
+       0,
+       7
+      ],
+      [
+       0,
+       60,
+       0,
+       8
+      ],
+      [
+       0,
+       0,
+       64,
+       4
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7931,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2069,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       52,
+       0,
+       0,
+       15
+      ],
+      [
+       0,
+       52,
+       0,
+       16
+      ],
+      [
+       0,
+       0,
+       57,
+       11
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 0.9998,
+     "light_red": 0.9792,
+     "light_yellow": 0.9601,
+     "light_green": 0.9695
+    },
+    "thr0.3": {
+     "lamp_correct": 0.9015,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.0985,
+     "fake_lamps": 5,
+     "fake_lamps_on_monitor": 1,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 1,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       60,
+       0,
+       0,
+       7
+      ],
+      [
+       0,
+       60,
+       0,
+       8
+      ],
+      [
+       0,
+       0,
+       63,
+       5
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7734,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2266,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       52,
+       0,
+       0,
+       15
+      ],
+      [
+       0,
+       48,
+       0,
+       20
+      ],
+      [
+       0,
+       0,
+       57,
+       11
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9995,
+     "light_red": 0.9739,
+     "light_yellow": 0.9559,
+     "light_green": 0.959
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8867,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1133,
+     "fake_lamps": 12,
+     "fake_lamps_on_monitor": 6,
+     "images_with_fake_lamp_on_monitor": 5,
+     "fake_tl_on_monitor": 2,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       58,
+       0,
+       0,
+       9
+      ],
+      [
+       0,
+       59,
+       0,
+       9
+      ],
+      [
+       0,
+       0,
+       63,
+       5
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7882,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2118,
+     "fake_lamps": 2,
+     "fake_lamps_on_monitor": 1,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       52,
+       0,
+       0,
+       15
+      ],
+      [
+       0,
+       52,
+       0,
+       16
+      ],
+      [
+       0,
+       0,
+       56,
+       12
+      ]
+     ]
+    }
+   }
+  },
+  "v3 ep11 실제처럼": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 0.9998,
+     "light_red": 0.9775,
+     "light_yellow": 0.9698,
+     "light_green": 0.9669
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8374,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1626,
+     "fake_lamps": 3,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       54,
+       0,
+       0,
+       13
+      ],
+      [
+       0,
+       55,
+       0,
+       13
+      ],
+      [
+       0,
+       0,
+       61,
+       7
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7291,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2709,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       45,
+       0,
+       0,
+       22
+      ],
+      [
+       0,
+       49,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       54,
+       14
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 0.9996,
+     "light_red": 0.9707,
+     "light_yellow": 0.9569,
+     "light_green": 0.9669
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8473,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1527,
+     "fake_lamps": 4,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       57,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       54,
+       0,
+       14
+      ],
+      [
+       0,
+       0,
+       61,
+       7
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7389,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2611,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       46,
+       0,
+       0,
+       21
+      ],
+      [
+       0,
+       50,
+       0,
+       18
+      ],
+      [
+       0,
+       0,
+       54,
+       14
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9979,
+     "light_red": 0.9532,
+     "light_yellow": 0.9613,
+     "light_green": 0.953
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8571,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1429,
+     "fake_lamps": 10,
+     "fake_lamps_on_monitor": 7,
+     "images_with_fake_lamp_on_monitor": 7,
+     "fake_tl_on_monitor": 4,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       11
+      ],
+      [
+       0,
+       57,
+       0,
+       11
+      ],
+      [
+       0,
+       0,
+       61,
+       7
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7192,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2808,
+     "fake_lamps": 1,
+     "fake_lamps_on_monitor": 1,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 1,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       47,
+       0,
+       0,
+       20
+      ],
+      [
+       0,
+       47,
+       0,
+       21
+      ],
+      [
+       0,
+       0,
+       52,
+       16
+      ]
+     ]
+    }
+   }
+  }
+ }
+}

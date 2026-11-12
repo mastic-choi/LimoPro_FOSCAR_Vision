@@ -95,14 +95,15 @@ def _reblur_ratio(gray, mask=None):
     return float(g1[sel].sum() / max(g0[sel].sum(), 1e-6)) if sel.sum() >= 10 and t > 4 else None
 
 
-def add_monitor(img, da, ll, sl, slv, boxes, rng, dots_p=0.0, real=(), dots=None):
+def add_monitor(img, da, ll, sl, slv, boxes, rng, dots_p=0.0, real=(), dots=None, pattern=None):
     """boxes: (N,5) 원본 좌표 [x1,y1,x2,y2,cls]. 성공하면 True (이미지·마스크를 제자리에서 바꿈).
     dots_p: 화면을 단색 대신 땡땡이(켜진 불과 다른 색의 불빛 크기 원)로 그릴 확률. dots=True/False면 확률 대신 고정.
     real: 실제 카메라처럼 보이게 하는 효과 (REAL_ALL 중 고름). 효과를 켜고 꺼도 모니터 위치·크기·색은 같다.
       match  신호등 주변 사진의 선명도·노이즈를 재서 모니터도 같은 정도로 흐리게 하고 노이즈를 넣음
       persp  좌우 ±25° 비스듬히 본 사다리꼴(+ 약간 기울기)
       screen 비네팅, 좌우 밝기 차이, 반사 줄, 밝은 색이 하얗게 날아감(자체 발광 화면을 카메라로 찍은 것처럼)
-      jitter 땡땡이 원의 위치·크기·밝기를 조금씩 흔들고, 원 간격(촘촘함) 범위를 넓힘"""
+      jitter 땡땡이 원의 위치·크기·밝기를 조금씩 흔들고, 원 간격(촘촘함) 범위를 넓힘
+    pattern: 화면에 띄울 BGR 이미지(예: 대회 모니터 시험 패턴). 주면 단색·땡땡이 대신 이 이미지를 그대로 띄움"""
     tls = [b for b in boxes if int(b[4]) == TL_CLS and (b[2] - b[0]) >= 6]
     if not tls:
         return False
@@ -183,7 +184,11 @@ def add_monitor(img, da, ll, sl, slv, boxes, rng, dots_p=0.0, real=(), dots=None
     if ix1 > ix0 and iy1 > iy0:
         yy = np.linspace(0, 1, iy1 - iy0)[:, None, None]
         cv_[iy0:iy1, ix0:ix1] = col * (1 - grad * yy) + light * 8   # 단색 화면(자체 발광)
-        if is_dots:
+        if pattern is not None:   # 주어진 화면 이미지를 그대로 (자체 발광)
+            pat = cv2.resize(pattern, (ix1 - ix0, iy1 - iy0), interpolation=cv2.INTER_AREA).astype(np.float32)
+            cv_[iy0:iy1, ix0:ix1] = pat * (1 - grad * yy) + light * 8
+            col = pat.reshape(-1, 3).mean(0)
+        if is_dots and pattern is None:
             lamps = [o for o in boxes if int(o[4]) in LAMP_COLOR and b[0] - 2 <= (o[0] + o[2]) / 2 <= b[2] + 2
                      and b[1] - 2 <= (o[1] + o[3]) / 2 <= b[3] + 2]
             lit = int(lamps[0][4]) if lamps else None
@@ -224,7 +229,7 @@ def add_monitor(img, da, ll, sl, slv, boxes, rng, dots_p=0.0, real=(), dots=None
                 d = u * np.cos(ang) + w_ * np.sin(ang) - q.uniform(-0.8, 0.8)
                 band = np.exp(-(d / q.uniform(0.08, 0.25)) ** 2)
                 scr = scr + (255 * light.mean() - scr) * (q.uniform(0.06, 0.2) * band)[..., None]
-            scr = scr * q.uniform(1.0, 1.15 if is_dots else 1.5)   # 노출: 밝은 색은 하얗게 날아감 (땡땡이는 원이 불빛처럼 보이게 약하게)
+            scr = scr * q.uniform(1.0, 1.15 if is_dots or pattern is not None else 1.5)   # 노출: 밝은 색은 하얗게 날아감 (땡땡이는 원이 불빛처럼 보이게 약하게)
             ex = np.clip(scr.max(2, keepdims=True) - 255, 0, None)
             cv_[iy0:iy1, ix0:ix1] = scr + ex * 0.7
     src = np.array([[0, 0], [cw, 0], [cw, ch], [0, ch]], np.float32)

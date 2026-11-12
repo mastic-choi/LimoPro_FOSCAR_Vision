@@ -1,0 +1,95 @@
+{
+ "thr": 0.3,
+ "real": [
+  "match",
+  "persp",
+  "screen"
+ ],
+ "photos": {
+  "red": "test_venue/v1106_000327_s0",
+  "yellow": "test_venue/v1106_000712_s0",
+  "green": "test_venue/v1106_000221_s0"
+ },
+ "summary": {
+  "red": {
+   "v2": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 7
+   },
+   "v3 ep7": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 7
+   },
+   "v3 ep11": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 7
+   }
+  },
+  "yellow": {
+   "v2": {
+    "fake_lamp": 0,
+    "fake_tl": 1,
+    "img_fake": 0,
+    "ok": 7
+   },
+   "v3 ep7": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 7
+   },
+   "v3 ep11": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 7
+   }
+  },
+  "green": {
+   "v2": {
+    "fake_lamp": 0,
+    "fake_tl": 1,
+    "img_fake": 0,
+    "ok": 7
+   },
+   "v3 ep7": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 7
+   },
+   "v3 ep11": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 7
+   }
+  },
+  "solid": {
+   "v2": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 6
+   },
+   "v3 ep7": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 6
+   },
+   "v3 ep11": {
+    "fake_lamp": 0,
+    "fake_tl": 0,
+    "img_fake": 0,
+    "ok": 6
+   }
+  }
+ }
+}

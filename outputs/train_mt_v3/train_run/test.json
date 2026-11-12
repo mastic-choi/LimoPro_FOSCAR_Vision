@@ -1,0 +1,751 @@
+{
+  "best": {
+    "score": 2.6635,
+    "epoch": 11,
+    "stopped": true,
+    "start_val": {
+      "da_iou": 0.9522,
+      "ll_iou": 0.82,
+      "map50": 0.9064,
+      "loss": 2.45016
+    },
+    "best_pt_epoch": 0,
+    "raw_best": 2.6635,
+    "best_score_epoch": 11,
+    "val_at_best_score": {
+      "da_iou": 0.951,
+      "ll_iou": 0.8075,
+      "calib": {
+        "n": 6432,
+        "acc": 0.3321,
+        "conf": 0.2587,
+        "ece": 0.0808,
+        "mce": 0.3968,
+        "nll": 0.3181,
+        "brier": 0.0914
+      },
+      "sl_iou": null,
+      "ap50": {
+        "pedestrian": 0.9382,
+        "sign_A": 0.9834,
+        "sign_B": 0.9685,
+        "bump": 0.9986,
+        "slow": 0.9945,
+        "parking": 0.9762,
+        "traffic_light": 0.9797,
+        "light_red": 0.9736,
+        "light_yellow": 0.9633,
+        "light_green": 0.9831,
+        "limo": null,
+        "cone": 0.2712
+      },
+      "map50": 0.905,
+      "loss": 1.29115,
+      "loss_parts": {
+        "seg": 0.20992,
+        "sl": 0.0,
+        "cls": 0.09446,
+        "reg": 0.44616,
+        "cal": 0.0
+      }
+    },
+    "best_val_loss": 1.26164,
+    "best_loss_epoch": 7,
+    "val": {
+      "da_iou": 0.9483,
+      "ll_iou": 0.8109,
+      "calib": {
+        "n": 6316,
+        "acc": 0.3345,
+        "conf": 0.2691,
+        "ece": 0.0724,
+        "mce": 0.39,
+        "nll": 0.3132,
+        "brier": 0.0892
+      },
+      "sl_iou": null,
+      "ap50": {
+        "pedestrian": 0.9215,
+        "sign_A": 0.9516,
+        "sign_B": 0.8885,
+        "bump": 0.9586,
+        "slow": 0.9889,
+        "parking": 0.9427,
+        "traffic_light": 0.9779,
+        "light_red": 0.9685,
+        "light_yellow": 0.9963,
+        "light_green": 0.9756,
+        "limo": null,
+        "cone": 0.2695
+      },
+      "map50": 0.8862,
+      "loss": 1.26164,
+      "loss_parts": {
+        "seg": 0.20873,
+        "sl": 0.0,
+        "cls": 0.09723,
+        "reg": 0.42922,
+        "cal": 0.0
+      }
+    },
+    "best_train_loss": 2.2282979073731797,
+    "lane_guard_skipped": [
+      1,
+      3,
+      4,
+      6,
+      7
+    ],
+    "loss_log": [
+      {
+        "epoch": 1,
+        "train_loss": 2.19421,
+        "val_loss": 1.48638,
+        "val_parts": {
+          "seg": 0.21373,
+          "sl": 0.0,
+          "cls": 0.13043,
+          "reg": 0.5059,
+          "cal": 0.0
+        },
+        "score": 2.5533
+      },
+      {
+        "epoch": 2,
+        "train_loss": 2.52678,
+        "val_loss": 1.74132,
+        "val_parts": {
+          "seg": 0.26793,
+          "sl": 0.0,
+          "cls": 0.12405,
+          "reg": 0.61265,
+          "cal": 0.0
+        },
+        "score": 2.5883
+      },
+      {
+        "epoch": 3,
+        "train_loss": 2.48736,
+        "val_loss": 1.41357,
+        "val_parts": {
+          "seg": 0.21247,
+          "sl": 0.0,
+          "cls": 0.11556,
+          "reg": 0.48499,
+          "cal": 0.0
+        },
+        "score": 2.6166
+      },
+      {
+        "epoch": 4,
+        "train_loss": 2.36516,
+        "val_loss": 1.33789,
+        "val_parts": {
+          "seg": 0.21447,
+          "sl": 0.0,
+          "cls": 0.10766,
+          "reg": 0.45405,
+          "cal": 0.0
+        },
+        "score": 2.6311
+      },
+      {
+        "epoch": 5,
+        "train_loss": 2.39633,
+        "val_loss": 1.36014,
+        "val_parts": {
+          "seg": 0.21091,
+          "sl": 0.0,
+          "cls": 0.10746,
+          "reg": 0.46715,
+          "cal": 0.0
+        },
+        "score": 2.6312
+      },
+      {
+        "epoch": 6,
+        "train_loss": 2.29254,
+        "val_loss": 1.32797,
+        "val_parts": {
+          "seg": 0.21855,
+          "sl": 0.0,
+          "cls": 0.1006,
+          "reg": 0.45412,
+          "cal": 0.0
+        },
+        "score": 2.6354
+      },
+      {
+        "epoch": 7,
+        "train_loss": 2.2283,
+        "val_loss": 1.26164,
+        "val_parts": {
+          "seg": 0.20873,
+          "sl": 0.0,
+          "cls": 0.09723,
+          "reg": 0.42922,
+          "cal": 0.0
+        },
+        "score": 2.6454
+      },
+      {
+        "epoch": 8,
+        "train_loss": 2.27299,
+        "val_loss": 1.33675,
+        "val_parts": {
+          "seg": 0.22346,
+          "sl": 0.0,
+          "cls": 0.10392,
+          "reg": 0.45273,
+          "cal": 0.0
+        },
+        "score": 2.6322
+      },
+      {
+        "epoch": 9,
+        "train_loss": 2.20583,
+        "val_loss": 1.3965,
+        "val_parts": {
+          "seg": 0.22843,
+          "sl": 0.0,
+          "cls": 0.10268,
+          "reg": 0.48136,
+          "cal": 0.0
+        },
+        "score": 2.6215
+      },
+      {
+        "epoch": 10,
+        "train_loss": 2.13927,
+        "val_loss": 1.27783,
+        "val_parts": {
+          "seg": 0.20913,
+          "sl": 0.0,
+          "cls": 0.09277,
+          "reg": 0.44158,
+          "cal": 0.0
+        },
+        "score": 2.6528
+      },
+      {
+        "epoch": 11,
+        "train_loss": 2.17914,
+        "val_loss": 1.29115,
+        "val_parts": {
+          "seg": 0.20992,
+          "sl": 0.0,
+          "cls": 0.09446,
+          "reg": 0.44616,
+          "cal": 0.0
+        },
+        "score": 2.6635
+      },
+      {
+        "epoch": 12,
+        "train_loss": 2.10558,
+        "val_loss": 1.30731,
+        "val_parts": {
+          "seg": 0.20369,
+          "sl": 0.0,
+          "cls": 0.09731,
+          "reg": 0.4545,
+          "cal": 0.0
+        },
+        "score": 2.6581
+      }
+    ],
+    "hist": [
+      2.5533,
+      2.5883000000000003,
+      2.6166,
+      2.6311,
+      2.6312,
+      2.6354,
+      2.6454,
+      2.6322,
+      2.6215,
+      2.6528,
+      2.6635,
+      2.6581
+    ],
+    "overfit_run": 0,
+    "overfit_log": [
+      {
+        "epoch": 1,
+        "score": 2.5533,
+        "train_loss": 2.1942,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 2,
+        "score": 2.5883,
+        "train_loss": 2.5268,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 3,
+        "score": 2.6166,
+        "train_loss": 2.4874,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 4,
+        "score": 2.6311,
+        "train_loss": 2.3652,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 5,
+        "score": 2.6312,
+        "train_loss": 2.3963,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 6,
+        "score": 2.6354,
+        "train_loss": 2.2925,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 7,
+        "score": 2.6454,
+        "train_loss": 2.2283,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 8,
+        "score": 2.6322,
+        "train_loss": 2.273,
+        "gap": 0.0132,
+        "suspect": false
+      },
+      {
+        "epoch": 9,
+        "score": 2.6215,
+        "train_loss": 2.2058,
+        "gap": 0.0239,
+        "suspect": false
+      },
+      {
+        "epoch": 10,
+        "score": 2.6528,
+        "train_loss": 2.1393,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 11,
+        "score": 2.6635,
+        "train_loss": 2.1791,
+        "gap": 0.0,
+        "suspect": false
+      },
+      {
+        "epoch": 12,
+        "score": 2.6581,
+        "train_loss": 2.1056,
+        "gap": 0.0054,
+        "suspect": false
+      }
+    ],
+    "stop_reason": "val_loss"
+  },
+  "args": {
+    "seg_data": "dataset/synth_signs_v2",
+    "det_data": "dataset/cones_v1",
+    "cone_train_n": 2500,
+    "cone_val_n": 300,
+    "init": "weights/hybridnets_mt_v2_best.pt",
+    "epochs": 120,
+    "batch": 32,
+    "lr": 0.0001,
+    "ll_weight": 2.0,
+    "sl_weight": 2.0,
+    "det_weight": 2.0,
+    "workers": 16,
+    "venue_ref_dir": "dataset/venue_ref_20261106",
+    "venue_p": 0.5,
+    "venue_v4": 0.8,
+    "venue_v5": 0.25,
+    "patience": 0,
+    "amp": true,
+    "max_steps": 0,
+    "val_max": 0,
+    "seed": 0,
+    "out": "outputs/train/hybridnets_mt_v3_seed0",
+    "fresh": false,
+    "head_lr_mult": 10.0,
+    "enc_skip": false,
+    "warmup_steps": 500,
+    "min_delta": 0.001,
+    "es_smooth": 1,
+    "ignore_small": 14.0,
+    "oversample_ab": 2.0,
+    "calib_loss": "none",
+    "calib_weight": 0.0,
+    "aug_monitor_p": 0.4,
+    "aug_monitor_dots": 0.5,
+    "aug_monitor_real": "all",
+    "overfit_drop": 0.0,
+    "overfit_epochs": 3,
+    "es_val_loss": 5,
+    "es_min_delta": 0.0,
+    "best_by": "val_loss",
+    "lane_guard": 0.01,
+    "aug_cable_p": 0.0
+  },
+  "calib": {
+    "T_all": 0.495,
+    "T_cls": {
+      "pedestrian": 0.471,
+      "sign_A": 1.025,
+      "sign_B": 0.591,
+      "bump": 0.554,
+      "slow": 0.471,
+      "parking": 0.872,
+      "traffic_light": 0.33,
+      "light_red": 0.641,
+      "light_yellow": 0.487,
+      "light_green": 0.511,
+      "limo": 0.495,
+      "cone": 0.487
+    },
+    "how": "p_calibrated = sigmoid(logit(p) / T_cls[class])",
+    "val_raw": {
+      "n": 25231,
+      "acc": 0.159,
+      "conf": 0.1976,
+      "ece": 0.1006,
+      "mce": 0.2426,
+      "nll": 0.217,
+      "brier": 0.0544
+    },
+    "val_T": {
+      "n": 25231,
+      "acc": 0.159,
+      "conf": 0.1318,
+      "ece": 0.0272,
+      "mce": 0.2707,
+      "nll": 0.1573,
+      "brier": 0.0458
+    }
+  },
+  "test": {
+    "all": {
+      "da_iou": 0.9546,
+      "ll_iou": 0.8164,
+      "calib": {
+        "n": 111710,
+        "acc": 0.1503,
+        "conf": 0.1894,
+        "ece": 0.0971,
+        "mce": 0.2486,
+        "nll": 0.2189,
+        "brier": 0.0554
+      },
+      "calib_T": {
+        "n": 111710,
+        "acc": 0.1503,
+        "conf": 0.1209,
+        "ece": 0.0294,
+        "mce": 0.2226,
+        "nll": 0.1635,
+        "brier": 0.0479
+      },
+      "sl_iou": null,
+      "ap50": {
+        "pedestrian": 0.9575,
+        "sign_A": 0.8061,
+        "sign_B": 0.8867,
+        "bump": 0.9671,
+        "slow": 0.994,
+        "parking": 0.8529,
+        "traffic_light": 0.9882,
+        "light_red": 0.9775,
+        "light_yellow": 0.9503,
+        "light_green": 0.9844,
+        "limo": null,
+        "cone": 0.5712
+      },
+      "map50": 0.8947
+    }
+  },
+  "test_venue": {
+    "all": {
+      "da_iou": 0.9346,
+      "ll_iou": 0.4862,
+      "calib": {
+        "n": 563,
+        "acc": 0.4707,
+        "conf": 0.3859,
+        "ece": 0.1456,
+        "mce": 0.3659,
+        "nll": 0.2708,
+        "brier": 0.0756
+      },
+      "calib_T": {
+        "n": 563,
+        "acc": 0.4707,
+        "conf": 0.3831,
+        "ece": 0.0876,
+        "mce": 0.3453,
+        "nll": 0.2187,
+        "brier": 0.068
+      },
+      "sl_iou": 0.6042,
+      "ap50": {
+        "pedestrian": 0.99,
+        "sign_A": 0.8388,
+        "sign_B": 0.8752,
+        "bump": 0.9048,
+        "slow": 0.9967,
+        "parking": 0.905,
+        "traffic_light": 0.9855,
+        "light_red": 0.9478,
+        "light_yellow": 1.0,
+        "light_green": 0.9733,
+        "limo": null,
+        "cone": null
+      },
+      "map50": 0.9368
+    }
+  },
+  "test_bag": {
+    "all": {
+      "da_iou": 0.9808,
+      "ll_iou": 0.8256,
+      "calib": {
+        "n": 187,
+        "acc": 0.4171,
+        "conf": 0.3405,
+        "ece": 0.1443,
+        "mce": 0.2262,
+        "nll": 0.2653,
+        "brier": 0.0748
+      },
+      "calib_T": {
+        "n": 187,
+        "acc": 0.4171,
+        "conf": 0.3326,
+        "ece": 0.0845,
+        "mce": 0.0903,
+        "nll": 0.2284,
+        "brier": 0.07
+      },
+      "sl_iou": null,
+      "ap50": {
+        "pedestrian": 0.8333,
+        "sign_A": 0.9583,
+        "sign_B": 0.8833,
+        "bump": 1.0,
+        "slow": 0.9643,
+        "parking": 0.9286,
+        "traffic_light": 1.0,
+        "light_red": 1.0,
+        "light_yellow": 1.0,
+        "light_green": 1.0,
+        "limo": null,
+        "cone": null
+      },
+      "map50": 0.952
+    }
+  },
+  "candidates": {
+    "best.pt": {
+      "epoch": 0,
+      "test": {
+        "da_iou": 0.9546,
+        "ll_iou": 0.8164,
+        "sl_iou": null,
+        "map50": 0.8947,
+        "ap50": {
+          "pedestrian": 0.9575,
+          "sign_A": 0.8061,
+          "sign_B": 0.8867,
+          "bump": 0.9671,
+          "slow": 0.994,
+          "parking": 0.8529,
+          "traffic_light": 0.9882,
+          "light_red": 0.9775,
+          "light_yellow": 0.9503,
+          "light_green": 0.9844,
+          "limo": null,
+          "cone": 0.5712
+        }
+      },
+      "test_venue": {
+        "da_iou": 0.9346,
+        "ll_iou": 0.4862,
+        "sl_iou": 0.6042,
+        "map50": 0.9368,
+        "ap50": {
+          "pedestrian": 0.99,
+          "sign_A": 0.8388,
+          "sign_B": 0.8752,
+          "bump": 0.9048,
+          "slow": 0.9967,
+          "parking": 0.905,
+          "traffic_light": 0.9855,
+          "light_red": 0.9478,
+          "light_yellow": 1.0,
+          "light_green": 0.9733,
+          "limo": null,
+          "cone": null
+        }
+      },
+      "test_bag": {
+        "da_iou": 0.9808,
+        "ll_iou": 0.8256,
+        "sl_iou": null,
+        "map50": 0.952,
+        "ap50": {
+          "pedestrian": 0.8333,
+          "sign_A": 0.9583,
+          "sign_B": 0.8833,
+          "bump": 1.0,
+          "slow": 0.9643,
+          "parking": 0.9286,
+          "traffic_light": 1.0,
+          "light_red": 1.0,
+          "light_yellow": 1.0,
+          "light_green": 1.0,
+          "limo": null,
+          "cone": null
+        }
+      }
+    },
+    "best_val_loss.pt": {
+      "epoch": 7,
+      "test": {
+        "da_iou": 0.952,
+        "ll_iou": 0.805,
+        "sl_iou": null,
+        "map50": 0.8856,
+        "ap50": {
+          "pedestrian": 0.9422,
+          "sign_A": 0.9466,
+          "sign_B": 0.9314,
+          "bump": 0.9608,
+          "slow": 0.9717,
+          "parking": 0.9373,
+          "traffic_light": 0.9869,
+          "light_red": 0.9771,
+          "light_yellow": 0.9535,
+          "light_green": 0.974,
+          "limo": null,
+          "cone": 0.2609
+        }
+      },
+      "test_venue": {
+        "da_iou": 0.9337,
+        "ll_iou": 0.4805,
+        "sl_iou": 0.6208,
+        "map50": 0.969,
+        "ap50": {
+          "pedestrian": 0.9967,
+          "sign_A": 0.9791,
+          "sign_B": 0.8983,
+          "bump": 0.9553,
+          "slow": 0.995,
+          "parking": 0.9901,
+          "traffic_light": 0.9855,
+          "light_red": 0.9437,
+          "light_yellow": 1.0,
+          "light_green": 0.9624,
+          "limo": null,
+          "cone": null
+        }
+      },
+      "test_bag": {
+        "da_iou": 0.9783,
+        "ll_iou": 0.8092,
+        "sl_iou": null,
+        "map50": 0.9788,
+        "ap50": {
+          "pedestrian": 0.9762,
+          "sign_A": 1.0,
+          "sign_B": 1.0,
+          "bump": 1.0,
+          "slow": 0.8571,
+          "parking": 1.0,
+          "traffic_light": 1.0,
+          "light_red": 0.9762,
+          "light_yellow": 1.0,
+          "light_green": 1.0,
+          "limo": null,
+          "cone": null
+        }
+      }
+    },
+    "best_score.pt": {
+      "epoch": 11,
+      "test": {
+        "da_iou": 0.9515,
+        "ll_iou": 0.8022,
+        "sl_iou": null,
+        "map50": 0.8977,
+        "ap50": {
+          "pedestrian": 0.9586,
+          "sign_A": 0.9579,
+          "sign_B": 0.9701,
+          "bump": 0.9951,
+          "slow": 0.9934,
+          "parking": 0.9495,
+          "traffic_light": 0.9871,
+          "light_red": 0.9692,
+          "light_yellow": 0.9435,
+          "light_green": 0.9742,
+          "limo": null,
+          "cone": 0.2651
+        }
+      },
+      "test_venue": {
+        "da_iou": 0.9315,
+        "ll_iou": 0.4834,
+        "sl_iou": 0.6456,
+        "map50": 0.9787,
+        "ap50": {
+          "pedestrian": 0.9983,
+          "sign_A": 0.9444,
+          "sign_B": 0.9913,
+          "bump": 0.9859,
+          "slow": 1.0,
+          "parking": 1.0,
+          "traffic_light": 0.9855,
+          "light_red": 0.9456,
+          "light_yellow": 0.9968,
+          "light_green": 0.946,
+          "limo": null,
+          "cone": null
+        }
+      },
+      "test_bag": {
+        "da_iou": 0.9786,
+        "ll_iou": 0.8096,
+        "sl_iou": null,
+        "map50": 0.9873,
+        "ap50": {
+          "pedestrian": 1.0,
+          "sign_A": 0.9762,
+          "sign_B": 1.0,
+          "bump": 1.0,
+          "slow": 0.9098,
+          "parking": 1.0,
+          "traffic_light": 1.0,
+          "light_red": 1.0,
+          "light_yellow": 1.0,
+          "light_green": 1.0,
+          "limo": null,
+          "cone": null
+        }
+      }
+    }
+  }
+}

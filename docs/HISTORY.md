@@ -13,9 +13,10 @@ AutoRace 2026 참가팀 FOSCAR의 차선 인식 모델 저장소입니다. BDD10
 
 *11/06 대회장 조명 사진 중 학습에 쓰지 않은 test 프레임입니다. 초록은 da, 분홍은 ll이고, 칸 아래 숫자는 정답과 비교한 da IoU입니다. 색 조명과 섞이지 않게 흑백 위에 그렸습니다.*
 
-## 현재 상태 (2026-11-10)
+## 현재 상태 (2026-11-12)
 
-- **다중 작업 2차 [`multitask-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2) (최신):** 1차에서 학습 설정만 바꿔 15 epoch 더 학습했습니다. 검출 mAP50이 0.65~0.75 → **0.90~0.95**, A/B 구분이 50%대 → **84~92%**로 올랐고, 차선은 1차와 같은 수준입니다. [2차 결과](../outputs/train_mt_v2/README.md)를 보세요.
+- **다중 작업 3차 [`multitask-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3) (최신, 2026-11-12):** 2차에서 이어서 신호등 뒤 방해 모니터 증강, 14px 미만 박스 무시, A/B 오버샘플링, val loss 조기 종료를 넣어 학습했습니다. 콘 뺀 검출 mAP50이 0.93~0.95 → **0.97~0.99**, 모니터 앞 가짜 불빛이 61 → **4**개로 줄었고, 차선 ll은 0.01~0.02 내렸습니다. [3차 결과](../outputs/train_mt_v3/README.md)를 보세요.
+- **다중 작업 2차 [`multitask-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2):** 1차에서 학습 설정만 바꿔 15 epoch 더 학습했습니다. 검출 mAP50이 0.65~0.75 → **0.90~0.95**, A/B 구분이 50%대 → **84~92%**로 올랐고, 차선은 1차와 같은 수준입니다. [2차 결과](../outputs/train_mt_v2/README.md)를 보세요.
 - **다중 작업 1차 [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1):** HybridNets 하나로 차선, 흰 가로선, 표지판·신호등·라바콘 검출을 같이 합니다. 차선은 4차와 같은 수준이고 신호등은 잘 잡지만, **표지판은 종류를 헷갈리고 A/B는 거의 구분하지 못합니다.** 원인은 데이터가 아니라 검출 머리와 BiFPN의 학습 부족으로 확인했고(백본 특징은 A/B를 약 95% 구분), 이를 고친 것이 2차입니다. 아래 [다중 작업 1차](#다중-작업-1차-2026-11-10)를 보세요.
 - 1·2·3차 파인튜닝을 마쳤고 가중치는 [Releases](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases)에 있습니다. **최신은 HybridNets만 다시 학습한 [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4)이고, 모델 4개는 [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3)에 있습니다.**
 - 4차(HybridNets만)는 11/07 실차 주행에서 3차 HybridNets가 코너 안쪽 da를 깎던 프레임과 트랙 밖 프레임을 라벨링해 더했습니다. 실차 코너 test da가 0.878 → 0.982로 올랐고, 기존 test와 대회장 test는 0.004~0.005 떨어졌습니다. 아래 [4차 결과](#4차-hybridnets만-2026-11-08)를 보세요.
@@ -200,7 +201,8 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 
 | 릴리즈 | 내용 |
 |---|---|
-| [`multitask-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2) | **다중 작업 2차 HybridNets (최신)**, 검출 mAP50 0.90~0.95, A/B 구분 84~92% |
+| [`multitask-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3) | **다중 작업 3차 HybridNets (최신)**, 콘 뺀 검출 mAP50 0.97~0.99, 모니터 오탐 감소, 점수 보정값 포함 |
+| [`multitask-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2) | 다중 작업 2차 HybridNets, 검출 mAP50 0.90~0.95, A/B 구분 84~92% |
 | [`multitask-v2-skip`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2-skip) | 참고용: 2차 + 백본 지름길(실험 B). 성능은 2차와 비슷, 추론에 `forward_mt` 필요 |
 | [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1) | 다중 작업 1차 HybridNets (차선 + 흰 가로선 + 검출 12종), 학습 데이터셋, 학습 코드 |
 | [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4) | **4차 HybridNets (차선만, 최신)**, 실차 코너 test 채점 |

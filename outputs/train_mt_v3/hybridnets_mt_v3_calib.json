@@ -1,0 +1,36 @@
+{
+ "T_all": 0.9,
+ "T_cls": {
+  "pedestrian": 0.442,
+  "sign_A": 0.718,
+  "sign_B": 0.487,
+  "bump": 0.621,
+  "slow": 0.382,
+  "parking": 0.479,
+  "traffic_light": 0.341,
+  "light_red": 0.536,
+  "light_yellow": 0.503,
+  "light_green": 0.449,
+  "limo": 0.9,
+  "cone": 1.058
+ },
+ "how": "p_calibrated = sigmoid(logit(p) / T_cls[class])",
+ "val_raw": {
+  "n": 6410,
+  "acc": 0.3337,
+  "conf": 0.2595,
+  "ece": 0.0806,
+  "mce": 0.3849,
+  "nll": 0.3205,
+  "brier": 0.0922
+ },
+ "val_T": {
+  "n": 6410,
+  "acc": 0.3337,
+  "conf": 0.2553,
+  "ece": 0.0784,
+  "mce": 0.3961,
+  "nll": 0.3003,
+  "brier": 0.0896
+ }
+}

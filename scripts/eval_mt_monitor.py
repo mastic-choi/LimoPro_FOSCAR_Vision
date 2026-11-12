@@ -35,36 +35,17 @@ def iou(a, b):
     return inter / ((a[2] - a[0]) * (a[3] - a[1]) + (b[:, 2] - b[:, 0]) * (b[:, 3] - b[:, 1]) - inter + 1e-9)
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("weights")
-    ap.add_argument("--name", default="model")
-    ap.add_argument("--data", default="dataset/synth_signs_v2")
-    ap.add_argument("--splits", default="test,test_venue")
-    ap.add_argument("--real", default="", help="모니터 효과 (match,persp,screen,jitter). 비우면 기본 모니터")
-    ap.add_argument("--out", default="outputs/eval_monitor")
-    ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--batch", type=int, default=8)
-    a = ap.parse_args()
-    real = tuple(x for x in a.real.split(",") if x)
-
-    import make_model_compare_gif as m
-    os.chdir(m.ROOT)
-    sys.path.insert(0, os.path.join(m.MODELS_DIR, "HybridNets"))
-    import utils.utils as util
-    dev = m.device
-    model = tm.build_model(m, a.weights).to(dev).eval()
-    reg_t, clip_t = util.BBoxTransform(), util.ClipBoxes()
-
-    # 사진 준비: 세 가지 모두 그려진 사진만
+def make_samples(data, splits, seed0=0, real=()):
+    """신호등이 있는 사진마다 (이름, 박스, {clean/solid/dots: 사진}, {solid/dots: 모니터 마스크}). 세 가지 모두 그려진 사진만.
+    seed가 사진 이름·순서로 정해져서 실행마다(모델이 달라도) 같은 모니터가 그려진다."""
     ds = tm.Items([], False)
     samples = []
-    for split in a.splits.split(","):
-        for it in tm.seg_items(a.data, split):
+    for split in splits.split(","):
+        for it in tm.seg_items(data, split):
             img, da, ll, sl, slv, b = ds.load(it)
             if not len(b) or not (b[:, 4] == TL).any():
                 continue
-            seed = a.seed * 100003 + len(samples) * 7919 + zlib.crc32(it["name"].encode()) % 1000   # 실행마다 같은 모니터
+            seed = seed0 * 100003 + len(samples) * 7919 + zlib.crc32(it["name"].encode()) % 1000   # 실행마다 같은 모니터
             outs, masks = {"clean": img}, {}
             for v, dots in (("solid", False), ("dots", True)):
                 im = img.copy(); z0 = np.zeros(img.shape[:2], np.uint8)
@@ -75,6 +56,32 @@ def main():
                 masks[v] = np.abs(im.astype(np.int16) - img).max(2) > 12
             if len(outs) == 3:
                 samples.append((it["name"], b, outs, masks))
+    return samples
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("weights")
+    ap.add_argument("--name", default="model")
+    ap.add_argument("--data", default="dataset/synth_signs_v2")
+    ap.add_argument("--splits", default="test,test_venue")
+    ap.add_argument("--real", default="", help="모니터 효과 (match,persp,screen,jitter). 비우면 기본 모니터")
+    ap.add_argument("--out", default="outputs/eval_monitor")
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--batch", type=int, default=8)
+    ap.add_argument("--device", default="", help="비우면 cuda가 있으면 cuda, 없으면 cpu (예: mps)")
+    a = ap.parse_args()
+    real = tuple(x for x in a.real.split(",") if x)
+
+    import make_model_compare_gif as m
+    os.chdir(m.ROOT)
+    sys.path.insert(0, os.path.join(m.MODELS_DIR, "HybridNets"))
+    import utils.utils as util
+    dev = torch.device(a.device) if a.device else m.device
+    model = tm.build_model(m, a.weights).to(dev).eval()
+    reg_t, clip_t = util.BBoxTransform(), util.ClipBoxes()
+
+    samples = make_samples(a.data, a.splits, a.seed, real)
     print(f"신호등 있는 사진 중 모니터를 그린 것 {len(samples)}장", flush=True)
 
     dets = {v: [] for v in VARIANTS}
