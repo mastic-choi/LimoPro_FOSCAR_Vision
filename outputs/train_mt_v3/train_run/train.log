@@ -1,0 +1,77 @@
+train 11804 (seg 9304, sl 554, cone 2500) / val 626
+oversample A/B/P x2.0: 4017 images
+init weights/hybridnets_mt_v2_best.pt: loaded 1502/1502 tensors, new 0 (예: [])
+param groups: rest 11.6M x1, head+bifpn 1.8M x10.0
+시작 가중치 val: da 0.9522 ll 0.82 mAP50 0.9064 val_loss 2.45016
+  ep 1 step 0/368 loss 2.491 seg 0.513 sl 0.442 cls 0.154 reg 0.393
+  ep 1 step 100/368 loss 1.742 seg 0.563 sl 0.132 cls 0.111 reg 0.347
+  ep 1 step 200/368 loss 2.285 seg 0.537 sl 0.310 cls 0.113 reg 0.451
+  ep 1 step 300/368 loss 4.003 seg 0.552 sl 0.914 cls 0.169 reg 0.643
+  차선 보호: val loss는 최저지만 da+ll 1.7513 < 시작 1.7722 - 0.01 라 best.pt로 고르지 않음 (best_val_loss.pt에는 저장)
+epoch 1/120 loss 2.1942 val_loss 1.48638 | val da 0.9516 ll 0.7997 mAP50 0.802 | ECE 0.0595 NLL 0.3431 | AP {"pedestrian": 0.8178, "sign_A": 0.7779, "sign_B": 0.4432, "bump": 0.9618, "slow": 0.966, "parking": 0.843, "traffic_light": 0.9794, "light_red": 0.97, "light_yellow": 0.9788, "light_green": 0.9674, "limo": null, "cone": 0.2941} | 176s
+  ep 2 step 0/368 loss 4.418 seg 0.590 sl 1.225 cls 0.175 reg 0.515
+  ep 2 step 100/368 loss 2.271 seg 0.500 sl 0.000 cls 0.188 reg 0.697
+  ep 2 step 200/368 loss 2.330 seg 0.698 sl 0.234 cls 0.122 reg 0.460
+  ep 2 step 300/368 loss 2.725 seg 0.514 sl 0.545 cls 0.119 reg 0.441
+epoch 2/120 loss 2.5268 val_loss 1.74132 | val da 0.9326 ll 0.7831 mAP50 0.8726 | ECE 0.0809 NLL 0.3524 | AP {"pedestrian": 0.9229, "sign_A": 0.9158, "sign_B": 0.8397, "bump": 0.9663, "slow": 0.9988, "parking": 0.9312, "traffic_light": 0.9799, "light_red": 0.9419, "light_yellow": 0.9497, "light_green": 0.9643, "limo": null, "cone": 0.295} | 172s
+  ep 3 step 0/368 loss 2.122 seg 0.800 sl 0.000 cls 0.142 reg 0.519
+  ep 3 step 100/368 loss 2.040 seg 0.550 sl 0.000 cls 0.133 reg 0.612
+  ep 3 step 200/368 loss 2.912 seg 0.511 sl 0.563 cls 0.133 reg 0.504
+  ep 3 step 300/368 loss 2.205 seg 0.524 sl 0.266 cls 0.134 reg 0.440
+  차선 보호: val loss는 최저지만 da+ll 1.7519 < 시작 1.7722 - 0.01 라 best.pt로 고르지 않음 (best_val_loss.pt에는 저장)
+epoch 3/120 loss 2.4874 val_loss 1.41357 | val da 0.9509 ll 0.8010 mAP50 0.8647 | ECE 0.0854 NLL 0.3052 | AP {"pedestrian": 0.9201, "sign_A": 0.9526, "sign_B": 0.8647, "bump": 0.9519, "slow": 0.9861, "parking": 0.8677, "traffic_light": 0.9799, "light_red": 0.902, "light_yellow": 0.9637, "light_green": 0.9719, "limo": null, "cone": 0.266} | 173s
+  ep 4 step 0/368 loss 3.532 seg 0.478 sl 0.934 cls 0.163 reg 0.430
+  ep 4 step 100/368 loss 2.431 seg 0.572 sl 0.413 cls 0.088 reg 0.429
+  ep 4 step 200/368 loss 2.347 seg 0.522 sl 0.496 cls 0.098 reg 0.318
+  ep 4 step 300/368 loss 3.599 seg 0.783 sl 0.814 cls 0.108 reg 0.487
+  차선 보호: val loss는 최저지만 da+ll 1.7532 < 시작 1.7722 - 0.01 라 best.pt로 고르지 않음 (best_val_loss.pt에는 저장)
+epoch 4/120 loss 2.3652 val_loss 1.33789 | val da 0.9523 ll 0.8009 mAP50 0.8779 | ECE 0.0847 NLL 0.3005 | AP {"pedestrian": 0.9101, "sign_A": 0.9155, "sign_B": 0.9189, "bump": 0.9406, "slow": 0.9961, "parking": 0.9017, "traffic_light": 0.979, "light_red": 0.9684, "light_yellow": 0.9813, "light_green": 0.9845, "limo": null, "cone": 0.2622} | 178s
+  ep 5 step 0/368 loss 1.995 seg 0.535 sl 0.097 cls 0.115 reg 0.518
+  ep 5 step 100/368 loss 3.105 seg 0.694 sl 0.533 cls 0.129 reg 0.543
+  ep 5 step 200/368 loss 1.983 seg 0.472 sl 0.342 cls 0.106 reg 0.308
+  ep 5 step 300/368 loss 2.365 seg 0.506 sl 0.378 cls 0.140 reg 0.412
+epoch 5/120 loss 2.3963 val_loss 1.36014 | val da 0.9533 ll 0.8073 mAP50 0.8706 | ECE 0.1068 NLL 0.3659 | AP {"pedestrian": 0.8767, "sign_A": 0.9107, "sign_B": 0.8813, "bump": 0.9774, "slow": 0.9631, "parking": 0.9064, "traffic_light": 0.9797, "light_red": 0.9699, "light_yellow": 0.9586, "light_green": 0.9862, "limo": null, "cone": 0.2756} | 173s
+  ep 6 step 0/368 loss 2.099 seg 0.535 sl 0.186 cls 0.116 reg 0.480
+  ep 6 step 100/368 loss 1.943 seg 0.470 sl 0.160 cls 0.144 reg 0.433
+  ep 6 step 200/368 loss 1.446 seg 0.466 sl 0.000 cls 0.114 reg 0.376
+  ep 6 step 300/368 loss 1.949 seg 0.516 sl 0.187 cls 0.106 reg 0.423
+  차선 보호: val loss는 최저지만 da+ll 1.7490 < 시작 1.7722 - 0.01 라 best.pt로 고르지 않음 (best_val_loss.pt에는 저장)
+epoch 6/120 loss 2.2925 val_loss 1.32797 | val da 0.9525 ll 0.7965 mAP50 0.8864 | ECE 0.0879 NLL 0.3086 | AP {"pedestrian": 0.9134, "sign_A": 0.9713, "sign_B": 0.9139, "bump": 0.9763, "slow": 0.9894, "parking": 0.9412, "traffic_light": 0.9801, "light_red": 0.948, "light_yellow": 0.9651, "light_green": 0.9825, "limo": null, "cone": 0.263} | 173s
+  ep 7 step 0/368 loss 1.810 seg 0.492 sl 0.184 cls 0.106 reg 0.369
+  ep 7 step 100/368 loss 2.381 seg 0.524 sl 0.331 cls 0.127 reg 0.470
+  ep 7 step 200/368 loss 1.871 seg 0.546 sl 0.101 cls 0.111 reg 0.450
+  ep 7 step 300/368 loss 3.678 seg 0.572 sl 0.665 cls 0.163 reg 0.725
+  차선 보호: val loss는 최저지만 da+ll 1.7592 < 시작 1.7722 - 0.01 라 best.pt로 고르지 않음 (best_val_loss.pt에는 저장)
+epoch 7/120 loss 2.2283 val_loss 1.26164 | val da 0.9483 ll 0.8109 mAP50 0.8862 | ECE 0.0724 NLL 0.3132 | AP {"pedestrian": 0.9215, "sign_A": 0.9516, "sign_B": 0.8885, "bump": 0.9586, "slow": 0.9889, "parking": 0.9427, "traffic_light": 0.9779, "light_red": 0.9685, "light_yellow": 0.9963, "light_green": 0.9756, "limo": null, "cone": 0.2695} | 173s
+  ep 8 step 0/368 loss 2.600 seg 0.518 sl 0.674 cls 0.068 reg 0.299
+  ep 8 step 100/368 loss 2.744 seg 0.461 sl 0.521 cls 0.125 reg 0.495
+  ep 8 step 200/368 loss 3.021 seg 0.513 sl 0.581 cls 0.143 reg 0.530
+  ep 8 step 300/368 loss 1.527 seg 0.474 sl 0.000 cls 0.116 reg 0.411
+epoch 8/120 loss 2.2730 val_loss 1.33675 | val da 0.9384 ll 0.8092 mAP50 0.8846 | ECE 0.0861 NLL 0.2985 | AP {"pedestrian": 0.929, "sign_A": 0.9492, "sign_B": 0.9008, "bump": 0.9529, "slow": 0.9932, "parking": 0.9451, "traffic_light": 0.9791, "light_red": 0.9571, "light_yellow": 0.9834, "light_green": 0.9759, "limo": null, "cone": 0.2595} | 173s
+  ep 9 step 0/368 loss 2.553 seg 0.435 sl 0.612 cls 0.103 reg 0.344
+  ep 9 step 100/368 loss 3.265 seg 0.630 sl 0.585 cls 0.134 reg 0.599
+  ep 9 step 200/368 loss 2.591 seg 0.618 sl 0.432 cls 0.130 reg 0.425
+  ep 9 step 300/368 loss 1.748 seg 0.434 sl 0.178 cls 0.092 reg 0.387
+epoch 9/120 loss 2.2058 val_loss 1.3965 | val da 0.9448 ll 0.7921 mAP50 0.8846 | ECE 0.1047 NLL 0.3109 | AP {"pedestrian": 0.9368, "sign_A": 0.9357, "sign_B": 0.8963, "bump": 0.9466, "slow": 0.9975, "parking": 0.9457, "traffic_light": 0.9795, "light_red": 0.9647, "light_yellow": 0.9777, "light_green": 0.9902, "limo": null, "cone": 0.2551} | 172s
+  ep 10 step 0/368 loss 1.892 seg 0.456 sl 0.095 cls 0.092 reg 0.532
+  ep 10 step 100/368 loss 2.356 seg 0.532 sl 0.449 cls 0.079 reg 0.384
+  ep 10 step 200/368 loss 2.114 seg 0.442 sl 0.310 cls 0.118 reg 0.408
+  ep 10 step 300/368 loss 1.392 seg 0.556 sl 0.000 cls 0.087 reg 0.331
+epoch 10/120 loss 2.1393 val_loss 1.27783 | val da 0.9493 ll 0.8096 mAP50 0.8939 | ECE 0.1183 NLL 0.3052 | AP {"pedestrian": 0.9087, "sign_A": 0.9653, "sign_B": 0.9166, "bump": 0.9918, "slow": 0.9958, "parking": 0.9515, "traffic_light": 0.9796, "light_red": 0.9753, "light_yellow": 0.9875, "light_green": 0.993, "limo": null, "cone": 0.2536} | 181s
+  ep 11 step 0/368 loss 1.658 seg 0.562 sl 0.127 cls 0.090 reg 0.330
+  ep 11 step 100/368 loss 2.024 seg 0.477 sl 0.230 cls 0.107 reg 0.436
+  ep 11 step 200/368 loss 1.953 seg 0.585 sl 0.000 cls 0.141 reg 0.543
+  ep 11 step 300/368 loss 1.589 seg 0.443 sl 0.114 cls 0.116 reg 0.343
+epoch 11/120 loss 2.1791 val_loss 1.29115 | val da 0.9510 ll 0.8075 mAP50 0.905 | ECE 0.0808 NLL 0.3181 | AP {"pedestrian": 0.9382, "sign_A": 0.9834, "sign_B": 0.9685, "bump": 0.9986, "slow": 0.9945, "parking": 0.9762, "traffic_light": 0.9797, "light_red": 0.9736, "light_yellow": 0.9633, "light_green": 0.9831, "limo": null, "cone": 0.2712} | 173s
+  ep 12 step 0/368 loss 1.499 seg 0.448 sl 0.147 cls 0.096 reg 0.282
+  ep 12 step 100/368 loss 1.671 seg 0.534 sl 0.190 cls 0.085 reg 0.294
+  ep 12 step 200/368 loss 2.342 seg 0.520 sl 0.456 cls 0.100 reg 0.355
+  ep 12 step 300/368 loss 1.757 seg 0.487 sl 0.147 cls 0.117 reg 0.371
+조기 종료 (val_loss): best.pt epoch 0, val loss 최저 1.26164 (epoch 7) -> 지금 1.30731, 점수 최고 2.6635 (epoch 11) -> 지금 2.6581
+epoch 12/120 loss 2.1056 val_loss 1.30731 | val da 0.9544 ll 0.8101 mAP50 0.8936 | ECE 0.0711 NLL 0.2961 | AP {"pedestrian": 0.9207, "sign_A": 0.9731, "sign_B": 0.9342, "bump": 0.9802, "slow": 0.9911, "parking": 0.9509, "traffic_light": 0.9796, "light_red": 0.9601, "light_yellow": 0.9809, "light_green": 0.9756, "limo": null, "cone": 0.2694} | 175s
+calib: {"T_all": 0.495, "T_cls": {"pedestrian": 0.471, "sign_A": 1.025, "sign_B": 0.591, "bump": 0.554, "slow": 0.471, "parking": 0.872, "traffic_light": 0.33, "light_red": 0.641, "light_yellow": 0.487, "light_green": 0.511, "limo": 0.495, "cone": 0.487}, "how": "p_calibrated = sigmoid(logit(p) / T_cls[class])", "val_raw": {"n": 25231, "acc": 0.159, "conf": 0.1976, "ece": 0.1006, "mce": 0.2426, "nll": 0.217, "brier": 0.0544}, "val_T": {"n": 25231, "acc": 0.159, "conf": 0.1318, "ece": 0.0272, "mce": 0.2707, "nll": 0.1573, "brier": 0.0458}}
+test {"da_iou": 0.9546, "ll_iou": 0.8164, "calib": {"n": 111710, "acc": 0.1503, "conf": 0.1894, "ece": 0.0971, "mce": 0.2486, "nll": 0.2189, "brier": 0.0554}, "calib_T": {"n": 111710, "acc": 0.1503, "conf": 0.1209, "ece": 0.0294, "mce": 0.2226, "nll": 0.1635, "brier": 0.0479}, "sl_iou": null, "ap50": {"pedestrian": 0.9575, "sign_A": 0.8061, "sign_B": 0.8867, "bump": 0.9671, "slow": 0.994, "parking": 0.8529, "traffic_light": 0.9882, "light_red": 0.9775, "light_yellow": 0.9503, "light_green": 0.9844, "limo": null, "cone": 0.5712}, "map50": 0.8947}
+test_venue {"da_iou": 0.9346, "ll_iou": 0.4862, "calib": {"n": 563, "acc": 0.4707, "conf": 0.3859, "ece": 0.1456, "mce": 0.3659, "nll": 0.2708, "brier": 0.0756}, "calib_T": {"n": 563, "acc": 0.4707, "conf": 0.3831, "ece": 0.0876, "mce": 0.3453, "nll": 0.2187, "brier": 0.068}, "sl_iou": 0.6042, "ap50": {"pedestrian": 0.99, "sign_A": 0.8388, "sign_B": 0.8752, "bump": 0.9048, "slow": 0.9967, "parking": 0.905, "traffic_light": 0.9855, "light_red": 0.9478, "light_yellow": 1.0, "light_green": 0.9733, "limo": null, "cone": null}, "map50": 0.9368}
+test_bag {"da_iou": 0.9808, "ll_iou": 0.8256, "calib": {"n": 187, "acc": 0.4171, "conf": 0.3405, "ece": 0.1443, "mce": 0.2262, "nll": 0.2653, "brier": 0.0748}, "calib_T": {"n": 187, "acc": 0.4171, "conf": 0.3326, "ece": 0.0845, "mce": 0.0903, "nll": 0.2284, "brier": 0.07}, "sl_iou": null, "ap50": {"pedestrian": 0.8333, "sign_A": 0.9583, "sign_B": 0.8833, "bump": 1.0, "slow": 0.9643, "parking": 0.9286, "traffic_light": 1.0, "light_red": 1.0, "light_yellow": 1.0, "light_green": 1.0, "limo": null, "cone": null}, "map50": 0.952}
+후보 best_val_loss.pt {"test": {"da_iou": 0.952, "ll_iou": 0.805, "map50": 0.8856}, "test_venue": {"da_iou": 0.9337, "ll_iou": 0.4805, "map50": 0.969}, "test_bag": {"da_iou": 0.9783, "ll_iou": 0.8092, "map50": 0.9788}}
+후보 best_score.pt {"test": {"da_iou": 0.9515, "ll_iou": 0.8022, "map50": 0.8977}, "test_venue": {"da_iou": 0.9315, "ll_iou": 0.4834, "map50": 0.9787}, "test_bag": {"da_iou": 0.9786, "ll_iou": 0.8096, "map50": 0.9873}}

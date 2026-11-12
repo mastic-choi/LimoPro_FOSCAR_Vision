@@ -1,0 +1,188 @@
+{
+ "ckpt": "best_score.pt",
+ "val": {
+  "da_iou": 0.9507,
+  "ll_iou": 0.8072,
+  "calib": {
+   "n": 6410,
+   "acc": 0.3337,
+   "conf": 0.2595,
+   "ece": 0.0806,
+   "mce": 0.3849,
+   "nll": 0.3205,
+   "brier": 0.0922
+  },
+  "sl_iou": null,
+  "ap50": {
+   "pedestrian": 0.9374,
+   "sign_A": 0.9851,
+   "sign_B": 0.9679,
+   "bump": 0.9986,
+   "slow": 0.9945,
+   "parking": 0.9762,
+   "traffic_light": 0.9797,
+   "light_red": 0.9738,
+   "light_yellow": 0.9635,
+   "light_green": 0.9831,
+   "limo": null,
+   "cone": 0.2716
+  },
+  "map50": 0.9052
+ },
+ "calib": {
+  "T_all": 0.9,
+  "T_cls": {
+   "pedestrian": 0.442,
+   "sign_A": 0.718,
+   "sign_B": 0.487,
+   "bump": 0.621,
+   "slow": 0.382,
+   "parking": 0.479,
+   "traffic_light": 0.341,
+   "light_red": 0.536,
+   "light_yellow": 0.503,
+   "light_green": 0.449,
+   "limo": 0.9,
+   "cone": 1.058
+  },
+  "how": "p_calibrated = sigmoid(logit(p) / T_cls[class])",
+  "val_raw": {
+   "n": 6410,
+   "acc": 0.3337,
+   "conf": 0.2595,
+   "ece": 0.0806,
+   "mce": 0.3849,
+   "nll": 0.3205,
+   "brier": 0.0922
+  },
+  "val_T": {
+   "n": 6410,
+   "acc": 0.3337,
+   "conf": 0.2553,
+   "ece": 0.0784,
+   "mce": 0.3961,
+   "nll": 0.3003,
+   "brier": 0.0896
+  }
+ },
+ "test": {
+  "all": {
+   "da_iou": 0.9515,
+   "ll_iou": 0.802,
+   "calib": {
+    "n": 26940,
+    "acc": 0.3082,
+    "conf": 0.2327,
+    "ece": 0.0756,
+    "mce": 0.3914,
+    "nll": 0.343,
+    "brier": 0.1005
+   },
+   "calib_T": {
+    "n": 26940,
+    "acc": 0.3082,
+    "conf": 0.2309,
+    "ece": 0.0774,
+    "mce": 0.3859,
+    "nll": 0.3318,
+    "brier": 0.0992
+   },
+   "sl_iou": null,
+   "ap50": {
+    "pedestrian": 0.9585,
+    "sign_A": 0.9666,
+    "sign_B": 0.9702,
+    "bump": 0.9945,
+    "slow": 0.9929,
+    "parking": 0.9497,
+    "traffic_light": 0.987,
+    "light_red": 0.97,
+    "light_yellow": 0.9438,
+    "light_green": 0.9735,
+    "limo": null,
+    "cone": 0.266
+   },
+   "map50": 0.8986
+  }
+ },
+ "test_venue": {
+  "all": {
+   "da_iou": 0.9316,
+   "ll_iou": 0.4832,
+   "calib": {
+    "n": 746,
+    "acc": 0.3633,
+    "conf": 0.3193,
+    "ece": 0.1204,
+    "mce": 0.4344,
+    "nll": 0.2015,
+    "brier": 0.0498
+   },
+   "calib_T": {
+    "n": 746,
+    "acc": 0.3633,
+    "conf": 0.3113,
+    "ece": 0.053,
+    "mce": 0.4797,
+    "nll": 0.1463,
+    "brier": 0.0416
+   },
+   "sl_iou": 0.6447,
+   "ap50": {
+    "pedestrian": 0.9983,
+    "sign_A": 0.9461,
+    "sign_B": 0.9913,
+    "bump": 0.9859,
+    "slow": 1.0,
+    "parking": 1.0,
+    "traffic_light": 0.9855,
+    "light_red": 0.9456,
+    "light_yellow": 0.9983,
+    "light_green": 0.946,
+    "limo": null,
+    "cone": null
+   },
+   "map50": 0.9791
+  }
+ },
+ "test_bag": {
+  "all": {
+   "da_iou": 0.9787,
+   "ll_iou": 0.8097,
+   "calib": {
+    "n": 286,
+    "acc": 0.2762,
+    "conf": 0.2611,
+    "ece": 0.1203,
+    "mce": 0.3554,
+    "nll": 0.1935,
+    "brier": 0.046
+   },
+   "calib_T": {
+    "n": 286,
+    "acc": 0.2762,
+    "conf": 0.2314,
+    "ece": 0.0449,
+    "mce": 0.1693,
+    "nll": 0.1468,
+    "brier": 0.0377
+   },
+   "sl_iou": null,
+   "ap50": {
+    "pedestrian": 1.0,
+    "sign_A": 0.9762,
+    "sign_B": 1.0,
+    "bump": 1.0,
+    "slow": 0.9098,
+    "parking": 1.0,
+    "traffic_light": 1.0,
+    "light_red": 1.0,
+    "light_yellow": 1.0,
+    "light_green": 1.0,
+    "limo": null,
+    "cone": null
+   },
+   "map50": 0.9873
+  }
+ }
+}
