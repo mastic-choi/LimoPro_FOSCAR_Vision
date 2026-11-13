@@ -1,0 +1,669 @@
+{
+ "thr": 0.4,
+ "models": {
+  "v3": "weights/hybridnets_mt_v3_best.pt",
+  "v3real": "outputs/train/hybridnets_mt_v3real_seed0/best.pt"
+ },
+ "summary": {
+  "test": {
+   "v3": {
+    "n_img": 542,
+    "n_gt": 1039,
+    "ok": 933,
+    "wrong": 9,
+    "miss": 97,
+    "fa": 1,
+    "n_big": 1019,
+    "miss_big": 89,
+    "da_iou": 0.9515404799747668,
+    "ll_iou": 0.8019976583711078,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 0.9677561363280762,
+     "sign_A": 0.9707910291616668,
+     "sign_B": 0.9716452026737259,
+     "bump": 0.9975459085302893,
+     "slow": 0.9977151013211633,
+     "parking": 0.9530149620496704,
+     "traffic_light": 0.9880805402117642,
+     "light_red": 0.9767135268242065,
+     "light_yellow": 0.9492548995395946,
+     "light_green": 0.9789392143356184,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.975171674865868,
+     "sign_A": 0.9749474912280732,
+     "sign_B": 0.9821685607928495,
+     "bump": 0.9975459085302893,
+     "slow": 0.9974326748520298,
+     "parking": 0.9532652343917404,
+     "traffic_light": 0.9880805402117642,
+     "light_red": 0.9767135268242065,
+     "light_yellow": 0.9492548995395946,
+     "light_green": 0.9789392143356184,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9751456520975775
+   },
+   "v3real": {
+    "n_img": 542,
+    "n_gt": 1039,
+    "ok": 954,
+    "wrong": 6,
+    "miss": 79,
+    "fa": 2,
+    "n_big": 1019,
+    "miss_big": 74,
+    "da_iou": 0.955970186565176,
+    "ll_iou": 0.8223634677287359,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 0.9735824474589284,
+     "sign_A": 0.9972607920774909,
+     "sign_B": 0.9748056864403366,
+     "bump": 0.9986367016442205,
+     "slow": 0.9872309899569583,
+     "parking": 0.9700762324645814,
+     "traffic_light": 0.9883284023668639,
+     "light_red": 0.9780152824999643,
+     "light_yellow": 0.9436747927000245,
+     "light_green": 0.9808977808809403,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 0.9730369754881596,
+     "sign_A": 0.9971310666597712,
+     "sign_B": 0.9745830707511643,
+     "bump": 0.9986367016442205,
+     "slow": 0.9863636363636364,
+     "parking": 0.9705023315716087,
+     "traffic_light": 0.9883284023668639,
+     "light_red": 0.9780152824999643,
+     "light_yellow": 0.9436747927000245,
+     "light_green": 0.9808977808809403,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.979250910849031
+   }
+  },
+  "test_venue": {
+   "v3": {
+    "n_img": 143,
+    "n_gt": 274,
+    "ok": 247,
+    "wrong": 2,
+    "miss": 25,
+    "fa": 0,
+    "n_big": 268,
+    "miss_big": 23,
+    "da_iou": 0.9316046957137215,
+    "ll_iou": 0.4832184271529347,
+    "sl_iou": 0.6447377429166626,
+    "ap50": {
+     "pedestrian": 0.9983333333333333,
+     "sign_A": 0.9460869565217391,
+     "sign_B": 0.9913419913419914,
+     "bump": 0.9859006734006733,
+     "slow": 0.9999999999999999,
+     "parking": 1.0,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9455782312925168,
+     "light_yellow": 0.9983333333333333,
+     "light_green": 0.9460328907203908,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 1.0,
+     "sign_A": 0.9460869565217391,
+     "sign_B": 0.9913419913419914,
+     "bump": 0.992822966507177,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9455782312925168,
+     "light_yellow": 0.9983333333333333,
+     "light_green": 0.9460328907203908,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.979711465632079
+   },
+   "v3real": {
+    "n_img": 143,
+    "n_gt": 274,
+    "ok": 253,
+    "wrong": 2,
+    "miss": 19,
+    "fa": 0,
+    "n_big": 268,
+    "miss_big": 19,
+    "da_iou": 0.9369596126742248,
+    "ll_iou": 0.49004101757973006,
+    "sl_iou": 0.617132539042489,
+    "ap50": {
+     "pedestrian": 0.9999999999999999,
+     "sign_A": 0.9565217391304348,
+     "sign_B": 1.0,
+     "bump": 0.9545454545454546,
+     "slow": 0.9999999999999999,
+     "parking": 1.0,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9523809523809523,
+     "light_yellow": 0.9999999999999999,
+     "light_green": 0.9357920725108224,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 1.0,
+     "sign_A": 0.9565217391304348,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 0.9855072463768116,
+     "light_red": 0.9523809523809523,
+     "light_yellow": 0.9999999999999999,
+     "light_green": 0.9357920725108224,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9784747464944477
+   }
+  },
+  "test_bag": {
+   "v3": {
+    "n_img": 42,
+    "n_gt": 79,
+    "ok": 69,
+    "wrong": 2,
+    "miss": 8,
+    "fa": 0,
+    "n_big": 73,
+    "miss_big": 6,
+    "da_iou": 0.9786821343881397,
+    "ll_iou": 0.8096876380624723,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 1.0,
+     "sign_A": 0.9761904761904762,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 0.9097744360902256,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 1.0,
+     "sign_A": 1.0,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 0.9885964912280703
+   },
+   "v3real": {
+    "n_img": 42,
+    "n_gt": 79,
+    "ok": 73,
+    "wrong": 0,
+    "miss": 6,
+    "fa": 0,
+    "n_big": 73,
+    "miss_big": 6,
+    "da_iou": 0.9819933198795664,
+    "ll_iou": 0.8449149345595363,
+    "sl_iou": null,
+    "ap50": {
+     "pedestrian": 1.0,
+     "sign_A": 1.0,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "ap50_14px": {
+     "pedestrian": 1.0,
+     "sign_A": 1.0,
+     "sign_B": 1.0,
+     "bump": 1.0,
+     "slow": 1.0,
+     "parking": 1.0,
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 1.0,
+     "limo": null,
+     "cone": null
+    },
+    "map50_no_cone": 1.0
+   }
+  }
+ },
+ "monitor": {
+  "v3": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 0.9997,
+     "light_red": 0.9799,
+     "light_yellow": 0.9702,
+     "light_green": 0.9665
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8374,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1626,
+     "fake_lamps": 2,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       53,
+       0,
+       0,
+       13
+      ],
+      [
+       0,
+       56,
+       0,
+       13
+      ],
+      [
+       0,
+       0,
+       61,
+       7
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7241,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2759,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       44,
+       0,
+       0,
+       22
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       53,
+       15
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 0.9997,
+     "light_red": 0.9726,
+     "light_yellow": 0.9606,
+     "light_green": 0.966
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8522,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1478,
+     "fake_lamps": 5,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       55,
+       0,
+       14
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7241,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2759,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       44,
+       0,
+       0,
+       22
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       53,
+       15
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9985,
+     "light_red": 0.9623,
+     "light_yellow": 0.9537,
+     "light_green": 0.9553
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8374,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1626,
+     "fake_lamps": 6,
+     "fake_lamps_on_monitor": 4,
+     "images_with_fake_lamp_on_monitor": 3,
+     "fake_tl_on_monitor": 5,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       55,
+       0,
+       0,
+       11
+      ],
+      [
+       0,
+       55,
+       0,
+       14
+      ],
+      [
+       0,
+       0,
+       60,
+       8
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7143,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2857,
+     "fake_lamps": 2,
+     "fake_lamps_on_monitor": 2,
+     "images_with_fake_lamp_on_monitor": 1,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       43,
+       0,
+       0,
+       23
+      ],
+      [
+       0,
+       50,
+       0,
+       19
+      ],
+      [
+       0,
+       0,
+       52,
+       16
+      ]
+     ]
+    }
+   }
+  },
+  "v3real": {
+   "clean": {
+    "ap50": {
+     "traffic_light": 1.0,
+     "light_red": 0.9731,
+     "light_yellow": 0.9621,
+     "light_green": 0.9721
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8621,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1379,
+     "fake_lamps": 1,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       55,
+       0,
+       0,
+       11
+      ],
+      [
+       0,
+       58,
+       0,
+       11
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7635,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2365,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       49,
+       0,
+       0,
+       17
+      ],
+      [
+       0,
+       52,
+       0,
+       17
+      ],
+      [
+       0,
+       0,
+       54,
+       14
+      ]
+     ]
+    }
+   },
+   "solid": {
+    "ap50": {
+     "traffic_light": 1.0,
+     "light_red": 0.9709,
+     "light_yellow": 0.9576,
+     "light_green": 0.9694
+    },
+    "thr0.3": {
+     "lamp_correct": 0.867,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.133,
+     "fake_lamps": 1,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       56,
+       0,
+       0,
+       10
+      ],
+      [
+       0,
+       58,
+       0,
+       11
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7734,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2266,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       51,
+       0,
+       0,
+       15
+      ],
+      [
+       0,
+       51,
+       0,
+       18
+      ],
+      [
+       0,
+       0,
+       55,
+       13
+      ]
+     ]
+    }
+   },
+   "dots": {
+    "ap50": {
+     "traffic_light": 0.9999,
+     "light_red": 0.9743,
+     "light_yellow": 0.9682,
+     "light_green": 0.9673
+    },
+    "thr0.3": {
+     "lamp_correct": 0.8424,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.1576,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       52,
+       0,
+       0,
+       14
+      ],
+      [
+       0,
+       57,
+       0,
+       12
+      ],
+      [
+       0,
+       0,
+       62,
+       6
+      ]
+     ]
+    },
+    "thr0.5": {
+     "lamp_correct": 0.7685,
+     "lamp_wrong_color": 0.0,
+     "lamp_missed": 0.2315,
+     "fake_lamps": 0,
+     "fake_lamps_on_monitor": 0,
+     "images_with_fake_lamp_on_monitor": 0,
+     "fake_tl_on_monitor": 0,
+     "confusion_rows_gt_red_yellow_green__cols_pred_red_yellow_green_missed": [
+      [
+       49,
+       0,
+       0,
+       17
+      ],
+      [
+       0,
+       51,
+       0,
+       18
+      ],
+      [
+       0,
+       0,
+       56,
+       12
+      ]
+     ]
+    }
+   }
+  }
+ }
+}

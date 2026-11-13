@@ -64,9 +64,9 @@ gh release download multitask-v3real -p "hybridnets_mt_v3real_best.pt" -p "hybri
 
 v3real 검출 AP50 (대회장 test): pedestrian 1.00 · bump 0.95 · sign_A 0.96 · sign_B 1.00 · parking 1.00 · slow 1.00 · traffic_light 0.99 · light red/yellow/green 0.95 / 1.00 / 0.96.
 
-- **실물 신호등은 실차에서 꼭 확인하세요.** 따로 찍은 사진은 1.2m 12장뿐입니다. 1.2m 초록불은 점수가 0.3~0.5로 낮게 나오니, 불빛 점수 기준은 0.3 근처를 추천합니다.
+- **실물 신호등은 실차에서 꼭 확인하세요.** 따로 찍은 사진은 1.2m 12장뿐입니다. **1.2m 초록불은 점수 0.30~0.31로 겨우 잡히거나 놓칩니다.** 초록불은 가까워질 때까지 몇 프레임 지켜보고 판단하세요. 비교 그림은 [`outputs/train_mt_v3real/compare/`](outputs/train_mt_v3real/compare/)에 있습니다.
 - **콘 출력은 쓰지 마세요.** v3real은 콘 없이 학습했습니다. 콘 검출이 필요하면 v3를 쓰세요.
-- **흰 가로선 IoU가 v3보다 0.027 낮습니다.** 정지선 판단에 쓴다면 실차에서 v3와 비교해 보세요.
+- **흰 가로선 IoU가 v3보다 0.027 낮습니다.** 주로 실제 가로선을 덜 칠해서 생긴 하락입니다(잘못 칠한 픽셀은 줄었음). 정지선 판단에 쓴다면 실차에서 v3와 비교해 보세요.
 - 전체 표는 [`outputs/train_mt_v3real/README.md`](outputs/train_mt_v3real/README.md), 3차는 [`outputs/train_mt_v3/README.md`](outputs/train_mt_v3/README.md), 2차는 [`outputs/train_mt_v2/README.md`](outputs/train_mt_v2/README.md)에 있습니다.
 
 ## 4. Quick start
