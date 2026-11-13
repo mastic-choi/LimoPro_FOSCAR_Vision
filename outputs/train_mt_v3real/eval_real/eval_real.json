@@ -1,0 +1,422 @@
+{
+ "v3": {
+  "ckpt": "/home/foscar/2026AutoRace/LimoPro_v3real/LimoPro_mt_rtx/weights/hybridnets_mt_v3_best.pt",
+  "test": {
+   "n_images": 171,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 0.956,
+     "light_yellow": 0.958,
+     "light_green": 0.926
+    },
+    "hits": {
+     "traffic_light": "171/171",
+     "light_red": "43/45",
+     "light_yellow": "69/72",
+     "light_green": "50/54"
+    },
+    "wrong_color": 1,
+    "fp": {
+     "traffic_light": 6,
+     "light_red": 2,
+     "light_yellow": 1,
+     "light_green": 7
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 0.977,
+     "light_red": 0.822,
+     "light_yellow": 0.708,
+     "light_green": 0.222
+    },
+    "hits": {
+     "traffic_light": "167/171",
+     "light_red": "37/45",
+     "light_yellow": "51/72",
+     "light_green": "12/54"
+    },
+    "wrong_color": 1,
+    "fp": {
+     "traffic_light": 1,
+     "light_red": 1,
+     "light_yellow": 1,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 0.9995,
+    "light_red": 0.9384,
+    "light_yellow": 0.9922,
+    "light_green": 0.9239
+   }
+  },
+  "test_1m2": {
+   "n_images": 12,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 0.0,
+     "light_green": 0.0
+    },
+    "hits": {
+     "traffic_light": "12/12",
+     "light_red": "4/4",
+     "light_yellow": "0/4",
+     "light_green": "0/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 0.833,
+     "light_red": 1.0,
+     "light_yellow": 0.0,
+     "light_green": 0.0
+    },
+    "hits": {
+     "traffic_light": "10/12",
+     "light_red": "4/4",
+     "light_yellow": "0/4",
+     "light_green": "0/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 1.0,
+    "light_red": 1.0,
+    "light_yellow": 1.0,
+    "light_green": 1.0
+   }
+  }
+ },
+ "best": {
+  "ckpt": "/home/foscar/2026AutoRace/LimoPro_v3real/LimoPro_mt_rtx/outputs/train/hybridnets_mt_v3real_seed0/best.pt",
+  "test": {
+   "n_images": 171,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 0.978,
+     "light_yellow": 1.0,
+     "light_green": 1.0
+    },
+    "hits": {
+     "traffic_light": "171/171",
+     "light_red": "44/45",
+     "light_yellow": "72/72",
+     "light_green": "54/54"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 1,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 0.994,
+     "light_red": 0.956,
+     "light_yellow": 1.0,
+     "light_green": 1.0
+    },
+    "hits": {
+     "traffic_light": "170/171",
+     "light_red": "43/45",
+     "light_yellow": "72/72",
+     "light_green": "54/54"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 1,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 1.0,
+    "light_red": 0.956,
+    "light_yellow": 1.0,
+    "light_green": 1.0
+   }
+  },
+  "test_1m2": {
+   "n_images": 12,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 0.75
+    },
+    "hits": {
+     "traffic_light": "12/12",
+     "light_red": "4/4",
+     "light_yellow": "4/4",
+     "light_green": "3/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 0.0
+    },
+    "hits": {
+     "traffic_light": "12/12",
+     "light_red": "4/4",
+     "light_yellow": "4/4",
+     "light_green": "0/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 1.0,
+    "light_red": 1.0,
+    "light_yellow": 1.0,
+    "light_green": 1.0
+   }
+  }
+ },
+ "best_val_loss": {
+  "ckpt": "/home/foscar/2026AutoRace/LimoPro_v3real/LimoPro_mt_rtx/outputs/train/hybridnets_mt_v3real_seed0/best_val_loss.pt",
+  "test": {
+   "n_images": 171,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 0.978,
+     "light_yellow": 1.0,
+     "light_green": 1.0
+    },
+    "hits": {
+     "traffic_light": "171/171",
+     "light_red": "44/45",
+     "light_yellow": "72/72",
+     "light_green": "54/54"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 1,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 0.994,
+     "light_red": 0.956,
+     "light_yellow": 1.0,
+     "light_green": 1.0
+    },
+    "hits": {
+     "traffic_light": "170/171",
+     "light_red": "43/45",
+     "light_yellow": "72/72",
+     "light_green": "54/54"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 1,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 1.0,
+    "light_red": 0.956,
+    "light_yellow": 1.0,
+    "light_green": 1.0
+   }
+  },
+  "test_1m2": {
+   "n_images": 12,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 0.75
+    },
+    "hits": {
+     "traffic_light": "12/12",
+     "light_red": "4/4",
+     "light_yellow": "4/4",
+     "light_green": "3/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 0.0
+    },
+    "hits": {
+     "traffic_light": "12/12",
+     "light_red": "4/4",
+     "light_yellow": "4/4",
+     "light_green": "0/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 1.0,
+    "light_red": 1.0,
+    "light_yellow": 1.0,
+    "light_green": 1.0
+   }
+  }
+ },
+ "best_score": {
+  "ckpt": "/home/foscar/2026AutoRace/LimoPro_v3real/LimoPro_mt_rtx/outputs/train/hybridnets_mt_v3real_seed0/best_score.pt",
+  "test": {
+   "n_images": 171,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 0.978,
+     "light_yellow": 1.0,
+     "light_green": 1.0
+    },
+    "hits": {
+     "traffic_light": "171/171",
+     "light_red": "44/45",
+     "light_yellow": "72/72",
+     "light_green": "54/54"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 1,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 0.994,
+     "light_red": 0.956,
+     "light_yellow": 1.0,
+     "light_green": 1.0
+    },
+    "hits": {
+     "traffic_light": "170/171",
+     "light_red": "43/45",
+     "light_yellow": "72/72",
+     "light_green": "54/54"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 1,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 1.0,
+    "light_red": 0.956,
+    "light_yellow": 1.0,
+    "light_green": 1.0
+   }
+  },
+  "test_1m2": {
+   "n_images": 12,
+   "thr0.3": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 0.75
+    },
+    "hits": {
+     "traffic_light": "12/12",
+     "light_red": "4/4",
+     "light_yellow": "4/4",
+     "light_green": "3/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "thr0.5": {
+    "recall": {
+     "traffic_light": 1.0,
+     "light_red": 1.0,
+     "light_yellow": 1.0,
+     "light_green": 0.0
+    },
+    "hits": {
+     "traffic_light": "12/12",
+     "light_red": "4/4",
+     "light_yellow": "4/4",
+     "light_green": "0/4"
+    },
+    "wrong_color": 0,
+    "fp": {
+     "traffic_light": 0,
+     "light_red": 0,
+     "light_yellow": 0,
+     "light_green": 0
+    }
+   },
+   "ap50": {
+    "traffic_light": 1.0,
+    "light_red": 1.0,
+    "light_yellow": 1.0,
+    "light_green": 1.0
+   }
+  }
+ }
+}

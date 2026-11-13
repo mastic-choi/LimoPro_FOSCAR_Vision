@@ -37,6 +37,13 @@ v3 옵션 (기본값이면 v2와 같은 학습)
   --aug-monitor-real    모니터를 실제 카메라처럼(match,persp,screen,jitter 또는 all). 비교 그림: preview_monitor_real.py
   매 epoch val 검출 점수 보정 지표(D-ECE, MCE, NLL)를 log.csv에 기록, 학습 후 val로 temperature를 맞춰 calib.json에 저장
 
+실물 신호등 옵션 (v3real, 기본값이면 쓰지 않음)
+  --real-data DIR --real-repeat N   로봇 카메라로 찍은 실물 신호등 사진(박스만, scripts/make_real_tl_labels.py). train은 N배로,
+                      val은 val에 더하고, test는 test_real로 따로 채점. 분할 라벨이 없어 차선 손실에는 들어가지 않음.
+                      방해 모니터 증강(--aug-monitor-p)은 실물 사진에도 그림
+  --det-data none     콘 데이터를 쓰지 않음 (출력 12클래스는 그대로, cone 출력은 학습 안 됨)
+  --freeze-bn         BatchNorm 통계를 시작 가중치 값으로 고정. 큰 batch로 학습한 가중치를 작은 batch로 이어서 학습할 때
+
 사용 예:
   python scripts/train_multitask.py --seg-data dataset/synth_signs_v2 --det-data dataset/cones_v1 \\
       --venue-ref-dir dataset/venue_ref_20261106 --init outputs/train/hybridnets_v4_seed0/best_da.pt --batch 16
@@ -180,12 +187,13 @@ class Items(torch.utils.data.Dataset):
         img, da, ll, sl, slv, b = self.load(it)
         seg = it["kind"] == "seg"
         neg_aug = False
-        if self.train and seg and (self.aug_monitor_p > 0 or self.aug_cable_p > 0):
+        # 실물 신호등 사진(--real-data, kind=det, real_tl=True)에도 뒤 모니터를 그린다. 케이블은 분할 이미지만
+        if self.train and (seg or it.get("real_tl")) and (self.aug_monitor_p > 0 or self.aug_cable_p > 0):
             import mt_online_aug as oa
             r = np.random.default_rng()
             if len(b) and r.random() < self.aug_monitor_p:
                 oa.add_monitor(img, da, ll, sl, slv, b, r, self.aug_dots_p, real=self.aug_real)
-            if r.random() < self.aug_cable_p:
+            if seg and r.random() < self.aug_cable_p:
                 neg_aug = oa.add_cable(img, sl, slv, r)
         if self.train:
             img, (da, ll, sl, slv), b = self.augment(img, [da, ll, sl, slv], b, seg)
@@ -223,7 +231,7 @@ def seg_items(root, split):
     return out
 
 
-def det_items(root, split, n_max, seed, positives_only=True):
+def det_items(root, split, n_max, seed, positives_only=True, prefix="cone", **extra):
     d = os.path.join(root, "images", split)
     if not os.path.isdir(d):
         return []
@@ -233,7 +241,7 @@ def det_items(root, split, n_max, seed, positives_only=True):
         lab = os.path.join(root, "labels", split, stem + ".txt")
         if positives_only and (not os.path.exists(lab) or os.path.getsize(lab) == 0):
             continue
-        out.append(dict(kind="det", name=f"cone/{split}/{stem}", img=os.path.join(d, n), lab=lab))
+        out.append(dict(kind="det", name=f"{prefix}/{split}/{stem}", img=os.path.join(d, n), lab=lab, **extra))
     rnd = random.Random(seed)
     rnd.shuffle(out)
     return out[:n_max] if n_max else out
@@ -498,6 +506,13 @@ def main():
                     help="차선 보호: val da+ll IoU가 시작 가중치보다 이만큼 넘게 낮은 epoch은 best.pt로 고르지 않음 (0 = 끔). "
                          "학습 전에 시작 가중치를 val로 한 번 잼")
     ap.add_argument("--aug-cable-p", type=float, default=0.0, help="흰 케이블을 그릴 확률 (그 자리는 흰 가로선 아님)")
+    ap.add_argument("--real-data", default="",
+                    help="실물 신호등 사진(로봇 카메라, 박스만): images/<split>, labels/<split> (scripts/make_real_tl_labels.py). "
+                         "train은 --real-repeat배로 넣고, val은 val에 더하고, test는 test_real로 따로 채점. 빈 값 = 안 씀")
+    ap.add_argument("--real-repeat", type=int, default=1, help="실물 train 사진을 한 epoch에 몇 번 넣을지")
+    ap.add_argument("--freeze-bn", action="store_true",
+                    help="BatchNorm 통계(running mean/var)를 시작 가중치 값으로 고정 (학습 중에도 eval 모드). "
+                         "batch 32로 학습한 가중치를 batch 4~8로 이어서 학습할 때 차선이 흔들리지 않게")
     a = ap.parse_args()
 
     import make_model_compare_gif as m   # 장치·ZLUDA 설정
@@ -518,10 +533,19 @@ def main():
         raise SystemExit(f"--aug-monitor-real에 모르는 값 {bad} (가능: {','.join(oa.REAL_ALL)}, all)")
     tr = seg_items(a.seg_data, "train") + det_items(a.det_data, "train", a.cone_train_n, a.seed)
     va_ = seg_items(a.seg_data, "val") + det_items(a.det_data, "val", a.cone_val_n, a.seed)
+    if a.real_data:
+        rt = det_items(a.real_data, "train", 0, a.seed, prefix="real", real_tl=True)
+        rv = det_items(a.real_data, "val", 0, a.seed, prefix="real", real_tl=True)
+        if not rt:
+            raise SystemExit(f"--real-data {a.real_data}: images/train 이 비어 있음")
+        tr += rt * a.real_repeat
+        va_ += rv
+        print(f"real: train {len(rt)} x{a.real_repeat} = {len(rt) * a.real_repeat}, val {len(rv)}", flush=True)
     if a.val_max:
         va_ = va_[:a.val_max // 2] + va_[-(a.val_max // 2):]
     print(f"train {len(tr)} (seg {sum(i['kind'] == 'seg' for i in tr)}, sl {sum(i.get('sl') is not None for i in tr)}, "
-          f"cone {sum(i['kind'] == 'det' for i in tr)}) / val {len(va_)}", flush=True)
+          f"cone {sum(i['kind'] == 'det' and not i.get('real_tl') for i in tr)}, real {sum(bool(i.get('real_tl')) for i in tr)}) "
+          f"/ val {len(va_)}", flush=True)
     mk = lambda items, train: torch.utils.data.DataLoader(
         Items(items, train, venue if train else None, a.ignore_small if train else 0.0,
               a.aug_monitor_p if train else 0.0, a.aug_cable_p if train else 0.0, a.aug_monitor_dots, real), batch_size=a.batch,
@@ -579,6 +603,10 @@ def main():
         for g in opt.param_groups:
             g["lr"] = lr * g.get("mult", 1.0)
         model.train()
+        if a.freeze_bn:   # 작은 batch(RTX 4~8)로 이어서 학습할 때: BatchNorm은 시작 가중치의 통계를 그대로 쓰고 갱신하지 않음
+            for mod in model.modules():
+                if isinstance(mod, torch.nn.modules.batchnorm._BatchNorm):
+                    mod.eval()
         t0, n, acc = time.time(), 0, np.zeros(6)
         for step, (x, da, ll, sl, slv, segv, slf, ann, _) in enumerate(tl):
             if a.max_steps and step >= a.max_steps:
@@ -673,8 +701,11 @@ def main():
     print("calib:", json.dumps(calib, ensure_ascii=False), flush=True)
     res = {"best": best, "args": vars(a), "calib": calib}
     test_sets = {}
-    for split in ("test", "test_venue", "test_bag"):
-        items = seg_items(a.seg_data, split)
+    for split in ("test", "test_venue", "test_bag", "test_real"):
+        if split == "test_real":   # 실물 신호등 (로봇 카메라). --real-data 없으면 건너뜀
+            items = det_items(a.real_data, "test", 0, a.seed, prefix="real") if a.real_data else []
+        else:
+            items = seg_items(a.seg_data, split)
         if split == "test":
             items += det_items(a.det_data, "test", 0, a.seed) + det_items(a.det_data, "val", 0, a.seed)[a.cone_val_n:]
         if items:
