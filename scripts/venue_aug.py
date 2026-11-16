@@ -25,7 +25,19 @@ def random_ref():
 
 
 def _lab(img): return cv2.cvtColor(img, cv2.COLOR_BGR2LAB).astype(np.float32)
-def _stats(lab, m): x = lab[m]; return x.mean(0), x.std(0) + 1e-3
+def _stats(lab, m):
+    if FAST:   # 마스크 픽셀을 복사하지 않고 OpenCV 로 (같은 값, 모집단 표준편차)
+        mu, sd = cv2.meanStdDev(lab, mask=m.astype(np.uint8))
+        return mu[:, 0].astype(np.float32), sd[:, 0].astype(np.float32) + 1e-3
+    x = lab[m]; return x.mean(0), x.std(0) + 1e-3
+
+
+def _cmax(x):   # x.max(2, keepdims=True) 와 같음 (3채널, numpy 의 마지막 축 reduce 보다 빠름)
+    return np.maximum(np.maximum(x[..., 0], x[..., 1]), x[..., 2])[..., None] if FAST else x.max(2, keepdims=True)
+
+
+def _cmean(x):  # x.mean(2, keepdims=True) 와 같음
+    return ((x[..., 0] + x[..., 1] + x[..., 2]) * np.float32(1 / 3))[..., None] if FAST else x.mean(2, keepdims=True)
 
 # ---------------- v1 ----------------
 def v1(img, ref, da=None):
@@ -61,7 +73,7 @@ def _tinted_streak(img, color, wfloor):
     x0 = random.uniform(0.1, 0.9) * w
     cv2.line(mask, (int(x0 + random.uniform(-.05, .05) * w), int(random.uniform(.4, .6) * h)),
              (int(x0 + random.uniform(-.35, .35) * w), h), 1.0, random.randint(25, 90))
-    mask = cv2.GaussianBlur(mask, (0, 0), random.uniform(10, 25)) * wfloor
+    mask = _smooth(mask, random.uniform(10, 25), 4) * wfloor
     mask *= np.linspace(0.3, 1.0, h, dtype=np.float32)[:, None]
     return np.clip(img + mask[..., None] * random.uniform(90, 220) * color, 0, 255)
 
@@ -85,7 +97,8 @@ def v2(img, ref, da=None):
     rb = np.zeros((h, w), bool); rb[:int(.40 * h)] = True     #            위쪽 = 벽/배경
     tf = _transfer(lab, wf > 0.5, rlab, rf)
     tb = _transfer(lab, wf <= 0.5, rlab, rb)
-    t = tf * wf[..., None] + tb * (1 - wf[..., None])
+    wf3 = wf[..., None].astype(np.float32)
+    t = tf * wf3 + tb * (1 - wf3)
     k = random.uniform(0.75, 1.0)
     out = cv2.cvtColor(np.clip(lab + k * (t - lab), 0, 255).astype(np.uint8), cv2.COLOR_LAB2BGR).astype(np.float32)
     if random.random() < 0.45:   # 매끈한 매트에 조명이 반사된 색 띠
@@ -94,15 +107,19 @@ def v2(img, ref, da=None):
         out = _tinted_bloom(out, _highlight_color(ref, rb))
     if random.random() < 0.30:   # 조명 색이 화면 한쪽에서 다른 쪽으로 바뀜
         c1, c2 = np.random.uniform(0.75, 1.25, 3), np.random.uniform(0.75, 1.25, 3)
-        tt = np.linspace(0, 1, w)[None, :, None] if random.random() < 0.6 else np.linspace(0, 1, h)[:, None, None]
-        out = out * (c1 * (1 - tt) + c2 * tt)
+        tt = np.linspace(0, 1, w, dtype=np.float32)[None, :, None] if random.random() < 0.6 else np.linspace(0, 1, h, dtype=np.float32)[:, None, None]
+        out = out * (c1 * (1 - tt) + c2 * tt).astype(np.float32)
     return np.clip(out, 0, 255).astype(np.uint8)
 
 # ---------------- v3 = v2 + 노출 과다로 밝은 곳이 조명색 섞인 흰색으로 날아감 + 차선 탈색 + 바닥 광택 ----------------
 def _sheen(h, w, wf):
     """매트 광택: 바닥에 크고 부드러운 밝기 얼룩 (조명이 매트에 비친 넓은 반사)."""
     n = np.random.rand(max(2, h // 60), max(2, w // 60)).astype(np.float32)
-    n = cv2.GaussianBlur(cv2.resize(n, (w, h), interpolation=cv2.INTER_CUBIC), (0, 0), 25)
+    if FAST:   # 저해상도에서 키우고 흐린 뒤 원래 크기로
+        n = cv2.GaussianBlur(cv2.resize(n, (w // 4, h // 4), interpolation=cv2.INTER_CUBIC), (0, 0), 25 / 4)
+        n = cv2.resize(n, (w, h), interpolation=cv2.INTER_LINEAR)
+    else:
+        n = cv2.GaussianBlur(cv2.resize(n, (w, h), interpolation=cv2.INTER_CUBIC), (0, 0), 25)
     n = (n - n.min()) / (np.ptp(n) + 1e-6)
     return n ** 2 * wf
 
@@ -114,7 +131,7 @@ def v3(img, ref, da=None, ll=None):
     if ll is not None and ll.any() and random.random() < 0.5:
         # 차선 탈색: 색 조명 + 노출 과다에서 노란 차선이 연한/흰 차선으로 보임 (라벨은 그대로)
         a = cv2.GaussianBlur(cv2.dilate(ll.astype(np.uint8), np.ones((3, 3))).astype(np.float32), (0, 0), 1.2)[..., None]
-        gray = out.mean(2, keepdims=True)
+        gray = _cmean(out)
         s = random.uniform(0.4, 0.9)
         lane = gray + s * (out - gray) + random.uniform(0, 25)
         out = out * (1 - a) + lane * a
@@ -124,8 +141,8 @@ def v3(img, ref, da=None, ll=None):
     out = out * random.uniform(1.0, 1.3) if random.random() < 0.4 else out
     out = np.clip(out, 0, 255)
     # 잘린 근처 하이라이트는 채도가 빠짐 (센서 포화)
-    L = out.max(2, keepdims=True); hi = np.clip((L - 230) / 25, 0, 1)
-    out = out * (1 - 0.4 * hi) + out.mean(2, keepdims=True) * 0.4 * hi
+    L = _cmax(out); hi = np.clip((L - 230) / 25, 0, 1)
+    out = out * (1 - 0.4 * hi) + _cmean(out) * 0.4 * hi
     return np.clip(out, 0, 255).astype(np.uint8)
 
 # ---------------- v4 = 실제 대회장 사진의 조명 분포를 통째로 옮김 (2026-11-06) ----------------
@@ -133,8 +150,23 @@ def v3(img, ref, da=None, ll=None):
 # v1~v3는 사진 한 장의 색 통계를 옮기거나 직선 그라데이션만 더해서 이 공간 분포를 못 만든다.
 # 방법: 사진 = 조명(아주 흐린 성분) x 반사(세부 모양)라고 보고, 학습 사진의 조명을 대회장 사진의 조명으로 바꾼다.
 #       차선·매트 무늬 같은 세부는 학습 사진 그대로라 라벨이 그대로 맞는다.
+# 큰 시그마(10~40 px) 블러는 아주 부드러운 성분만 남기므로 저해상도에서 계산해 키워도 거의 같다 (H100 학습에서 CPU 병목, 11-16).
+# VENUE_FAST=0 이면 예전처럼 원본 해상도에서 계산.
+FAST = os.environ.get("VENUE_FAST", "1") != "0"
+
+
+def _smooth(x, sigma, f):
+    """GaussianBlur(x, sigma) 를 1/f 해상도에서 계산해 원래 크기로 (float32)."""
+    if not FAST or sigma < 2 * f:
+        return cv2.GaussianBlur(x, (0, 0), sigma)
+    h, w = x.shape[:2]
+    s = cv2.resize(x, (max(2, w // f), max(2, h // f)), interpolation=cv2.INTER_AREA)
+    s = cv2.GaussianBlur(s, (0, 0), sigma / f)
+    return cv2.resize(s, (w, h), interpolation=cv2.INTER_LINEAR)
+
+
 def _illum(img, sigma):
-    return cv2.GaussianBlur(img.astype(np.float32), (0, 0), sigma) + 4.0
+    return _smooth(img.astype(np.float32), sigma, 8) + 4.0
 
 def v4(img, ref, da=None, ll=None):
     h, w = img.shape[:2]
@@ -150,15 +182,16 @@ def v4(img, ref, da=None, ll=None):
     out = x * (1 - k + k * gain)
     if ll is not None and ll.any() and random.random() < 0.35:   # 노란 차선이 조명에 물들어 하얗게 날아감 (v3와 같음)
         a = cv2.GaussianBlur(cv2.dilate(ll.astype(np.uint8), np.ones((3, 3))).astype(np.float32), (0, 0), 1.2)[..., None]
-        gray = out.mean(2, keepdims=True)
+        gray = _cmean(out)
         out = out * (1 - a) + (gray + random.uniform(0.4, 0.9) * (out - gray) + random.uniform(0, 25)) * a
     if random.random() < 0.3:                                    # 자동 화이트밸런스·노출이 프레임마다 흔들림
         out = out * np.random.uniform(0.85, 1.15, 3) * random.uniform(0.85, 1.25)
     out = np.clip(out, 0, 255)
-    L = out.max(2, keepdims=True); hi = np.clip((L - 230) / 25, 0, 1)   # 포화된 하이라이트는 채도가 빠짐
-    out = out * (1 - 0.4 * hi) + out.mean(2, keepdims=True) * 0.4 * hi
+    L = _cmax(out); hi = np.clip((L - 230) / 25, 0, 1)   # 포화된 하이라이트는 채도가 빠짐
+    out = out * (1 - 0.4 * hi) + _cmean(out) * 0.4 * hi
     if random.random() < 0.4:                                    # 어두운 조명에서 늘어나는 센서 노이즈
-        out = out + np.random.normal(0, random.uniform(2, 6), out.shape)
+        sd = random.uniform(2, 6)
+        out = out + (np.random.standard_normal(out.shape).astype(np.float32) * sd if not FAST else cv2.randn(np.empty(out.shape, np.float32), 0, sd))
     return np.clip(out, 0, 255).astype(np.uint8)
 
 
