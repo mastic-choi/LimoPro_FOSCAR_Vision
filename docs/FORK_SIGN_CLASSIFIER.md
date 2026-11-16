@@ -1,7 +1,14 @@
 # 갈림길 A/B 표지판 크롭 분류기 (fork_cls_v1, 2026-11-16, 진행 중)
 
-> **상태: 릴리즈 안 함.** 실차 bag 2개(둘 다 B, 노트북 화면에 띄운 표지판)로만 검증했습니다. 화면 표지판은 대회용 판(Ø80 mm)의
-> 약 2배 크기로 추정되어, 실물 크기 A·B bag으로 가상 주행을 통과한 뒤에 릴리즈합니다. 이어서 할 일은 맨 아래에 있습니다.
+> **상태: 사전 릴리즈 [`fork-sign-v0`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0) (Pre-release, 검증 전).**
+> 로봇에서 바로 돌려 보도록 `final_l3` 모델을 올렸습니다. 실차 bag 2개(둘 다 B, 노트북 화면에 띄운 표지판)로만 검증했고, 화면 표지판은
+> 대회용 판(Ø80 mm)의 약 2배 크기로 추정됩니다. 실물 크기 A·B bag으로 가상 주행을 통과하면 정식 `fork-sign-v1`로 올립니다.
+> 이어서 할 일은 맨 아래에 있습니다.
+>
+> ```bash
+> # 로봇: 모델 받기 (비공개 레포라 gh 로그인 필요). ar_fork_sign 노드 기본 경로가 ~/ar_models/fork_sign.onnx
+> mkdir -p ~/ar_models && gh release download fork-sign-v0 -R mastic-choi/LimoPro_FOSCAR_Vision -p fork_sign.onnx -D ~/ar_models --clobber
+> ```
 
 ## 왜
 
