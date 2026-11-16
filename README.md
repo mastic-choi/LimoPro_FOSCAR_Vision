@@ -9,6 +9,18 @@
 최신 릴리즈는 **[`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real)** (HybridNets 기반, v3 + 실물 신호등)입니다.
 상세 실험 기록(1~4차 차선 모델, 데이터·학습 설정, 한계 등)은 [`docs/HISTORY.md`](docs/HISTORY.md)에 있습니다.
 
+### 진행 중 (2026-11-16): 실물 갈림길 A/B 표지판과 v4
+
+![실물 A·B 표지판 SAM 2.1 추적](outputs/fork_cls_v2/sam2_tracking.gif)
+
+*실물 크기(Ø80 mm 인쇄) A·B 표지판으로 돈 M7 주행 5개. 표지판 박스를 SAM 2.1 영상 추적으로 모든 프레임에 만들었습니다 —
+자홍 = 아주 먼 구간(3차선 구간에서 차로 끝), 하늘색 = 먼 구간(장애물 사이), 초록 = 가까운 구간, 빨강 = HybridNets 검출 + 갈림길 분류기 확인.*
+
+- **갈림길 A/B 분류기 [`fork-sign-v0.2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.2)** (사전 릴리즈): 위 주행의 크롭을 더해 학습.
+  학습에 안 쓴 실물 주행으로 A↔B 혼동 0, 재현율 98~100%. 자세히: [`outputs/fork_cls_v2/README.md`](outputs/fork_cls_v2/README.md), [`docs/FORK_SIGN_CLASSIFIER.md`](docs/FORK_SIGN_CLASSIFIER.md)
+- **`hybridnets_mt_v4` 학습 준비**: 원본 HybridNets 에서 새로 학습, sign_A·sign_B 를 `fork_sign` 하나로 합침(A/B 는 분류기),
+  정지선 사람 검수 2,587장 추가, 실차 bag 834장·실물 A·B 주행 641장 추가, H100 속도 대응. 자세히: [`docs/MULTITASK_V4_TRAINING.md`](docs/MULTITASK_V4_TRAINING.md)
+
 ## 1. 주요 기능
 
 - **한 모델, 네 가지 출력** — HybridNets 하나로 아래를 동시에 냅니다.
