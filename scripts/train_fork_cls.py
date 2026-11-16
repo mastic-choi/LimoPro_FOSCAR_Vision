@@ -10,6 +10,7 @@
   W' = Σ_c W[:,c]/std_c, b' = −Σ_c Σ W[:,c]·mean_c/std_c. 학습·ONNX·로봇이 모두 이 접힌 모델을 쓴다.
 - 증강(전처리 전, 원본 크롭에): 위치·크기 흔들기, 밝기·대비, 색 조명(채널 배율), 흐림, 축소 후 확대, JPEG. 좌우 반전 없음.
   --flip-real-b: 실차 B 크롭을 좌우 반전해 A 로도 쓴다(실물 A 가 없을 때의 대용. 화살표는 맞고 글자는 거울 B).
+  --mask-prob: 이 확률로 표지판 원 바깥을 회색으로 가린다. 뒤집은 B 는 배경(노트북 흰 막대 등)도 뒤집혀 '배경으로 A/B 고르기'를 배울 수 있어서.
 - 데이터 폴더: <dir>/<A|B|none>/*.png (fork_crops_synth.py, fork_crops_bag.py 결과).
 
 사용:
@@ -91,8 +92,22 @@ def load_dir(d):
     return items
 
 
-def augment(img, rng):
+def circle_mask(img, scale=1.08, dx=0.0, dy=0.0, fill=128):
+    """표지판 원 바깥을 회색으로. 크롭 한 변 = 박스 x 1.6 이라 원 반지름 ≈ 한 변 / 3.2.
+    배경(노트북 화면 테두리·흰 막대 등)으로 A/B 를 고르는 지름길을 막는다 (뒤집은 B 를 A 로 쓰면 배경도 같이 뒤집힌다)."""
     h, w = img.shape[:2]
+    yy, xx = np.mgrid[:h, :w]
+    r = min(h, w) / 3.2 * scale
+    out = img.copy()
+    out[np.hypot(xx - (w / 2 + dx * w), yy - (h / 2 + dy * h)) > r] = fill
+    return out
+
+
+def augment(img, rng, mask_prob=0.0):
+    h, w = img.shape[:2]
+    if rng.random() < mask_prob:   # 원 바깥 가리기 (위치 흔들기 전에: 가림이 표지판과 같이 움직이게)
+        img = circle_mask(img, rng.uniform(1.0, 1.25), rng.uniform(-0.03, 0.03), rng.uniform(-0.03, 0.03),
+                          int(rng.integers(60, 200)))
     if rng.random() < 0.7:   # 위치·크기 흔들기 (검출 박스 오차)
         sc = rng.uniform(0.88, 1.12); tx, ty = rng.uniform(-0.08, 0.08) * w, rng.uniform(-0.08, 0.08) * h
         M = np.float32([[sc, 0, (1 - sc) * w / 2 + tx], [0, sc, (1 - sc) * h / 2 + ty]])
@@ -125,7 +140,7 @@ def features(backbone, arrs, dev, bs=256):
     return torch.cat(out) if out else torch.zeros(0, backbone.m.fc.in_features)
 
 
-def build_set(items, copies, rng, flip_b=False):
+def build_set(items, copies, rng, flip_b=False, mask_prob=0.0):
     X, Y = [], []
     for f, y in items:
         img = cv2.imread(f)
@@ -137,7 +152,7 @@ def build_set(items, copies, rng, flip_b=False):
         for im, yy in variants:
             X.append(to_input(im)); Y.append(yy)
             for _ in range(copies):
-                X.append(to_input(augment(im, rng))); Y.append(yy)
+                X.append(to_input(augment(im, rng, mask_prob))); Y.append(yy)
     return X, np.array(Y, np.int64)
 
 
@@ -163,6 +178,7 @@ def main():
     ap.add_argument("--real", nargs="*", default=[], help="실차 폴더 (증강 많이, --flip-real-b 대상)")
     ap.add_argument("--eval", nargs="*", default=[], help="이름=폴더")
     ap.add_argument("--flip-real-b", action="store_true")
+    ap.add_argument("--mask-prob", type=float, default=0.0, help="증강에서 표지판 원 바깥을 가릴 확률 (배경 지름길 막기)")
     ap.add_argument("--synth-none-max", type=int, default=4000)
     ap.add_argument("--synth-copies", type=int, default=1)
     ap.add_argument("--real-copies", type=int, default=12)
@@ -183,7 +199,7 @@ def main():
         if not real:   # 합성 none 은 너무 많아 일부만
             nn_ = [it for it in items if it[1] == 2]; rest = [it for it in items if it[1] != 2]
             random.shuffle(nn_); items = rest + nn_[:a.synth_none_max]
-        X, Y = build_set(items, a.real_copies if real else a.synth_copies, rng, flip_b=real and a.flip_real_b)
+        X, Y = build_set(items, a.real_copies if real else a.synth_copies, rng, flip_b=real and a.flip_real_b, mask_prob=a.mask_prob)
         Xtr += X; Ytr.append(Y)
         print(f"train {d}: {len(Y)} (A {int((Y == 0).sum())}, B {int((Y == 1).sum())}, none {int((Y == 2).sum())})")
     Ytr = np.concatenate(Ytr)

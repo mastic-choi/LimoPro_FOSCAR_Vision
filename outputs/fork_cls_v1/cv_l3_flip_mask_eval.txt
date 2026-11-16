@@ -1,0 +1,16 @@
+venue          n= 247 A<->B   0  sign_recall 0.977  none_as_sign 0.025  flipB→A recall 0.857
+bag            n=  70 A<->B   0  sign_recall 1.000  none_as_sign 0.018  flipB→A recall 0.857
+real_030611    n= 254 A<->B   0  sign_recall 0.994  none_as_sign 0.000  flipB→A recall 0.994
+== bag_030611 B 156장 (모델 cv_l3_flip_mask_tr030233)
+  원본 B             → B: 맞음   99%  반대   0%  없음   1%
+  뒤집은 B (가짜 A)  → A: 맞음   99%  반대   0%  없음   1%
+  원 바깥 가린 B      → B: 맞음   97%  반대   0%  없음   3%
+  가린 뒤집은 B       → A: 맞음   97%  반대   0%  없음   3%
+venue          n= 247 A<->B   0  sign_recall 0.932  none_as_sign 0.020  flipB→A recall 0.857
+bag            n=  70 A<->B   0  sign_recall 0.923  none_as_sign 0.018  flipB→A recall 0.857
+real_030233    n= 305 A<->B   0  sign_recall 0.989  none_as_sign 0.000  flipB→A recall 0.989
+== bag_030233 B 187장 (모델 cv_l3_flip_mask_tr030611)
+  원본 B             → B: 맞음   99%  반대   0%  없음   1%
+  뒤집은 B (가짜 A)  → A: 맞음   99%  반대   0%  없음   1%
+  원 바깥 가린 B      → B: 맞음   97%  반대   0%  없음   3%
+  가린 뒤집은 B       → A: 맞음   96%  반대   1%  없음   3%
