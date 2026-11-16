@@ -1,15 +1,20 @@
-# 갈림길 A/B 표지판 크롭 분류기 (fork_cls_v1, 2026-11-16, 진행 중)
+# 갈림길 A/B 표지판 크롭 분류기 (fork_cls_v1 → v2, 2026-11-16, 진행 중)
 
-> **상태: 사전 릴리즈 [`fork-sign-v0.1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.1) (Pre-release, 검증 전).**
-> `final_l3_mask`(원 바깥 가림 증강) 모델입니다. 앞선 [`fork-sign-v0`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0)
-> (`final_l3`, 가림 없음)은 배경(노트북 화면의 흰 막대 등)으로 A/B를 고르는 지름길이 있어 v0.1을 씁니다(아래 "배경 지름길").
-> 실차 bag 2개(둘 다 B, 노트북 화면에 띄운 표지판)로만 검증했고, 화면 표지판은 대회용 판(Ø80 mm)의 약 2배 크기로 추정됩니다.
-> 실물 크기 A·B bag으로 가상 주행을 통과하면 정식 `fork-sign-v1`로 올립니다. 이어서 할 일은 맨 아래에 있습니다.
+> **상태: 사전 릴리즈 [`fork-sign-v0.2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.2) (Pre-release).**
+> v0.1 에 **실물 크기(Ø80 mm 인쇄) A·B 로 돌린 M7 주행 5개**(A 2, B 3)를 더해 다시 학습한 `fork_cls_v2/final_v2` 입니다.
+> 학습에 안 쓴 실물 주행으로 교차 검증해 A↔B 혼동 0, 재현율 A 98~100% / B 98~100% 입니다([`outputs/fork_cls_v2/README.md`](../outputs/fork_cls_v2/README.md)).
+> 실물 A·B bag 으로 가상 주행(확정 시각)을 아직 못 했습니다. 통과하면 정식 `fork-sign-v1` 로 올립니다.
 >
 > ```bash
 > # 로봇: 모델 받기 (비공개 레포라 gh 로그인 필요). ar_fork_sign 노드 기본 경로가 ~/ar_models/fork_sign.onnx
-> mkdir -p ~/ar_models && gh release download fork-sign-v0.1 -R mastic-choi/LimoPro_FOSCAR_Vision -p 'fork_sign.onnx*' -D ~/ar_models --clobber
+> mkdir -p ~/ar_models && gh release download fork-sign-v0.2 -R mastic-choi/LimoPro_FOSCAR_Vision -p 'fork_sign.onnx*' -D ~/ar_models --clobber
+> # TensorRT 엔진은 ONNX 를 바꿀 때마다 그 로봇에서 다시 (노드가 엔진을 먼저 읽음)
+> /usr/src/tensorrt/bin/trtexec --onnx=$HOME/ar_models/fork_sign.onnx --saveEngine=$HOME/ar_models/fork_sign_fp16.engine --fp16 \
+>   --minShapes=input:1x1x96x96 --optShapes=input:5x1x96x96 --maxShapes=input:5x1x96x96
 > ```
+>
+> 이전: [`fork-sign-v0.1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.1) (`final_l3_mask`, 원 바깥 가림, 실물 A 없음),
+> [`fork-sign-v0`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0) (`final_l3`, 배경 지름길 있음). 아래 본문은 v1 때 기록입니다.
 
 ## 배경 지름길 (11-16 추가)
 
@@ -123,7 +128,7 @@ python scripts/test_fork_crop_rule.py && python scripts/test_fork_cls_fold.py
 
 ## 이어서 할 일
 
-1. 대회용 크기(Ø80 mm 인쇄를 3D 프린팅 판에 부착) **A와 B로 M7을 한 번씩 녹화**. 녹화 전 `ros2 param set /lane_perception det_score_thresh 0.05`.
-2. 새 bag 크롭 → 라벨 → 재학습(실물 A가 생기면 `--flip-real-b` 없이도 비교) → 내보내기 → 일치 확인.
+1. ~~대회용 크기 A·B 로 M7 녹화~~, ~~크롭 → 재학습(뒤집기 있/없 비교) → 내보내기 → 일치 확인~~: 11-16 밤 `fork_cls_v2` 로 함 (`fork-sign-v0.2`).
+2. 실물 A·B 를 **bag 으로** 다시 녹화(`tools/ar.bash rec`, 검출·영상 포함) — 이번 5개는 M7 영상만 받아서 가상 주행을 못 함.
 3. 새 bag으로 가상 주행. 실물 A·B 모두 방향이 맞고 확정 시각이 예전 방식과 비슷하거나 빠르면 릴리즈(`fork-sign-v1`).
 4. 늦게 확정되면 `min_prob`·`min_margin`(0.6 / 0.2)을 낮춰 가상 주행으로 비교.

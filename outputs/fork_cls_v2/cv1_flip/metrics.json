@@ -1,0 +1,114 @@
+{
+ "train_counts": [
+  12053.0,
+  11290.0,
+  14019.0
+ ],
+ "venue": {
+  "n": 247,
+  "confusion[true][pred] A,B,none": [
+   [
+    20,
+    0,
+    3
+   ],
+   [
+    0,
+    19,
+    2
+   ],
+   [
+    1,
+    1,
+    201
+   ]
+  ],
+  "A<->B": 0,
+  "sign_recall": 0.8863636363636364,
+  "none_as_sign": 0.009852216748768473,
+  "flipped_B_as_A": {
+   "n": 21,
+   "recall_A": 0.8571428571428571,
+   "called_B": 0
+  }
+ },
+ "bag": {
+  "n": 70,
+  "confusion[true][pred] A,B,none": [
+   [
+    6,
+    0,
+    0
+   ],
+   [
+    0,
+    6,
+    1
+   ],
+   [
+    0,
+    0,
+    57
+   ]
+  ],
+  "A<->B": 0,
+  "sign_recall": 0.9230769230769231,
+  "none_as_sign": 0.0,
+  "flipped_B_as_A": {
+   "n": 7,
+   "recall_A": 0.8571428571428571,
+   "called_B": 1
+  }
+ },
+ "realA": {
+  "n": 68,
+  "confusion[true][pred] A,B,none": [
+   [
+    53,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    15
+   ]
+  ],
+  "A<->B": 0,
+  "sign_recall": 1.0,
+  "none_as_sign": 0.0
+ },
+ "realB": {
+  "n": 68,
+  "confusion[true][pred] A,B,none": [
+   [
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    50,
+    1
+   ],
+   [
+    0,
+    0,
+    17
+   ]
+  ],
+  "A<->B": 0,
+  "sign_recall": 0.9803921568627451,
+  "none_as_sign": 0.0,
+  "flipped_B_as_A": {
+   "n": 51,
+   "recall_A": 1.0,
+   "called_B": 0
+  }
+ }
+}
