@@ -44,11 +44,25 @@ v3 옵션 (기본값이면 v2와 같은 학습)
   --det-data none     콘 데이터를 쓰지 않음 (출력 12클래스는 그대로, cone 출력은 학습 안 됨)
   --freeze-bn         BatchNorm 통계를 시작 가중치 값으로 고정. 큰 batch로 학습한 가중치를 작은 batch로 이어서 학습할 때
 
+v4 옵션 (2026-11-16, 원본 HybridNets 에서 새로 학습, H100)
+  --merge-ab          sign_A·sign_B 를 한 클래스(1번 칸 fork_sign)로 합침. A/B 는 갈림길 분류기(CNN)가 정함. 2번 칸은 비움.
+                      출력 12칸은 그대로라 TensorRT·C++ 노드 구조는 같음. 합치면 표지판 이미지도 좌우 반전 증강을 함
+  --seg-extra DIR     분할+박스 데이터 추가(여러 번): <DIR>/<split>/{images,da_masks,ll_masks,labels,sl_masks,sl_valid}.
+                      train 은 학습에, 그 밖의 split 은 시험(test_<split>)에. 예: bag_mt_v1 (train, test_bag1116)
+  --det-extra DIR:N[:all][:tl]  박스만 데이터 추가(여러 번): <DIR>/images/<split>, labels/<split>. train 은 N배, test 는 test_<이름>.
+                      all = 빈 라벨(물체 없음) 프레임도 음성 샘플로 씀. tl = 실물 신호등(방해 모니터 증강 대상)
+H100 에서 느려지지 않게 (H100 은 작은 커널이 많은 모델에서 CPU 쪽 실행·동기화·데이터 준비가 병목이 되기 쉬움)
+  - 매 step 동기화 없음: 손실은 GPU 에 모아 --log-every step 마다만 꺼냄. GPU_DUTY < 1 일 때만 점유율 제한(그때는 매 step 동기화)
+  - --workers 0 = 자동(코어 수 - 2, 최대 64), --prefetch 4, persistent_workers, pin_memory + non_blocking 복사
+  - TF32·cudnn.benchmark 켬, fused AdamW, --channels-last, --compile (모델 forward 를 torch.compile)
+  - log.csv 에 epoch 마다 초당 이미지 수(ips)와 데이터를 기다린 비율(data_wait) → data_wait 가 크면 CPU(증강)가 병목
+  - 대회장 조명 증강(venue_aug)의 큰 블러를 저해상도에서 계산 (VENUE_FAST=0 이면 예전 방식)
+
 사용 예:
   python scripts/train_multitask.py --seg-data dataset/synth_signs_v2 --det-data dataset/cones_v1 \\
       --venue-ref-dir dataset/venue_ref_20261106 --init outputs/train/hybridnets_v4_seed0/best_da.pt --batch 16
 """
-import argparse, csv, json, os, random, sys, time
+import argparse, contextlib, csv, json, os, random, sys, time
 from argparse import Namespace
 
 import cv2
@@ -70,6 +84,7 @@ LAMP_CLS = [CLASSES.index(c) for c in ("light_red", "light_yellow", "light_green
 AB = {CLASSES.index("sign_A"), CLASSES.index("sign_B")}
 MEAN, STD = np.array([0.485, 0.456, 0.406], np.float32), np.array([0.229, 0.224, 0.225], np.float32)
 MAX_BOX = 64
+MERGE_AB = False   # --merge-ab: main 에서 켬 (DataLoader 워커는 fork 라 그대로 물려받음)
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +95,8 @@ def read_yolo(path, W, H):
             p = line.split()
             if len(p) == 5:
                 c, cx, cy, w, h = int(p[0]), *map(float, p[1:])
+                if MERGE_AB and c == 2:   # sign_B -> fork_sign(1)
+                    c = 1
                 out.append([(cx - w / 2) * W, (cy - h / 2) * H, (cx + w / 2) * W, (cy + h / 2) * H, c])
     return np.array(out, np.float32).reshape(-1, 5)
 
@@ -510,6 +527,13 @@ def main():
                     help="실물 신호등 사진(로봇 카메라, 박스만): images/<split>, labels/<split> (scripts/make_real_tl_labels.py). "
                          "train은 --real-repeat배로 넣고, val은 val에 더하고, test는 test_real로 따로 채점. 빈 값 = 안 씀")
     ap.add_argument("--real-repeat", type=int, default=1, help="실물 train 사진을 한 epoch에 몇 번 넣을지")
+    ap.add_argument("--merge-ab", action="store_true", help="sign_A·sign_B -> fork_sign (1번 칸), A/B 는 CNN 이 정함")
+    ap.add_argument("--seg-extra", action="append", default=[], help="분할+박스 데이터 추가 (여러 번)")
+    ap.add_argument("--det-extra", action="append", default=[], help="박스만 데이터 DIR:N[:all][:tl] (여러 번)")
+    ap.add_argument("--prefetch", type=int, default=4, help="DataLoader prefetch_factor (워커당 미리 만들어 둘 batch 수)")
+    ap.add_argument("--channels-last", action="store_true", help="모델·입력을 channels_last 로 (합성곱 비전 모델 권장)")
+    ap.add_argument("--compile", action="store_true", help="모델 forward 를 torch.compile (첫 epoch 에 컴파일 시간)")
+    ap.add_argument("--log-every", type=int, default=100, help="이 step 마다만 손실을 꺼내 출력 (꺼낼 때만 GPU 동기화)")
     ap.add_argument("--freeze-bn", action="store_true",
                     help="BatchNorm 통계(running mean/var)를 시작 가중치 값으로 고정 (학습 중에도 eval 모드). "
                          "batch 32로 학습한 가중치를 batch 4~8로 이어서 학습할 때 차선이 흔들리지 않게")
@@ -524,6 +548,21 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     dev = m.device
     amp = a.amp and dev.type == "cuda"
+    global MERGE_AB, AB
+    if a.merge_ab:
+        MERGE_AB = True
+        CLASSES[1], CLASSES[2] = "fork_sign", "unused_2"
+        AB = set()   # 합치면 화살표 방향이 라벨에 상관없어 표지판 이미지도 좌우 반전
+    if dev.type == "cuda":
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+        torch.backends.cudnn.benchmark = True   # 입력 크기가 640x384 로 고정
+        pr = torch.cuda.get_device_properties(dev)
+        print(f"GPU {pr.name} {pr.total_memory / 2**30:.0f} GiB, SM {pr.multi_processor_count}, CPU {os.cpu_count()}개"
+              + ("  ⚠ MIG 조각 (SM 이 적음) — nvidia-smi -L 로 확인" if "MIG" in pr.name else ""), flush=True)
+    if a.workers <= 0:
+        a.workers = max(1, min(64, (os.cpu_count() or 4) - 2))
+    print(f"DataLoader workers {a.workers}, prefetch {a.prefetch}, batch {a.batch}, GPU_DUTY {m.GPU_DUTY}", flush=True)
 
     venue = (a.venue_ref_dir, a.venue_p, a.venue_v4, a.venue_v5) if a.venue_ref_dir and a.venue_ref_dir != "none" else None
     import mt_online_aug as oa
@@ -541,19 +580,38 @@ def main():
         tr += rt * a.real_repeat
         va_ += rv
         print(f"real: train {len(rt)} x{a.real_repeat} = {len(rt) * a.real_repeat}, val {len(rv)}", flush=True)
+    extra_tests = {}   # 이름 -> items
+    for d in a.seg_extra:
+        tr += seg_items(d, "train")
+        va_ += seg_items(d, "val")
+        for sp in sorted(os.listdir(d)):
+            if sp not in ("train", "val", "excluded") and os.path.isdir(os.path.join(d, sp, "images")):
+                extra_tests[sp] = seg_items(d, sp)
+        print(f"seg-extra {d}: train {sum(1 for _ in seg_items(d, 'train'))}, test {list(extra_tests)}", flush=True)
+    for spec in a.det_extra:
+        parts = spec.split(":"); d, rep = parts[0], int(parts[1]) if len(parts) > 1 else 1
+        allf, tl_ = "all" in parts[2:], "tl" in parts[2:]
+        nm = os.path.basename(os.path.normpath(d))
+        dt = det_items(d, "train", 0, a.seed, positives_only=not allf, prefix=nm, real_tl=tl_)
+        tr += dt * rep
+        va_ += det_items(d, "val", 0, a.seed, positives_only=not allf, prefix=nm, real_tl=tl_)
+        te = det_items(d, "test", 0, a.seed, positives_only=not allf, prefix=nm)
+        if te:
+            extra_tests[f"test_{nm}"] = te
+        print(f"det-extra {nm}: train {len(dt)} x{rep}{' (빈 프레임 포함)' if allf else ''}, test {len(te)}", flush=True)
     if a.val_max:
         va_ = va_[:a.val_max // 2] + va_[-(a.val_max // 2):]
     print(f"train {len(tr)} (seg {sum(i['kind'] == 'seg' for i in tr)}, sl {sum(i.get('sl') is not None for i in tr)}, "
-          f"cone {sum(i['kind'] == 'det' and not i.get('real_tl') for i in tr)}, real {sum(bool(i.get('real_tl')) for i in tr)}) "
+          f"박스만 {sum(i['kind'] == 'det' and not i.get('real_tl') for i in tr)}, 실물 신호등 {sum(bool(i.get('real_tl')) for i in tr)}) "
           f"/ val {len(va_)}", flush=True)
     mk = lambda items, train: torch.utils.data.DataLoader(
         Items(items, train, venue if train else None, a.ignore_small if train else 0.0,
               a.aug_monitor_p if train else 0.0, a.aug_cable_p if train else 0.0, a.aug_monitor_dots, real), batch_size=a.batch,
         shuffle=train, drop_last=train, num_workers=a.workers, persistent_workers=a.workers > 0, pin_memory=True,
-        collate_fn=collate)
+        prefetch_factor=a.prefetch if a.workers > 0 else None, collate_fn=collate)
     tl, vl = mk(tr, True), mk(va_, False)
     if a.oversample_ab != 1.0:   # A/B/주차가 든 이미지를 더 자주
-        ABP = {CLASSES.index(c) for c in ("sign_A", "sign_B", "parking")}
+        ABP = {1, 2, 5}   # sign_A(또는 fork_sign), sign_B, parking
         has = [bool(it.get("lab")) and os.path.exists(it["lab"])
                and any(int(l.split()[0]) in ABP for l in open(it["lab"]) if l.strip()) for it in tr]
         w = torch.tensor([a.oversample_ab if h else 1.0 for h in has], dtype=torch.double)
@@ -562,15 +620,17 @@ def main():
         tl = torch.utils.data.DataLoader(Items(tr, True, venue, a.ignore_small, a.aug_monitor_p, a.aug_cable_p, a.aug_monitor_dots, real),
                                          batch_size=a.batch, sampler=sampler,
                                          drop_last=True, num_workers=a.workers, persistent_workers=a.workers > 0,
-                                         pin_memory=True, collate_fn=collate)
+                                         pin_memory=True, prefetch_factor=a.prefetch if a.workers > 0 else None, collate_fn=collate)
         print(f"oversample A/B/P x{a.oversample_ab}: {sum(has)} images", flush=True)
 
     model = build_model(m, a.init, a.enc_skip).to(dev)
+    if a.channels_last:
+        model = model.to(memory_format=torch.channels_last)
     head_names = ("regressor.", "classifier.", "bifpn.", "det_skip.")
     g_head = [p for n, p in model.named_parameters() if p.requires_grad and n.startswith(head_names)]
     g_rest = [p for n, p in model.named_parameters() if p.requires_grad and not n.startswith(head_names)]
     opt = torch.optim.AdamW([{"params": g_rest, "mult": 1.0}, {"params": g_head, "mult": a.head_lr_mult}],
-                            lr=a.lr, weight_decay=5e-4)
+                            lr=a.lr, weight_decay=5e-4, **({"fused": True} if dev.type == "cuda" else {}))
     print(f"param groups: rest {sum(p.numel() for p in g_rest) / 1e6:.1f}M x1, "
           f"head+bifpn {sum(p.numel() for p in g_head) / 1e6:.1f}M x{a.head_lr_mult}", flush=True)
     focal = DetLoss(calib=a.calib_loss if a.calib_weight > 0 else "none")
@@ -586,8 +646,13 @@ def main():
     log = os.path.join(a.out, "log.csv")
     if start == 0:
         with open(log, "w", encoding="utf-8") as f:
-            f.write("epoch,lr,loss,seg,sl,cls,reg,cal,val_loss,val_seg,val_sl,val_det,val_da,val_ll,val_map50,val_ece,val_mce,val_nll,sec\n")
-    limiter = m.GpuDutyLimiter()
+            f.write("epoch,lr,loss,seg,sl,cls,reg,cal,val_loss,val_seg,val_sl,val_det,val_da,val_ll,val_map50,val_ece,val_mce,val_nll,sec,ips,data_wait\n")
+    # GPU_DUTY < 1 (공용 RTX PC 보호) 일 때만 점유율 제한. 제한기는 매 step 동기화하므로 H100(GPU_DUTY=1)에서는 안 씀
+    limiter_on = m.GPU_DUTY < 1.0 and dev.type == "cuda"
+    fwd = (lambda x_: heads(model, x_))
+    if a.compile:
+        fwd = torch.compile(fwd)
+        print("torch.compile: 첫 step 들에서 컴파일 (수 분)", flush=True)
     if a.lane_guard > 0 and "start_val" not in best:   # 시작 가중치의 val 차선 IoU (차선 보호 기준)
         s0 = evaluate(model, vl, dev, util, amp, loss_fn=val_loss_fn)["all"]
         best["start_val"] = {k: s0[k] for k in ("da_iou", "ll_iou", "map50", "loss")}
@@ -607,19 +672,29 @@ def main():
             for mod in model.modules():
                 if isinstance(mod, torch.nn.modules.batchnorm._BatchNorm):
                     mod.eval()
-        t0, n, acc = time.time(), 0, np.zeros(6)
-        for step, (x, da, ll, sl, slv, segv, slf, ann, _) in enumerate(tl):
+        t0, n = time.time(), 0
+        acc_t = torch.zeros(6, device=dev)   # 손실 합은 GPU 에 (매 step float() 하면 그때마다 동기화)
+        wait, n_img, it = 0.0, 0, iter(tl)
+        for step in range(len(tl)):
+            tw = time.perf_counter()
+            try:
+                x, da, ll, sl, slv, segv, slf, ann, _ = next(it)
+            except StopIteration:
+                break
+            wait += time.perf_counter() - tw; n_img += x.shape[0]
             if a.max_steps and step >= a.max_steps:
                 break
             gstep = ep * len(tl) + step
             if a.warmup_steps and gstep <= a.warmup_steps:
                 for g in opt.param_groups:
                     g["lr"] = lr * g.get("mult", 1.0) * min(1.0, (gstep + 1) / a.warmup_steps)
-            with limiter:
-                x, da, ll, sl, slv = x.to(dev), da.to(dev), ll.to(dev), sl.to(dev), slv.to(dev)
-                segv, slf, ann = segv.to(dev), slf.to(dev), ann.to(dev)
+            with (m.GpuDutyLimiter() if limiter_on else contextlib.nullcontext()):
+                nb = dict(non_blocking=True)
+                x = x.to(dev, **nb, memory_format=torch.channels_last) if a.channels_last else x.to(dev, **nb)
+                da, ll, sl, slv = da.to(dev, **nb), ll.to(dev, **nb), sl.to(dev, **nb), slv.to(dev, **nb)
+                segv, slf, ann = segv.to(dev, **nb), slf.to(dev, **nb), ann.to(dev, **nb)
                 with torch.autocast("cuda", dtype=torch.bfloat16, enabled=amp):
-                    reg, cls, anchors, pda, pll, psl = heads(model, x)
+                    reg, cls, anchors, pda, pll, psl = fwd(x)
                 pda, pll, psl = ts.crop(pda).float(), ts.crop(pll).float(), ts.crop(psl).float()
                 loss, (l_seg, l_sl, c_l, r_l, k_l) = compute_loss(a, focal, reg, cls, anchors, pda, pll, psl,
                                                                   da, ll, sl, slv, segv, slf, ann)
@@ -627,12 +702,15 @@ def main():
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
                 opt.step()
-            acc += [float(loss), float(l_seg), float(l_sl), float(c_l), float(r_l), float(k_l)]
+            acc_t += torch.stack([t_.detach().float() for t_ in (loss, l_seg, l_sl, c_l, r_l, k_l)])
             n += 1
-            if step % 100 == 0:
-                print(f"  ep {ep + 1} step {step}/{len(tl)} loss {float(loss):.3f} seg {float(l_seg):.3f} "
-                      f"sl {float(l_sl):.3f} cls {float(c_l):.3f} reg {float(r_l):.3f}", flush=True)
-        acc /= max(n, 1)
+            if step % a.log_every == 0:
+                lv = acc_t.tolist(); el = time.time() - t0
+                print(f"  ep {ep + 1} step {step}/{len(tl)} loss(평균) {lv[0] / n:.3f} seg {lv[1] / n:.3f} sl {lv[2] / n:.3f} "
+                      f"cls {lv[3] / n:.3f} reg {lv[4] / n:.3f} | {n_img / max(el, 1e-6):.0f} img/s, 데이터 대기 {wait / max(el, 1e-6):.0%}", flush=True)
+        acc = acc_t.cpu().numpy() / max(n, 1)
+        t_train = time.time() - t0
+        ips, wait_frac = n_img / max(t_train, 1e-6), wait / max(t_train, 1e-6)
         v = evaluate(model, vl, dev, util, amp, loss_fn=val_loss_fn)["all"]
         score = v["da_iou"] + v["ll_iou"] + (v["map50"] or 0)
         vloss = v["loss"]
@@ -683,10 +761,10 @@ def main():
         with open(log, "a", encoding="utf-8") as f:
             cb = v["calib"]; lp = v["loss_parts"]
             f.write(f"{ep + 1},{lr:.3g},{acc[0]:.4f},{acc[1]:.4f},{acc[2]:.4f},{acc[3]:.4f},{acc[4]:.4f},{acc[5]:.4f},"
-                    f"{vloss},{lp['seg']},{lp['sl']},{round(lp['cls'] + lp['reg'], 5)},{v['da_iou']},{v['ll_iou']},{v['map50']},{cb.get('ece')},{cb.get('mce')},{cb.get('nll')},{sec:.0f}\n")
+                    f"{vloss},{lp['seg']},{lp['sl']},{round(lp['cls'] + lp['reg'], 5)},{v['da_iou']},{v['ll_iou']},{v['map50']},{cb.get('ece')},{cb.get('mce')},{cb.get('nll')},{sec:.0f},{ips:.1f},{wait_frac:.3f}\n")
         print(f"epoch {ep + 1}/{a.epochs} loss {acc[0]:.4f} val_loss {vloss} | val da {v['da_iou']:.4f} ll {v['ll_iou']:.4f} "
               f"mAP50 {v['map50']} | ECE {v['calib'].get('ece')} NLL {v['calib'].get('nll')} | "
-              f"AP {json.dumps(v['ap50'])} | {sec:.0f}s", flush=True)
+              f"AP {json.dumps(v['ap50'])} | {sec:.0f}s, 학습 {ips:.0f} img/s, 데이터 대기 {wait_frac:.0%}", flush=True)
 
     # test: best 가중치로 test / test_venue / test_bag
     model.load_state_dict(torch.load(os.path.join(a.out, "best.pt"), map_location=dev))
@@ -710,6 +788,11 @@ def main():
             items += det_items(a.det_data, "test", 0, a.seed) + det_items(a.det_data, "val", 0, a.seed)[a.cone_val_n:]
         if items:
             test_sets[split] = items
+    for split, items in extra_tests.items():   # bag_mt_v1 test_bag1116 (분할), real_fork_v1 test (박스만) 등
+        if items:
+            test_sets[split] = items
+    for split, items in test_sets.items():
+        if split not in res:
             res[split] = evaluate(model, mk(items, False), dev, util, amp, T_cls=T_cls)
             res[split].pop("_raw", None)
             print(split, json.dumps(res[split]["all"]), flush=True)
