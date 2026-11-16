@@ -1,0 +1,119 @@
+{
+ "train_counts": [
+  7477.0,
+  7481.0,
+  10808.0
+ ],
+ "synth_val": {
+  "n": 560,
+  "confusion[true][pred] A,B,none": [
+   [
+    47,
+    0,
+    5
+   ],
+   [
+    2,
+    42,
+    5
+   ],
+   [
+    4,
+    4,
+    451
+   ]
+  ],
+  "A<->B": 2,
+  "sign_recall": 0.8811881188118812,
+  "none_as_sign": 0.017429193899782137,
+  "flipped_B_as_A": {
+   "n": 49,
+   "recall_A": 0.7959183673469388,
+   "called_B": 2
+  }
+ },
+ "synth_test": {
+  "n": 946,
+  "confusion[true][pred] A,B,none": [
+   [
+    77,
+    2,
+    7
+   ],
+   [
+    0,
+    77,
+    12
+   ],
+   [
+    3,
+    4,
+    764
+   ]
+  ],
+  "A<->B": 2,
+  "sign_recall": 0.88,
+  "none_as_sign": 0.009079118028534372,
+  "flipped_B_as_A": {
+   "n": 89,
+   "recall_A": 0.8089887640449438,
+   "called_B": 8
+  }
+ },
+ "venue": {
+  "n": 247,
+  "confusion[true][pred] A,B,none": [
+   [
+    22,
+    0,
+    1
+   ],
+   [
+    0,
+    19,
+    2
+   ],
+   [
+    2,
+    2,
+    199
+   ]
+  ],
+  "A<->B": 0,
+  "sign_recall": 0.9318181818181818,
+  "none_as_sign": 0.019704433497536946,
+  "flipped_B_as_A": {
+   "n": 21,
+   "recall_A": 0.8571428571428571,
+   "called_B": 0
+  }
+ },
+ "bag": {
+  "n": 70,
+  "confusion[true][pred] A,B,none": [
+   [
+    6,
+    0,
+    0
+   ],
+   [
+    0,
+    6,
+    1
+   ],
+   [
+    0,
+    0,
+    57
+   ]
+  ],
+  "A<->B": 0,
+  "sign_recall": 0.9230769230769231,
+  "none_as_sign": 0.0,
+  "flipped_B_as_A": {
+   "n": 7,
+   "recall_A": 0.8571428571428571,
+   "called_B": 1
+  }
+ }
+}

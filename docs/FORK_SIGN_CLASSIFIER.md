@@ -1,14 +1,29 @@
 # 갈림길 A/B 표지판 크롭 분류기 (fork_cls_v1, 2026-11-16, 진행 중)
 
-> **상태: 사전 릴리즈 [`fork-sign-v0`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0) (Pre-release, 검증 전).**
-> 로봇에서 바로 돌려 보도록 `final_l3` 모델을 올렸습니다. 실차 bag 2개(둘 다 B, 노트북 화면에 띄운 표지판)로만 검증했고, 화면 표지판은
-> 대회용 판(Ø80 mm)의 약 2배 크기로 추정됩니다. 실물 크기 A·B bag으로 가상 주행을 통과하면 정식 `fork-sign-v1`로 올립니다.
-> 이어서 할 일은 맨 아래에 있습니다.
+> **상태: 사전 릴리즈 [`fork-sign-v0.1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.1) (Pre-release, 검증 전).**
+> `final_l3_mask`(원 바깥 가림 증강) 모델입니다. 앞선 [`fork-sign-v0`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0)
+> (`final_l3`, 가림 없음)은 배경(노트북 화면의 흰 막대 등)으로 A/B를 고르는 지름길이 있어 v0.1을 씁니다(아래 "배경 지름길").
+> 실차 bag 2개(둘 다 B, 노트북 화면에 띄운 표지판)로만 검증했고, 화면 표지판은 대회용 판(Ø80 mm)의 약 2배 크기로 추정됩니다.
+> 실물 크기 A·B bag으로 가상 주행을 통과하면 정식 `fork-sign-v1`로 올립니다. 이어서 할 일은 맨 아래에 있습니다.
 >
 > ```bash
 > # 로봇: 모델 받기 (비공개 레포라 gh 로그인 필요). ar_fork_sign 노드 기본 경로가 ~/ar_models/fork_sign.onnx
-> mkdir -p ~/ar_models && gh release download fork-sign-v0 -R mastic-choi/LimoPro_FOSCAR_Vision -p fork_sign.onnx -D ~/ar_models --clobber
+> mkdir -p ~/ar_models && gh release download fork-sign-v0.1 -R mastic-choi/LimoPro_FOSCAR_Vision -p 'fork_sign.onnx*' -D ~/ar_models --clobber
 > ```
+
+## 배경 지름길 (11-16 추가)
+
+실차 B를 좌우로 뒤집어 A로 쓰면 화살표뿐 아니라 **글자(거울 B)와 배경(노트북 흰 막대)**도 뒤집힙니다. 그래서 "막대가 왼쪽이면 A"를 배울 수 있습니다.
+`scripts/eval_fork_cls_mask.py`로 표지판 원 바깥을 회색으로 가리고 시험했습니다(학습에 안 쓴 bag의 B 크롭, 대회 판은 무늬 없는 인쇄라 가린 쪽이 실전에 가까움).
+
+| 원 바깥 가린 뒤집은 B → A (반대쪽 오답) | 가림 증강 없음 (`cv_l3_flip_tr*`) | **가림 증강 0.5 (`cv_l3_flip_mask_tr*`)** |
+|---|---:|---:|
+| 030611 시험 | 90% (1%) | **97% (0%)** |
+| 030233 시험 | 71% (7%) | **96% (1%)** |
+
+`train_fork_cls.py --mask-prob 0.5`: 이 확률로 원(반지름 ≈ 크롭 한 변 / 3.2 × 1.0~1.25, 중심 ±3%) 바깥을 회색으로 가립니다.
+가상 주행(030233, 학습에 안 쓴 모델): 가림 없음 B 6.79 s / 거울 A 10.50 s → 가림 B 10.20 s / 거울 A 10.44~10.50 s.
+가림 모델은 B 쪽 치우침이 사라지고 먼 거리에서 신중해집니다. 문턱 0.5 / 0.1이면 B 5.52 s(인지만 쓴 방식 5.56 s), 거울 A 10.44 s, 방향 모두 맞음.
 
 ## 왜
 
