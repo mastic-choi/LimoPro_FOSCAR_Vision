@@ -103,7 +103,18 @@ def circle_mask(img, scale=1.08, dx=0.0, dy=0.0, fill=128):
     return out
 
 
-def augment(img, rng, mask_prob=0.0):
+def light_tint(img, rng, kind=None, strength=None):
+    """대회장 색 조명 흉내 (11-16): 빨간빛·파란빛 아래 파란 표지판. 크롭(BGR)에 조명 색 이득을 곱하고 그 색 빛을 조금 더한다.
+    strength 0 = 흰 조명, 1 = 아주 진한 색. 흑백으로 바꾸기 전에 해야 화살표·원 대비 변화가 학습된다 (파란빛이면 파란 원이 밝아져 흰 화살표와 대비가 줄어듦)."""
+    kind = kind or ("red" if rng.random() < 0.5 else "blue")
+    s = rng.uniform(0.3, 1.0) if strength is None else strength
+    gains = [1 - 0.9 * s, 1 - 0.8 * s, 1 + 0.2 * s] if kind == "red" else [1 + 0.2 * s, 1 - 0.75 * s, 1 - 0.9 * s]   # B, G, R
+    out = img.astype(np.float32) * np.float32(gains)
+    out[..., 2 if kind == "red" else 0] += (rng.uniform(0, 40) if strength is None else 20) * s   # 그 색 빛 번짐
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def augment(img, rng, mask_prob=0.0, tint_prob=0.0):
     h, w = img.shape[:2]
     if rng.random() < mask_prob:   # 원 바깥 가리기 (위치 흔들기 전에: 가림이 표지판과 같이 움직이게)
         img = circle_mask(img, rng.uniform(1.0, 1.25), rng.uniform(-0.03, 0.03), rng.uniform(-0.03, 0.03),
@@ -112,7 +123,9 @@ def augment(img, rng, mask_prob=0.0):
         sc = rng.uniform(0.88, 1.12); tx, ty = rng.uniform(-0.08, 0.08) * w, rng.uniform(-0.08, 0.08) * h
         M = np.float32([[sc, 0, (1 - sc) * w / 2 + tx], [0, sc, (1 - sc) * h / 2 + ty]])
         img = cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
-    if rng.random() < 0.5:   # 색 조명 (대회장 조명이 파랑·노랑·빨강으로 바뀐다)
+    if rng.random() < tint_prob:   # 진한 빨간빛·파란빛 (대회장 조명)
+        img = light_tint(img, rng)
+    if rng.random() < 0.5:   # 약한 색 조명 (대회장 조명이 파랑·노랑·빨강으로 바뀐다)
         img = np.clip(img.astype(np.float32) * rng.uniform(0.7, 1.3, 3), 0, 255).astype(np.uint8)
     a, b = rng.uniform(0.6, 1.4), rng.uniform(-35, 35)   # 밝기·대비
     img = np.clip(img.astype(np.float32) * a + b, 0, 255).astype(np.uint8)
@@ -140,7 +153,7 @@ def features(backbone, arrs, dev, bs=256):
     return torch.cat(out) if out else torch.zeros(0, backbone.m.fc.in_features)
 
 
-def build_set(items, copies, rng, flip_b=False, mask_prob=0.0):
+def build_set(items, copies, rng, flip_b=False, mask_prob=0.0, tint_prob=0.0):
     X, Y = [], []
     for f, y in items:
         img = cv2.imread(f)
@@ -152,7 +165,7 @@ def build_set(items, copies, rng, flip_b=False, mask_prob=0.0):
         for im, yy in variants:
             X.append(to_input(im)); Y.append(yy)
             for _ in range(copies):
-                X.append(to_input(augment(im, rng, mask_prob))); Y.append(yy)
+                X.append(to_input(augment(im, rng, mask_prob, tint_prob))); Y.append(yy)
     return X, np.array(Y, np.int64)
 
 
@@ -179,6 +192,7 @@ def main():
     ap.add_argument("--eval", nargs="*", default=[], help="이름=폴더")
     ap.add_argument("--flip-real-b", action="store_true")
     ap.add_argument("--mask-prob", type=float, default=0.0, help="증강에서 표지판 원 바깥을 가릴 확률 (배경 지름길 막기)")
+    ap.add_argument("--tint-prob", type=float, default=0.0, help="증강에서 진한 빨간빛·파란빛 조명을 씌울 확률 (대회장 조명)")
     ap.add_argument("--synth-none-max", type=int, default=4000)
     ap.add_argument("--synth-copies", type=int, default=1)
     ap.add_argument("--real-copies", type=int, default=12)
@@ -188,7 +202,7 @@ def main():
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     rng = np.random.default_rng(a.seed); random.seed(a.seed); torch.manual_seed(a.seed)
-    dev = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    dev = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     backbone = folded_backbone(a.feat).to(dev)
     t0 = time.time()
 
@@ -199,7 +213,7 @@ def main():
         if not real:   # 합성 none 은 너무 많아 일부만
             nn_ = [it for it in items if it[1] == 2]; rest = [it for it in items if it[1] != 2]
             random.shuffle(nn_); items = rest + nn_[:a.synth_none_max]
-        X, Y = build_set(items, a.real_copies if real else a.synth_copies, rng, flip_b=real and a.flip_real_b, mask_prob=a.mask_prob)
+        X, Y = build_set(items, a.real_copies if real else a.synth_copies, rng, flip_b=real and a.flip_real_b, mask_prob=a.mask_prob, tint_prob=a.tint_prob)
         Xtr += X; Ytr.append(Y)
         print(f"train {d}: {len(Y)} (A {int((Y == 0).sum())}, B {int((Y == 1).sum())}, none {int((Y == 2).sum())})")
     Ytr = np.concatenate(Ytr)

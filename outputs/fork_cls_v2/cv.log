@@ -1,0 +1,72 @@
+train dataset/fork_crops_v1/synth/train: 14040 (A 3018, B 3022, none 8000)
+train dataset/fork_crops_v1/bag_030233: 6396 (A 2431, B 2431, none 1534)
+train dataset/fork_crops_v1/bag_030611: 5330 (A 2028, B 2028, none 1274)
+train dataset/fork_crops_v1/bag_1115_234946: 338 (A 0, B 0, none 338)
+train dataset/fork_crops_v1/bag_1116_014225: 585 (A 65, B 65, none 455)
+train dataset/fork_crops_v1/bag_1116_014651: 4706 (A 1768, B 1768, none 1170)
+train dataset/fork_crops_v1/bag_1116_181759: 650 (A 208, B 208, none 234)
+train dataset/fork_crops_v1/bag_1116_183018: 1131 (A 455, B 455, none 221)
+train dataset/fork_crops_v1/real1116_210015_B: 1248 (A 585, B 585, none 78)
+train dataset/fork_crops_v1/real1116_213635_B: 1677 (A 728, B 728, none 221)
+train dataset/fork_crops_v1/real1116_214321_A: 1261 (A 767, B 0, none 494)
+특징 (37362, 9216) (36 s)
+선형층 학습 끝 loss 0.0968
+venue          n= 247 A<->B   0  sign_recall 0.886  none_as_sign 0.010  flipB→A recall 0.857
+bag            n=  70 A<->B   0  sign_recall 0.923  none_as_sign 0.000  flipB→A recall 0.857
+realA          n=  68 A<->B   0  sign_recall 1.000  none_as_sign 0.000
+realB          n=  68 A<->B   0  sign_recall 0.980  none_as_sign 0.000  flipB→A recall 1.000
+끝 (76 s) → outputs/fork_cls_v2/cv1_flip
+train dataset/fork_crops_v1/synth/train: 14040 (A 3018, B 3022, none 8000)
+train dataset/fork_crops_v1/bag_030233: 3965 (A 0, B 2431, none 1534)
+train dataset/fork_crops_v1/bag_030611: 3302 (A 0, B 2028, none 1274)
+train dataset/fork_crops_v1/bag_1115_234946: 338 (A 0, B 0, none 338)
+train dataset/fork_crops_v1/bag_1116_014225: 520 (A 0, B 65, none 455)
+train dataset/fork_crops_v1/bag_1116_014651: 2938 (A 0, B 1768, none 1170)
+train dataset/fork_crops_v1/bag_1116_181759: 442 (A 0, B 208, none 234)
+train dataset/fork_crops_v1/bag_1116_183018: 676 (A 0, B 455, none 221)
+train dataset/fork_crops_v1/real1116_210015_B: 663 (A 0, B 585, none 78)
+train dataset/fork_crops_v1/real1116_213635_B: 949 (A 0, B 728, none 221)
+train dataset/fork_crops_v1/real1116_214321_A: 1261 (A 767, B 0, none 494)
+특징 (29094, 9216) (24 s)
+선형층 학습 끝 loss 0.0922
+venue          n= 247 A<->B   0  sign_recall 0.909  none_as_sign 0.015
+bag            n=  70 A<->B   0  sign_recall 0.923  none_as_sign 0.018
+realA          n=  68 A<->B   0  sign_recall 0.981  none_as_sign 0.000
+realB          n=  68 A<->B   0  sign_recall 0.961  none_as_sign 0.000  flipB→A recall 0.549
+끝 (56 s) → outputs/fork_cls_v2/cv1_noflip
+train dataset/fork_crops_v1/synth/train: 14040 (A 3018, B 3022, none 8000)
+train dataset/fork_crops_v1/bag_030233: 6396 (A 2431, B 2431, none 1534)
+train dataset/fork_crops_v1/bag_030611: 5330 (A 2028, B 2028, none 1274)
+train dataset/fork_crops_v1/bag_1115_234946: 338 (A 0, B 0, none 338)
+train dataset/fork_crops_v1/bag_1116_014225: 585 (A 65, B 65, none 455)
+train dataset/fork_crops_v1/bag_1116_014651: 4706 (A 1768, B 1768, none 1170)
+train dataset/fork_crops_v1/bag_1116_181759: 650 (A 208, B 208, none 234)
+train dataset/fork_crops_v1/bag_1116_183018: 1131 (A 455, B 455, none 221)
+train dataset/fork_crops_v1/real1116_210015_B: 1248 (A 585, B 585, none 78)
+train dataset/fork_crops_v1/real1116_215318_B: 1547 (A 663, B 663, none 221)
+train dataset/fork_crops_v1/real1116_220858_A: 884 (A 689, B 0, none 195)
+특징 (36855, 9216) (34 s)
+선형층 학습 끝 loss 0.0944
+venue          n= 247 A<->B   0  sign_recall 0.909  none_as_sign 0.015  flipB→A recall 0.857
+bag            n=  70 A<->B   0  sign_recall 0.846  none_as_sign 0.000  flipB→A recall 0.857
+realA          n=  97 A<->B   0  sign_recall 0.983  none_as_sign 0.000
+realB          n=  73 A<->B   0  sign_recall 1.000  none_as_sign 0.000  flipB→A recall 0.964
+끝 (75 s) → outputs/fork_cls_v2/cv2_flip
+train dataset/fork_crops_v1/synth/train: 14040 (A 3018, B 3022, none 8000)
+train dataset/fork_crops_v1/bag_030233: 3965 (A 0, B 2431, none 1534)
+train dataset/fork_crops_v1/bag_030611: 3302 (A 0, B 2028, none 1274)
+train dataset/fork_crops_v1/bag_1115_234946: 338 (A 0, B 0, none 338)
+train dataset/fork_crops_v1/bag_1116_014225: 520 (A 0, B 65, none 455)
+train dataset/fork_crops_v1/bag_1116_014651: 2938 (A 0, B 1768, none 1170)
+train dataset/fork_crops_v1/bag_1116_181759: 442 (A 0, B 208, none 234)
+train dataset/fork_crops_v1/bag_1116_183018: 676 (A 0, B 455, none 221)
+train dataset/fork_crops_v1/real1116_210015_B: 663 (A 0, B 585, none 78)
+train dataset/fork_crops_v1/real1116_215318_B: 884 (A 0, B 663, none 221)
+train dataset/fork_crops_v1/real1116_220858_A: 884 (A 689, B 0, none 195)
+특징 (28652, 9216) (24 s)
+선형층 학습 끝 loss 0.0887
+venue          n= 247 A<->B   0  sign_recall 0.932  none_as_sign 0.015
+bag            n=  70 A<->B   1  sign_recall 0.923  none_as_sign 0.018
+realA          n=  97 A<->B   0  sign_recall 0.966  none_as_sign 0.000
+realB          n=  73 A<->B   0  sign_recall 1.000  none_as_sign 0.000  flipB→A recall 0.464
+끝 (56 s) → outputs/fork_cls_v2/cv2_noflip
