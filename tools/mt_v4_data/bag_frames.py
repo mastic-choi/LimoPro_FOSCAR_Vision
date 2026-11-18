@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """rosbag2 → 학습 후보 프레임 (원본 1280x720 JPEG 그대로) + 메타.
 
-압축 영상(/camera/color/image_raw/compressed)을 시간순으로 읽어
+압축 영상(/camera/color/image_raw/compressed, 없으면 원본 /camera/color/image_raw 를 JPEG 95 로)을 시간순으로 읽어
   - 직전에 남긴 프레임에서 --every 초 이상 지났고
   - 직전에 남긴 프레임과 화면 전체(160x90 흑백) 평균 절대차가 --still 이상인 것만 남긴다 (멈춘 동안 같은 장면 제거,
     dataset/README.md 의 LimoPro_frames_20261027 정지 중복 제거와 같은 값 2.5).
@@ -17,6 +17,15 @@ import cv2
 import numpy as np
 from rosbags.highlevel import AnyReader
 from rosbags.typesys import Stores, get_typestore, get_types_from_msg
+
+def raw_to_jpeg(m, q=95):
+    """sensor_msgs/Image (rgb8 | bgr8) → JPEG 바이트 (압축 영상이 없는 bag, 예: rawcam_1117_193722)."""
+    a = np.frombuffer(bytes(m.data), np.uint8).reshape(m.height, m.step)[:, :m.width * 3].reshape(m.height, m.width, 3)
+    if m.encoding.lower() == "rgb8":
+        a = a[:, :, ::-1]
+    ok, buf = cv2.imencode(".jpg", np.ascontiguousarray(a), [cv2.IMWRITE_JPEG_QUALITY, q])
+    return buf.tobytes()
+
 
 ap = argparse.ArgumentParser()
 ap.add_argument("out"); ap.add_argument("bags", nargs="+")
@@ -45,9 +54,11 @@ for bag in a.bags:
     (out / "orig" / name).mkdir(exist_ok=True)
     kept = seen = 0; last_t, last_g = -1e9, None; mission = -1
     with AnyReader([bag], default_typestore=ts) as r:
-        cam = [c for c in r.connections if c.topic == "/camera/color/image_raw/compressed"]
+        cam = [c for c in r.connections if c.topic == "/camera/color/image_raw/compressed"] or \
+              [c for c in r.connections if c.topic == "/camera/color/image_raw"]   # 압축 영상이 없으면 원본
         if not cam:
-            print("압축 영상 없음, 건너뜀:", name); continue
+            print("영상 없음, 건너뜀:", name); continue
+        is_raw = cam[0].topic == "/camera/color/image_raw"
         ms = [c for c in r.connections if c.topic == "/ar/mission_state"]
         t0 = r.start_time
         for c, t, raw in r.messages(connections=cam + ms):
@@ -58,7 +69,7 @@ for bag in a.bags:
             if tt - last_t < a.every:
                 continue
             m = r.deserialize(raw, c.msgtype)
-            buf = bytes(m.data)
+            buf = raw_to_jpeg(m) if is_raw else bytes(m.data)
             img = cv2.imdecode(np.frombuffer(buf, np.uint8), cv2.IMREAD_COLOR)
             if img is None or img.shape[:2] != (720, 1280):
                 continue
