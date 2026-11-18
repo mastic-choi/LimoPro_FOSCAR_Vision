@@ -11,6 +11,13 @@
             원본 크롭을 보고, A/B 라 하면(SAM 이 놓친 그 표지판일 수 있음) 무시 박스, 아니면 **배경**(라벨 없음 = 오탐을 배경으로 배움,
             예: 파란 원통을 parking 0.5 로 봄).
   split: --test 에 준 주행은 test, 나머지 train.
+  --min-sign-px (기본 14, 사용자 11-17): SAM 박스 크기 √(w·h) (640x360 기준)가 이보다 작으면 무시 박스(-2).
+            14 px 까지는 SAM 2.1 로 따라간 박스를 정답으로 쓴다. 그보다 작은 것은 표지판은 맞지만 배경으로 배우지 않게 무시.
+  --other-signs bg | detect:
+            bg (기본, 11-16 실물 A·B 시험 주행용): 위 설명대로 다른 표지판류 검출을 배경으로.
+            detect (대회장 주행용): 다른 표지판(서행·주차 등)이 실제로 있으므로 표지판류 검출도 일반 물체처럼
+            점수 >= 0.5 정답, 0.2~0.5 무시. 단 SAM 박스와 IoU >= 0.3 이면 같은 갈림길 표지판이라 빼고,
+            갈림길 분류기가 A/B 라 하거나 1·2번 칸(sign_A/B, v4 는 fork_sign) 검출이면 무시 박스.
 출력: <out>/images/<split>/<run>_<frame>.png, <out>/labels/<split>/...txt (YOLO 정규화, 640x360 기준), <out>/meta.csv
 사용 (v3real 묶음 venv): python real_fork_det_labels.py <bundle> <ckpt> <out> <run>:<A|B> ... --test 220858,215318
 """
@@ -24,6 +31,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("bundle"); ap.add_argument("ckpt"); ap.add_argument("out"); ap.add_argument("runs", nargs="+")
 ap.add_argument("--test", default=""); ap.add_argument("--every", type=int, default=3)
 ap.add_argument("--fork-onnx", required=True, help="갈림길 분류기 ONNX (fork-sign-v0.2)")
+ap.add_argument("--min-sign-px", type=float, default=14.0, help="SAM 박스 √(w·h) (640x360) 이 미만이면 무시 박스")
+ap.add_argument("--other-signs", choices=("bg", "detect"), default="bg",
+                help="bg: 다른 표지판 검출 = 배경 (표지판 없는 시험 주행), detect: 일반 물체처럼 (대회장 주행)")
 a = ap.parse_args()
 out = os.path.abspath(a.out); ckpt = os.path.abspath(a.ckpt)
 runs = [(os.path.abspath(r.rsplit(":", 1)[0]), r.rsplit(":", 1)[1]) for r in a.runs]
@@ -64,7 +74,7 @@ for run, let in runs:
     name = os.path.basename(run); sp = "test" if any(t in name for t in test) else "train"
     F = json.load(open(os.path.join(run, "sign_track.json")))["frames"]
     pick = [r for r in F if r["i"] % a.every == 0]
-    stat = {"frames": 0, "sign": 0, "sign_ign": 0, "other": 0, "ign": 0, "fp_bg": 0, "fp_cnn_ign": 0}
+    stat = {"frames": 0, "sign": 0, "sign_ign": 0, "sign_small": 0, "other": 0, "ign": 0, "fp_bg": 0, "fp_cnn_ign": 0}
     for k in range(0, len(pick), 8):
         ch = pick[k:k + 8]
         origs = [cv2.imread(os.path.join(run, "frames", r["frame"])) for r in ch]
@@ -83,7 +93,9 @@ for run, let in runs:
             if sb:
                 w, h = sb[2] - sb[0], sb[3] - sb[1]
                 ok = 0.6 <= w / max(h, 1e-6) <= 1.67
-                labs.append((C.index(f"sign_{let}") if ok else -2, sb)); stat["sign" if ok else "sign_ign"] += 1
+                big = (w * h) ** 0.5 >= a.min_sign_px
+                labs.append((C.index(f"sign_{let}") if ok and big else -2, sb))
+                stat["sign" if ok and big else ("sign_small" if ok else "sign_ign")] += 1
             for b, c, sc in zip(o["rois"], o["class_ids"], o["scores"]):
                 bb = np.array(b, np.float32); bb[[1, 3]] -= tm.PAD
                 bb[[0, 2]] = bb[[0, 2]].clip(0, 640); bb[[1, 3]] = bb[[1, 3]].clip(0, 360); bb = bb.tolist()
@@ -91,6 +103,14 @@ for run, let in runs:
                 if cn in SIGNLIKE or cn in ("sign_A", "sign_B"):
                     if sb and iou(bb, sb) >= 0.3:
                         continue   # 같은 갈림길 표지판
+                    if a.other_signs == "detect":
+                        if sc < 0.2:
+                            continue
+                        if cn in ("sign_A", "sign_B") or sc < 0.5 or fork_is_sign(orig, bb):
+                            labs.append((-2, bb)); stat["ign"] += 1        # SAM 이 놓친 갈림길 표지판이거나 애매함
+                        else:
+                            labs.append((int(c), bb)); stat["other"] += 1  # 대회장의 진짜 서행·주차 등
+                        continue
                     if fork_is_sign(orig, bb):
                         labs.append((-2, bb)); stat["fp_cnn_ign"] += 1   # SAM 이 놓친 갈림길 표지판일 수 있음
                     else:

@@ -34,6 +34,7 @@ import torch
 ap = argparse.ArgumentParser()
 ap.add_argument("bundle"); ap.add_argument("frames"); ap.add_argument("out"); ap.add_argument("onnx")
 ap.add_argument("--ckpt", required=True); ap.add_argument("--bag-sign", default="B", choices=["A", "B"])
+ap.add_argument("--bag-sign-map", default="", help="bag별 글자 'bag1:A,bag2:B' (대회장 주행처럼 bag마다 다를 때). 없는 bag 은 --bag-sign")
 ap.add_argument("--holdout", default=""); ap.add_argument("--det-thr", type=float, default=0.5)
 ap.add_argument("--cand-thr", type=float, default=0.3); ap.add_argument("--batch", type=int, default=8)
 ap.add_argument("--ign-thr", type=float, default=0.2, help="이 점수 ~ det-thr 사이 박스는 무시 박스(-2)")
@@ -63,6 +64,8 @@ model = tm.build_model(m, os.path.abspath(a.ckpt)).to(dev).eval()
 net = cv2.dnn.readNetFromONNX(a.onnx)
 reg_t, clip_t = util.BBoxTransform(), util.ClipBoxes()
 holdout = {x for x in a.holdout.split(",") if x}
+sign_map = dict(kv.split(":", 1) for kv in a.bag_sign_map.split(",") if kv)
+assert all(v in ("A", "B") for v in sign_map.values()), sign_map
 
 
 def fork_cls(img, boxes):
@@ -121,6 +124,7 @@ with torch.no_grad():
         for k, r in enumerate(chunk):
             sp = "test_bag1116" if r["bag"] in holdout else "train"
             name, mission = r["name"], int(r["mission_id"])
+            bag_sign = sign_map.get(r["bag"], a.bag_sign)
             da_raw, ll_raw = pda[k], pll[k]
             unc = lambda p: float(((p > 0.3) & (p < 0.7)).sum() / max(1, (p > 0.5).sum()))
             why = []
@@ -149,15 +153,15 @@ with torch.no_grad():
                     if sc >= a.cand_thr: labels.append(("ignore", bb, 0))
                 elif cn in AB and sc >= a.cand_thr:
                     if f[0]:
-                        labels.append((f"sign_{a.bag_sign}", bb, 2))
-                        if f[1] != a.bag_sign: flags.append(f"cnn_{f[1]}_vs_bag_{a.bag_sign}")
-                        if cn != f"sign_{a.bag_sign}": flags.append(f"hn_{cn}_to_bag")
+                        labels.append((f"sign_{bag_sign}", bb, 2))
+                        if f[1] != bag_sign: flags.append(f"cnn_{f[1]}_vs_bag_{bag_sign}")
+                        if cn != f"sign_{bag_sign}": flags.append(f"hn_{cn}_to_bag")
                     else:
                         labels.append(("ignore", bb, 0))
                         if sc >= a.det_thr: flags.append(f"hn_{cn}_cnn_none")
                 elif cn in SIGN_LIKE and sc >= a.cand_thr and f[0] and mission == 7:
-                    labels.append((f"sign_{a.bag_sign}", bb, 2)); flags.append(f"m7_{cn}_to_sign")
-                    if f[1] != a.bag_sign: flags.append(f"cnn_{f[1]}_vs_bag_{a.bag_sign}")
+                    labels.append((f"sign_{bag_sign}", bb, 2)); flags.append(f"m7_{cn}_to_sign")
+                    if f[1] != bag_sign: flags.append(f"cnn_{f[1]}_vs_bag_{bag_sign}")
                 elif cn in SIGN_LIKE and sc >= a.cand_thr and f[0]:   # M7 밖인데 분류기가 갈림길 표지판이라 함 → 정체 불명
                     labels.append(("ignore", bb, 0)); flags.append(f"cnn_sign_on_{cn}_outside_m7")
                 elif sc >= a.det_thr:
