@@ -10,12 +10,6 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 
 </div>
 
-## News
-- `2026-11-18` **[`multitask-v6`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) 릴리즈.** v4에서 이어 학습하고, 11-18 대회장 bag 자동 라벨 996장을 더했습니다. 대회장 bag 11개 전체 프레임으로 **DA 주행 검사**를 통과했습니다.
-- `2026-11-17` [`fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) 갈림길 A/B 분류기에 대회장 표지판을 학습시키고, 원 바깥을 항상 가리도록 했습니다. 대회장 '없음' 오탐이 35%에서 4%로 줄었습니다.
-- `2026-11-17` [`multitask-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v4) 원본 HybridNets에서 새로 학습했습니다(A·B를 `fork_sign` 하나로 합침).
-- `2026-11-13` [`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real) 실물 신호등 961장을 더해, 실물 노랑·초록 재현율이 22~71%에서 100%가 됐습니다.
-
 ## Introduction
 [HybridNets](https://github.com/datvuthanh/HybridNets)를 바탕으로 AutoRace 2026 트랙과 LIMO PRO 카메라에 맞게 파인튜닝한 다중 작업 모델입니다.
 네트워크 하나가 **주행가능영역(내 차로)**, **차선**, **흰 가로선(정지선·횡단보도)**, **검출 12종**을 한 번에 냅니다.
