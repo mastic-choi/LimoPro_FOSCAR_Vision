@@ -14,8 +14,6 @@
 |---|---|---|---|
 | **YOLOP** | **TwinLiteNet+ Small** | **HybridNets** | **TwinLiteNet+ Nano** |
 
-![모델 7종 비교](../outputs/montages/model_compare.gif)
-
 노란 실선은 대부분 잡지만 흰 횡단보도 선은 거의 모든 모델이 못 잡고, da는 지금 차선이 아니라
 매트 전체를 칠한다(BDD100K의 "도로 전체" 개념). TwinLiteNet+ 일부는 화면 맨 아래에 가짜 차선 줄이 생긴다.
 속도는 `outputs/benchmarks/` 참고(이 PC 기준 Nano 135fps ~ YOLOPv2 15fps).
@@ -24,8 +22,6 @@
 
 원본 | **Voting**(픽셀별로 7개 중 4개 이상이 확률 ≥ 0.5) | **Averaging**(7개 확률 평균 ≥ 0.5)
 
-![앙상블 비교](../outputs/montages/ensemble_vote_vs_avg.gif)
-
 두 방식 결과는 거의 같다. 개별 모델보다 차선이 안정적이고, **끊긴 흰 점선을 연속된 선으로 이어 준다**
 (HSV로는 조각만 나옴) → 이 앙상블 차선을 ego lane 추출의 기준으로 씀. 모든 모델이 같이 틀리는
 부분(흰 횡단보도, 매트 전체 da)은 앙상블로도 안 고쳐진다.
@@ -33,8 +29,6 @@
 ### 3. Ego lane 초기 비교(SAM2 단독) — `outputs/montages/ego_lane_compare.gif`
 
 원본 | 앙상블 | ego lane(기하) | ego lane + SAM2(점 프롬프트 결과 그대로)
-
-![ego lane 초기 비교](../outputs/montages/ego_lane_compare.gif)
 
 **SAM2를 단독으로 쓰면 제외 점을 찍어도 노란 선을 넘어 매트 전체로 번진다**(선 양쪽이 같은 검은 매트라
 SAM이 한 물체로 봄 — TwinLiteNet-KMU에서 겪은 실패와 같은 원인). 그래서 최종 방법에서는 SAM을 기하 범위
@@ -45,8 +39,6 @@ SAM이 한 물체로 봄 — TwinLiteNet-KMU에서 겪은 실패와 같은 원�
 | 점만 (포함 3 + 제외 최대 12) | 마스크만 (기하 ego를 마스크 프롬프트로) |
 |---|---|
 | **마스크 + 점** | **마스크 + 박스** (박스 = 기하 ego 외곽 사각형) |
-
-![SAM2 프롬프트 비교](../outputs/montages/sam_prompt_compare.gif)
 
 각 칸은 SAM2 **원본** 결과(범위로 자르기 전). OK 90장 기준, 기하 ego 대비:
 
@@ -62,8 +54,6 @@ SAM이 한 물체로 봄 — TwinLiteNet-KMU에서 겪은 실패와 같은 원�
 ### 5. Ego lane 최종 — `outputs/montages/ego_lane_final.gif`
 
 원본 | 1. 앙상블 | 2. +HSV 보완 ego lane(초록 선 = 선택된 좌/우 경계, 상단 OK/FAIL) | SAM2 원본(마스크+점) | 3. 최종(SAM2 ∩ ego 범위)
-
-![ego lane 최종](../outputs/montages/ego_lane_final.gif)
 
 175장 중 **OK 90장(51%)** — 그대로 라벨 후보. FAIL 85장(좌/우 차선 한쪽 누락 43, 추적 끊김 27,
 양쪽 동시 검출 행 부족 15)은 사람이 검수/보정. SAM2 원본은 기하 ego 대비 IoU 0.951 / 번짐 3%(125장).

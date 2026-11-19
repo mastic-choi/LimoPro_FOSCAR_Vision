@@ -109,8 +109,6 @@ A/B가 있는 사진은 좌우 반전을 하지 않습니다. 화살표 방향�
 - **같은 사진, 같은 해상도로 작은 CNN은 바로 배웁니다. 정보는 사진에 충분히 있습니다.**
 - 100%는 그대로 믿기 어렵습니다. 합성 기록(`meta.csv`)에 표지판 그림 종류가 없고 잘라 본 사진도 클래스마다 같은 디자인이라, train과 test가 같은 그림으로 합성된 쉬운 시험으로 보입니다. 실제 표지판 사진으로 확인해야 합니다.
 
-![잘라 낸 표지판 분류기, 대회장 test](../outputs/train_mt_v1/montages/ab_crop_cls_test_venue.jpg)
-
 ## 6. 확인 실험 2: HybridNets 내부 특징에 A/B 정보가 있는가 (linear probe)
 
 학습된 가중치를 고정하고, 층마다 정답 표지판 자리의 특징(roi_align 3×3)만으로 선형 분류기를 학습했습니다(`scripts/eval_mt_feature_probe.py`).
