@@ -140,8 +140,20 @@ def augment(img, rng, mask_prob=0.0, tint_prob=0.0):
     return img
 
 
+POST_MASK = 0.0   # >0 이면 전처리(흑백 96) 뒤 원 바깥을 0.5 로 (반지름 = 한 변/3.2 x POST_MASK). ONNX 안에 같이 넣어 로봇 코드는 그대로.
+
+
+def post_mask_array(size, scale):
+    """1 = 원 안, 0 = 원 바깥 (size x size float32). export_fork_cls.py 도 같은 것을 ONNX 에 넣는다."""
+    yy, xx = np.mgrid[:size, :size]
+    return (np.hypot(xx - (size - 1) / 2, yy - (size - 1) / 2) <= size / 3.2 * scale).astype(np.float32)
+
+
 def to_input(img):
-    return rule.preprocess(img, rgb=False, size=SIZE).astype(np.float32) / 255.0   # 크롭은 BGR png
+    x = rule.preprocess(img, rgb=False, size=SIZE).astype(np.float32) / 255.0   # 크롭은 BGR png
+    if POST_MASK > 0:   # 대회장 배경(LED 벽·뒷면 원판)으로 A/B 를 고르는 지름길 막기 (11-18)
+        m = post_mask_array(SIZE, POST_MASK); x = x * m + 0.5 * (1 - m)
+    return x
 
 
 @torch.no_grad()
@@ -191,6 +203,7 @@ def main():
     ap.add_argument("--real", nargs="*", default=[], help="실차 폴더 (증강 많이, --flip-real-b 대상)")
     ap.add_argument("--eval", nargs="*", default=[], help="이름=폴더")
     ap.add_argument("--flip-real-b", action="store_true")
+    ap.add_argument("--post-mask", type=float, default=0.0, help="전처리 뒤 원 바깥을 항상 회색으로 (반지름 배율, 예 1.15). 학습·시험·ONNX 모두 같게")
     ap.add_argument("--mask-prob", type=float, default=0.0, help="증강에서 표지판 원 바깥을 가릴 확률 (배경 지름길 막기)")
     ap.add_argument("--tint-prob", type=float, default=0.0, help="증강에서 진한 빨간빛·파란빛 조명을 씌울 확률 (대회장 조명)")
     ap.add_argument("--synth-none-max", type=int, default=4000)
@@ -200,6 +213,7 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--feat", choices=list(FEAT_DIM), default="l3", help="특징: l3(9216, 기본) | l4(4608) | gap(512)")
     a = ap.parse_args()
+    global POST_MASK; POST_MASK = a.post_mask
     os.makedirs(a.out, exist_ok=True)
     rng = np.random.default_rng(a.seed); random.seed(a.seed); torch.manual_seed(a.seed)
     dev = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")

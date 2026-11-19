@@ -84,6 +84,7 @@ LAMP_CLS = [CLASSES.index(c) for c in ("light_red", "light_yellow", "light_green
 AB = {CLASSES.index("sign_A"), CLASSES.index("sign_B")}
 MEAN, STD = np.array([0.485, 0.456, 0.406], np.float32), np.array([0.229, 0.224, 0.225], np.float32)
 MAX_BOX = 64
+GLARE_P = 0.0     # --aug-glare-p: 바닥 반사 증강 확률 (floor_glare.py, 대회장 무대 조명 반사, 사용자 11-18)
 MERGE_AB = False   # --merge-ab: main 에서 켬 (DataLoader 워커는 fork 라 그대로 물려받음)
 
 
@@ -162,6 +163,9 @@ class Items(torch.utils.data.Dataset):
             if random.random() < self.venue[3]:
                 fn = va.v5
             img, lit = fn(img, va.random_ref(), masks[0] > 0, masks[1] > 0), True
+        if seg and GLARE_P > 0 and random.random() < GLARE_P:   # 바닥 반사: 선 바로 옆 차로에 곧은 흰 띠, 라벨은 그대로
+            from floor_glare import floor_glare
+            img = floor_glare(img, masks[1] > 0, masks[0] > 0)
         if random.random() < 0.5 and not (len(b) and np.isin(b[:, 4], list(AB)).any()):
             img = img[:, ::-1]
             masks = [m[:, ::-1] for m in masks]
@@ -527,6 +531,7 @@ def main():
                     help="실물 신호등 사진(로봇 카메라, 박스만): images/<split>, labels/<split> (scripts/make_real_tl_labels.py). "
                          "train은 --real-repeat배로 넣고, val은 val에 더하고, test는 test_real로 따로 채점. 빈 값 = 안 씀")
     ap.add_argument("--real-repeat", type=int, default=1, help="실물 train 사진을 한 epoch에 몇 번 넣을지")
+    ap.add_argument("--aug-glare-p", type=float, default=0.0, help="바닥 반사 증강 확률 (분할 이미지, 대회장 조명 증강 다음). 0 = 끔")
     ap.add_argument("--merge-ab", action="store_true", help="sign_A·sign_B -> fork_sign (1번 칸), A/B 는 CNN 이 정함")
     ap.add_argument("--seg-extra", action="append", default=[], help="분할+박스 데이터 추가 (여러 번)")
     ap.add_argument("--det-extra", action="append", default=[], help="박스만 데이터 DIR:N[:all][:tl] (여러 번)")
@@ -549,6 +554,8 @@ def main():
     dev = m.device
     amp = a.amp and dev.type == "cuda"
     global MERGE_AB, AB
+    global GLARE_P
+    GLARE_P = a.aug_glare_p
     if a.merge_ab:
         MERGE_AB = True
         CLASSES[1], CLASSES[2] = "fork_sign", "unused_2"

@@ -9,10 +9,6 @@ AutoRace 2026 참가팀 FOSCAR의 차선 인식 모델 저장소입니다. BDD10
 - **da (주행가능영역):** 차가 지금 달리는 차로. 3차선 구간과 A/B 갈림길도 예외 없이 내 차로만 칠합니다.
 - **ll (차선):** 차선 위치
 
-![대회장 조명에서 2차와 3차 비교](../outputs/montages/venue_v2_vs_v3.jpg)
-
-*11/06 대회장 조명 사진 중 학습에 쓰지 않은 test 프레임입니다. 초록은 da, 분홍은 ll이고, 칸 아래 숫자는 정답과 비교한 da IoU입니다. 색 조명과 섞이지 않게 흑백 위에 그렸습니다.*
-
 ## 현재 상태 (2026-11-13)
 
 - **3차 + 실물 신호등 [`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real) (최신, 2026-11-13):** 3차에서 이어서 로봇 카메라로 찍은 실물 신호등 961장을 섞어 RTX 3070 Ti에서 30 epoch 학습했습니다(콘 없이, BatchNorm 고정). 실물 신호등 test에서 점수 0.5 기준 노랑 71 → **100%**, 초록 22 → **100%**가 됐고, 차선 ll은 0.802 → **0.822**로 올랐습니다. 흰 가로선 IoU(대회장)는 0.645 → 0.618로 내렸고, 콘은 학습하지 않았습니다. [v3real 결과](../outputs/train_mt_v3real/README.md)를 보세요.
@@ -74,10 +70,6 @@ BDD100K는 실제 도로 데이터입니다. 공개 모델을 그대로 쓰면 �
 - **2차부터:** 차선 일부를 지우는 `lane_gap`, 매트 주름을 흉내 내는 `track_wrinkle`. 이미지만 바꾸고 라벨은 그대로 둡니다.
 - **3차부터, 대회장 조명 증강 (`scripts/venue_aug.py`):** 학습 사진의 70%에 적용합니다. 실제 대회장 사진을 크게 흐려 조명만 뽑고, 학습 사진의 조명과 바꿔 끼웁니다(v4, 80%). "가까운 쪽 빨강, 먼 쪽 파랑" 같은 조명 배치가 그대로 따라오고, 차선과 매트 무늬는 원본 그대로입니다. 나머지 20%는 사진 색 통계를 옮기는 v3입니다.
 
-![대회장 조명 증강 v3, v4 비교](../outputs/montages/venue_aug_v4_demo.jpg)
-
-*한 줄이 학습 사진 한 장입니다. 원본 | v3 | v4(견본 A) | v4(견본 B) | v4 + 기존 증강 | 실제 대회장 견본 A. 모델 특징으로 잰 대회장 사진과의 거리는 기존 증강 12.9, v3 + 기존 증강 2.5, v4 + 기존 증강 1.1입니다(대회장 사진끼리 0.7).*
-
 | 모델 | 파라미터 | LR | 3차 epoch (best) | 3차 학습 시간 (H100) |
 |---|---:|---:|---|---:|
 | HybridNets | 12.8M | 0.0001 | 33 (25) | 약 43분 |
@@ -88,8 +80,6 @@ BDD100K는 실제 도로 데이터입니다. 공개 모델을 그대로 쓰면 �
 TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의 바뀌지 않았습니다. 학습률이 낮아 이어서 학습할 때 변화가 작았던 것으로 보입니다.
 
 ### 학습 곡선 (2차)
-
-![2차 모델별 val IoU 곡선](../outputs/train_v2_foscar/images/val_curves.png)
 
 ## 결과
 
@@ -121,8 +111,6 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 
 대회장 사진을 더해도 일반 조명 성능은 떨어지지 않았습니다. 1차 점수는 라벨 출처가 1차 앙상블이라 1차에 유리한 프레임과 불리한 프레임이 섞여 있어 참고용입니다. 1차와 2차의 상세 비교와 라벨 정리 과정은 [`docs/ENSEMBLE_FINETUNE.md`](ENSEMBLE_FINETUNE.md)에 있습니다.
 
-![1차와 2차 모델 비교](../outputs/montages/result_compare_clean.jpg)
-
 ### 4차 (HybridNets만, 2026-11-08)
 
 11/07 실차 주행(3차 HybridNets, 조명 7가지) rosbag을 분석해 보니, 3차 HybridNets가 특정 코너에서 0.2~0.6초씩 코너 안쪽 da를 깎았습니다. 같은 3차의 다른 모델 3개는 그 프레임을 끝까지 칠했습니다. 주행 노드는 깎인 da의 무게중심을 차로 중심으로 써서 경로가 바깥으로 밀렸습니다.
@@ -150,8 +138,6 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 - 기존 test와 대회장 test의 하락(0.004~0.005)은 시드 1개 기준이라 우연일 수 있지만, 커브 test가 0.932 → 0.922로 가장 많이 떨어졌습니다.
 - 어두운 갈림길 등 일부 프레임에서는 4차가 3차보다 엉뚱한 곳을 칠합니다(아래 그림 맨 아래 줄). 실차에서 확인이 필요합니다.
 
-![실차 코너에서 3차와 4차 HybridNets 비교](../outputs/montages/bag_corner_v3_vs_v4.jpg)
-
 ### 다중 작업 1차 (2026-11-10)
 
 4차 HybridNets에서 이어서, 분할을 4채널(배경 / 도로 / 차선 / **흰 가로선**)로 늘리고 **검출 12종**(pedestrian, sign_A, sign_B, bump, slow, parking, traffic_light, light_red/yellow/green, limo, cone)을 붙여 H100에서 40 epoch 학습했습니다. 학습 데이터는 ego_v4 프레임에 표지판·신호등을 합성하고 FLUX 3 Klein으로 다듬은 사진과, 공개 라바콘 데이터(TraCon, FSOCO)입니다.
@@ -176,15 +162,7 @@ TwinLiteNet+ Large는 3 epoch에서 최고점을 찍고 멈춰 2차에서 거의
 | A/B 구분 (A·B 점수만 비교, 기존 / 대회장 / bag) | 58 / 57 / 54% | **84 / 84 / 92%** |
 | 차선 da / ll, 대회장 test | 0.934 / 0.493 | 0.935 / 0.486 |
 
-![A/B 표지판 1차와 2차 비교](../outputs/train_mt_v2/montages/compare_v1_v2_ab_crops_test_venue.jpg)
-
-*대회장 test의 정답 A/B 표지판입니다. 위가 1차, 아래가 2차. 초록 테두리 = 맞음, 빨강 = 틀림, 주황 = 놓침.*
-
 2차 결과는 [`outputs/train_mt_v2/README.md`](../outputs/train_mt_v2/README.md), 1차 결과는 [`outputs/train_mt_v1/README.md`](../outputs/train_mt_v1/README.md), 분석은 [`docs/MULTITASK_DETECTION_ANALYSIS.md`](MULTITASK_DETECTION_ANALYSIS.md)에 있습니다.
-
-![대회장 test A/B 표지판 분류 확인](../outputs/train_mt_v1/montages/ab_crops_test_venue.jpg)
-
-*대회장 test의 정답 A/B 표지판을 잘라 확대했습니다. 초록 테두리 = 맞음, 빨강 = 틀림, 주황 = 놓침. 큰 표지판도 A/B/P 점수가 0.33~0.38로 비슷합니다.*
 
 ## 한계
 

@@ -55,19 +55,11 @@ test의 표지판·신호등도 실제 프레임에 합성한 것입니다. 실�
 
 **대회장 test**: 신호등은 0.6~0.9로 잘 잡습니다. 표지판은 맞혀도 0.40~0.52이고, A/B 표지판(아래에서 두 번째 줄 오른쪽)은 놓칩니다.
 
-![대회장 test 검출](montages/montage_test_venue.jpg)
-
 **기존 test**
-
-![기존 test 검출](montages/montage_test.jpg)
 
 **실차 코너 test_bag**
 
-![test_bag 검출](montages/montage_test_bag.jpg)
-
 **라바콘 test (TraCon)**: 가까운 콘은 0.6~0.8로 잘 잡고, 겹친 콘과 먼 콘을 일부 놓칩니다. 공사 표지판을 콘이나 slow로 잡은 오탐이 조금 있습니다.
-
-![라바콘 test 검출](montages/montage_cone_test.jpg)
 
 ## A/B 구분 확인
 
@@ -92,33 +84,19 @@ test의 표지판·신호등도 실제 프레임에 합성한 것입니다. 실�
 
 **대회장 test (44개 전부)**: 54px짜리 또렷한 A 표지판도 A/B/P 점수가 0.34~0.38로 거의 같습니다. 모델이 "파란 표지판이면 A·B·P에 1/3씩"으로 배운 상태입니다.
 
-![대회장 test A/B 잘라 낸 사진](montages/ab_crops_test_venue.jpg)
-
 **기존 test (A 24개, B 24개)**
-
-![기존 test A/B 잘라 낸 사진](montages/ab_crops_test.jpg)
 
 **test_bag (13개 전부)**
 
-![test_bag A/B 잘라 낸 사진](montages/ab_crops_test_bag.jpg)
-
 **train (A 24개, B 24개)**: 학습한 사진에서도 똑같이 틀립니다.
-
-![train A/B 잘라 낸 사진](montages/ab_crops_train.jpg)
 
 ### 전체 프레임
 
 대회장 test 중 A/B가 있는 프레임입니다. 예측 A는 파랑, B는 자홍, P는 하늘색입니다(점수 0.3 이상). 큰 P 표지판도 B 0.33으로 나옵니다(3번째 줄 오른쪽).
 
-![대회장 test A/B 프레임](montages/ab_frames_test_venue.jpg)
-
 ### 학습 라벨은 정상
 
 train의 A / B / P 표지판을 줄별로 잘라 봤습니다. A는 왼쪽 화살표, B는 오른쪽 화살표, P는 P이고, 라벨이 바뀐 것은 보이지 않습니다. Klein으로 다듬은 사진도 그림이 유지됩니다.
-
-![train A/B/P (Klein 다듬음)](montages/ab_train_crops_klein.jpg)
-
-![train A/B/P (원본)](montages/ab_train_crops_orig.jpg)
 
 ## 추가 확인 실험
 
@@ -127,8 +105,6 @@ train의 A / B / P 표지판을 줄별로 잘라 봤습니다. A는 왼쪽 화�
 - **잘라 낸 표지판으로 작은 CNN 분류기 학습** (`ab_crop_cls.json`): 같은 사진·해상도에서 A/B/P를 train 99.8%, test 세트 전부 100% 구분합니다. 정보는 사진에 있습니다. 다만 train과 test가 같은 표지판 그림으로 합성돼 쉬운 시험입니다.
 - **HybridNets 특징 linear probe** (`probe.txt`): 백본 p2·p3 특징은 A/B를 약 95% 구분하는데, 검출 머리가 받는 BiFPN P3에서는 약 85%로 줄고, 검출 머리 출력은 58%입니다.
 - **HybridNets 개선 실험 A·B** (`scripts/run_mt_exp_ab.sh`): 검출 머리·BiFPN 학습 강화(A), A + 백본 p3 지름길(B). 진행 중입니다.
-
-![잘라 낸 표지판 분류기, 대회장 test](montages/ab_crop_cls_test_venue.jpg)
 
 ## 다시 만들기
 
