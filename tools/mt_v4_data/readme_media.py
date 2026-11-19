@@ -27,7 +27,11 @@ ap.add_argument("--bundle", required=True); ap.add_argument("--weights", require
 ap.add_argument("--out", required=True); ap.add_argument("--cmp-weights", default=""); ap.add_argument("--tag", default="v6")
 ap.add_argument("--course-bag", default="arall_1118_135742"); ap.add_argument("--park-bag", default="ar4_1118_135516")
 ap.add_argument("--det-thr", type=float, default=0.4)
-ap.add_argument("--picks", nargs="*", default=["2=arall_1118_135742_01285", "4=ar4_1118_135516_00090", "7=arall_1118_135742_01025", "8=arall_1118_135742_01709"],
+ap.add_argument("--da-frames", nargs=4, default=["arall_1118_135742_00817", "arall_1118_135742_01444", "arall_1118_135742_01025", "arall_1118_135742_00410"],
+                help="task_da.jpg 네 칸 (왼쪽 위부터): 직선, 갈림길 A 갈래, 3차선, 지그재그. 11-19 에 DA 가 깔끔한 프레임으로 고름")
+ap.add_argument("--course-end", type=int, default=1945, help="전 코스 bag 에서 쓸 마지막 프레임 번호 (기본: 신호등 대기 중 사람 손이 들어오기 전)")
+ap.add_argument("--park-end", type=int, default=260, help="주차 bag 에서 쓸 마지막 프레임 번호 (기본: 주차 끝. 그 뒤는 대기 후 사람이 차를 들고 감)")
+ap.add_argument("--picks", nargs="*", default=["2=arall_1118_135742_01292", "4=ar4_1118_135516_00090", "7=arall_1118_135742_01025", "8=arall_1118_135742_01709"],
                 help="미션 칸 프레임 직접 지정 (미션=프레임 이름). 기본값은 11-19 에 눈으로 고른 것: 표지판이 보이는 갈림길, 사람 다리 없는 주차 칸, 흔들리지 않은 3차선·라바콘")
 a = ap.parse_args()
 OUT = os.path.abspath(a.out); os.makedirs(OUT, exist_ok=True)
@@ -120,6 +124,7 @@ def save(img, name):
 
 model = load(a.weights)
 Rc, rc = frames(a.course_bag); Rp, rp = frames(a.park_bag)
+rc, rp = rc[:a.course_end + 1], rp[:a.park_end + 1]   # 주행이 끝난 뒤(사람이 손대거나 차를 드는 장면)는 뺌
 C = infer(model, Rc, rc); P = infer(model, Rp, rp)
 ALL = [(a.course_bag, row, r) for row, r in zip(rc, C)] + [(a.park_bag, row, r) for row, r in zip(rp, P)]
 mis = lambda row: MIS.get(row["mission_id"], "start")
@@ -163,7 +168,7 @@ def pick(mids):
 
 
 save(grid([draw(r, da=False, ll=False, sl=False, foot=False) for r in pick(["1", "2", "3", "6"])], 2), "task_det.jpg")
-save(grid([draw(r, ll=False, sl=False, det=False, foot=False) for r in pick(["0", "2", "7", "8"])], 2), "task_da.jpg")
+save(grid([draw(BYNAME[n][2], ll=False, sl=False, det=False, foot=False) for n in a.da_frames], 2), "task_da.jpg")
 lane_mids = sorted(picks, key=lambda x: -picks[x][2][3].sum())[:2]   # 정지선이 가장 많이 보이는 두 미션
 lane_mids += [x for x in ["0", "5", "6", "7"] if x not in lane_mids][:4 - len(lane_mids)]
 save(grid([draw(r, da=False, det=False, foot=False) for r in pick(lane_mids)], 2), "task_lane.jpg")
