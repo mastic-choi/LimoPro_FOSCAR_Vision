@@ -73,7 +73,7 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 | 실차 test_bag | **0.981** | 0.980 |
 | 실차 bag 11/16 | **0.973** | 0.969 |
 
-<sub>DA IoU. DA는 **지금 달리는 내 차로만** 칠합니다(3차선·갈림길 포함).</sub>
+<sub>DA IoU. DA는 **지금 달리는 내 차로만** 칠합니다. 그림: 직선, 갈림길 A 갈래, 3차선, 지그재그.</sub>
 </td><td width="55%"><img src="docs/images/readme/task_da.jpg" width="100%"></td></tr>
 </table>
 
@@ -104,7 +104,7 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 <tr><td align="center"><sub>같은 bag(학습 안 씀)의 신호등 진입 구간. <b>v5(왼쪽)는 62.3초부터 DA·차선이 통째로 꺼지고</b>, v6(오른쪽)은 끝까지 유지합니다.</sub></td></tr>
 </table>
 
-v5는 시험셋 점수가 좋았지만 대회장에서 차가 멈췄습니다. 원인은 학습 데이터에 섞인 **빈 DA 정답 23장**이었습니다(도로가 보이는데 "도로 없음"으로 학습).
+v5는 시험셋 점수가 좋았지만 대회장에서 차가 멈췄습니다. 원인은 학습 데이터에 섞인 **빈 DA 정답 23장**이었습니다.
 그래서 이제는 릴리즈 전에 [`bag_da_gate.py`](tools/mt_v4_data/bag_da_gate.py)로 대회장 bag 전체 프레임을 차량 기준 모델과 함께 돌립니다.
 
 | 항목 | 통과 조건 | v5 (11-18 bag 8개) | **v6 (11-18 bag 11개)** |
