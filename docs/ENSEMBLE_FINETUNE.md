@@ -108,8 +108,6 @@ train_seg.py x 4 모델 (train_all.py 순차 실행, train_watchdog.py 감시)
 - `outputs/augmentation_lane_gap_samples.jpg`: 학습 이미지 6장 × (원본 / lane_gap / lane_gap+라벨 / track_wrinkle / 둘 다)
 - `outputs/augmentation_lane_gap_000000.jpg`: frame_000000 한 장의 무작위 변형 6×6 (홀수 행 = 증강, 짝수 행 = 같은 이미지 + 라벨 윤곽)
 
-![lane gap augmentation](../outputs/augmentation_lane_gap_000000.jpg)
-
 남은 것:
 - 1차 모델(3장 결과)은 이 증강 없이 학습됐다. 2차 학습(사람 검수한 pseudo-label 추가)부터 적용.
 - 효과 확인: test 셋에 같은 lane_gap을 적용한 "끊긴 차선 test"에서 1차/2차 모델의 da IoU와 차선 밖 침범 비율 비교 + 실제 구겨진 장면 육안 비교.
@@ -200,8 +198,6 @@ train_seg.py x 4 모델 (train_all.py 순차 실행, train_watchdog.py 감시)
   - 일치도 0.8 이상에는 원래 FAIL이던 **커브 프레임도 지금 차선만 깔끔하게** 칠해진 경우가 많다(예: 000174, 000855, 001168, 003542).
     기하 파이프라인이 못 잡던 장면을 파인튜닝 모델이 잡는다.
   - ll은 횡단보도·노면 표시 테두리를 차선으로 칠하는 경우가 있어 검수 때 확인 필요.
-
-![pseudo-label 6x6](../outputs/montages/pseudo_ft_v1_6x6.jpg)
 
 ### 4.1 다음 루프: 파인튜닝 앙상블 pseudo-label → 사람 검수
 1. `make_finetuned_pseudo_labels.py --eval-test` 로 앙상블이 단일 모델보다 나은지 test에서 확인.

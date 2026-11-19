@@ -33,8 +33,6 @@ temperature(val에서 맞춤): 전체 T = **0.572**, 클래스별 {"pedestrian":
 | da | 124,876,800 | 0.0096 | 0.1722 | 0.0606 |
 | ll | 124,876,800 | 0.0037 | 0.2302 | 0.0253 |
 
-![reliability test](reliability_test.png)
-
 ## test_venue
 
 | 검출 점수 | 예측 수 | 실제 정답률 | 평균 점수 | ECE | MCE | NLL | Brier |
@@ -64,8 +62,6 @@ temperature(val에서 맞춤): 전체 T = **0.572**, 클래스별 {"pedestrian":
 | ll | 32,947,200 | 0.0157 | 0.4927 | 0.1425 |
 | sl | 16,535,723 | 0.0037 | 0.2979 | 0.0266 |
 
-![reliability test_venue](reliability_test_venue.png)
-
 ## test_bag
 
 | 검출 점수 | 예측 수 | 실제 정답률 | 평균 점수 | ECE | MCE | NLL | Brier |
@@ -92,6 +88,4 @@ temperature(val에서 맞춤): 전체 T = **0.572**, 클래스별 {"pedestrian":
 |---|---:|---:|---:|---:|
 | da | 9,676,800 | 0.0019 | 0.0753 | 0.0216 |
 | ll | 9,676,800 | 0.0025 | 0.2938 | 0.0138 |
-
-![reliability test_bag](reliability_test_bag.png)
 
