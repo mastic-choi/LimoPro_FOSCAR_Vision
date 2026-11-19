@@ -137,10 +137,6 @@ test 3종(표지판·신호등)과 콘 1,363장에서, 정답 박스의 √넓�
 
 모니터 오탐은 오히려 가까울 때 많이 생깁니다. 화면 속 원이 진짜 불빛과 비슷한 크기로 찍히기 때문입니다.
 
-![가까운 거리, 빨강 불빛용 패턴](monitor_patterns/monitor_patterns_red_near.jpg)
-
-*왼쪽 칸이 넣은 화면 이미지, 오른쪽이 2차 / epoch 7 / epoch 11 결과를 확대한 것입니다. 자홍색 박스가 모니터 위 가짜 검출입니다.*
-
 ## 점수 보정
 
 학습 스크립트는 `best.pt`(= 2차)로만 temperature를 맞췄기 때문에, epoch 11로 다시 맞췄습니다(`scripts/eval_mt_finalize.py`, val 626장 = 합성 326 + 콘 300). 결과는 [`hybridnets_mt_v3_calib.json`](hybridnets_mt_v3_calib.json)이고 릴리즈에도 넣었습니다.
@@ -170,19 +166,11 @@ test 3종(표지판·신호등)과 콘 1,363장에서, 정답 박스의 √넓�
 
 **대회장 test**
 
-![대회장 test 검출 (3차)](montages/montage_test_venue.jpg)
-
 **기존 test**
-
-![기존 test 검출 (3차)](montages/montage_test.jpg)
 
 **실차 코너 test_bag**
 
-![test_bag 검출 (3차)](montages/montage_test_bag.jpg)
-
 **라바콘 test (TraCon)**
-
-![라바콘 test 검출 (3차)](montages/montage_cone_test.jpg)
 
 ### 후보 비교 몽타주
 

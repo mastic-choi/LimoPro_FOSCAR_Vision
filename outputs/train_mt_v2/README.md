@@ -92,11 +92,7 @@ test_bag은 클래스마다 표지판이 6~7개뿐이라 한 개 차이로 0.1 �
 대회장 test의 정답 A/B 표지판 44개입니다. 위가 1차, 아래가 2차입니다. 초록 테두리 = 맞음, 빨강 = 틀림, 주황 = 놓침. 셋째 줄은 `A/B 2택 결과 (A 점수/B 점수)`입니다.
 1차는 A·B 점수가 0.3대로 거의 같았고, 2차는 정답 쪽 점수가 0.5~0.8로 벌어집니다.
 
-![A/B 1차와 2차 비교, 대회장 test](montages/compare_v1_v2_ab_crops_test_venue.jpg)
-
 **test_bag**
-
-![A/B 1차와 2차 비교, test_bag](montages/compare_v1_v2_ab_crops_test_bag.jpg)
 
 ### 검출 몽타주 (2차)
 
@@ -104,24 +100,16 @@ test_bag은 클래스마다 표지판이 6~7개뿐이라 한 개 차이로 0.1 �
 
 **대회장 test**: 1차에서 놓치던 A/B 표지판(아래에서 두 번째 줄 오른쪽)을 sign_A 0.73, sign_B 0.71로 잡습니다. 같은 칸에서 B 표지판을 slow 0.48로도 잡은 오탐이 하나 있습니다.
 
-![대회장 test 검출 (2차)](montages/montage_test_venue.jpg)
-
 **기존 test**
-
-![기존 test 검출 (2차)](montages/montage_test.jpg)
 
 **실차 코너 test_bag**
 
-![test_bag 검출 (2차)](montages/montage_test_bag.jpg)
-
 **라바콘 test (TraCon)**
-
-![라바콘 test 검출 (2차)](montages/montage_cone_test.jpg)
 
 ### A/B 잘라 낸 사진 (2차만)
 
-- [기존 test](montages/ab_crops_test.jpg), [train](montages/ab_crops_train.jpg), [test_bag](montages/ab_crops_test_bag.jpg)
-- [대회장 test 전체 프레임](montages/ab_frames_test_venue.jpg)
+- `기존 test`, `train`, `test_bag`
+- `대회장 test 전체 프레임`
 
 ## 파일
 
