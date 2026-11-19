@@ -21,9 +21,9 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 네트워크 하나가 **주행가능영역(내 차로)**, **차선**, **흰 가로선(정지선·횡단보도)**, **검출 12종**을 한 번에 냅니다.
 갈림길 A/B 글자만 작은 분류기([`fork-sign`](docs/FORK_SIGN_CLASSIFIER.md))가 따로 정합니다.
 
-- **One model** 🧩 : 미션 9개(차선, 신호등, 갈림길, 횡단보도, 주차, 과속방지턱, 천천히, 3차선, 라바콘)에 필요한 인식을 한 번의 추론으로 처리합니다.
-- **Venue-tuned** 🏟️ : 대회장의 보라·파랑 LED 조명, 바닥 반사, 신호등 뒤 방해 모니터를 증강과 실제 대회장 bag으로 학습했습니다.
-- **Gate-verified** ✅ : 시험셋 점수만으로는 릴리즈하지 않습니다. **대회장 rosbag 전체를 돌려** DA가 한 프레임이라도 통째로 꺼지면 탈락시킵니다.
+- **One model**: 미션 9개(차선, 신호등, 갈림길, 횡단보도, 주차, 과속방지턱, 천천히, 3차선, 라바콘)에 필요한 인식을 한 번의 추론으로 처리합니다.
+- **Venue-tuned**: 대회장의 보라·파랑 LED 조명, 바닥 반사, 신호등 뒤 방해 모니터를 증강과 실제 대회장 bag으로 학습했습니다.
+- **Gate-verified**: 시험셋 점수만으로는 릴리즈하지 않습니다. **대회장 rosbag 전체를 돌려** DA가 한 프레임이라도 통째로 꺼지면 탈락시킵니다.
 
 ## Results
 아래 그림은 **모두 실제 대회장(11-18 CO-SHOW) rosbag 프레임**에 `multitask-v6`를 돌린 결과입니다. 쓴 bag 두 개(`arall_1118_135742`, `ar4_1118_135516`)는 **학습에 쓰지 않았습니다.**
@@ -35,10 +35,10 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 <tr><td align="center"><sub>대회장 rosbag 전 코스(출발 → 라바콘)와 주차, 약 3배속. 초록 = 주행가능영역, 빨강 = 차선, 주황 = 정지선, 박스 = 검출. 위 줄은 bag 시간과 차량의 미션 상태입니다.</sub></td></tr>
 </table>
 
-### Why fine-tune: original HybridNets vs LimoPro
+### original HybridNets vs AutoRace LimoPro HybridNets
 <table>
 <tr><td><img src="docs/images/readme/orig_vs_v6.gif" width="100%"></td></tr>
-<tr><td align="center"><sub>같은 대회장 bag(학습 안 씀), 전 코스. 왼쪽 = 원본 HybridNets(BDD100K 공개 가중치), 오른쪽 = LimoPro v6. 초록 = 주행가능영역, 빨강 = 차선.</sub></td></tr>
+<tr><td align="center"><sub>같은 대회장 bag(학습 안 씀), 전 코스. 왼쪽 = original HybridNets(BDD100K 공개 가중치), 오른쪽 = AutoRace LimoPro HybridNets(v6). 초록 = 주행가능영역, 빨강 = 차선.</sub></td></tr>
 </table>
 
 <a href="./"><img src="docs/images/readme/orig_vs_v6.jpg" width="100%"></a>
