@@ -26,7 +26,7 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 ### Visualization
 <table>
 <tr><td><img src="docs/images/readme/drive.gif" width="100%"></td></tr>
-<tr><td align="center"><sub>대회장 rosbag 전 코스(출발 → 라바콘)와 주차, 약 3배속. 초록 = 주행가능영역, 빨강 = 차선, 주황 = 정지선, 박스 = 검출. 위 줄은 bag 시간과 차량의 미션 상태입니다.</sub></td></tr>
+<tr><td align="center"><sub>대회장 rosbag 전 코스(출발 → 라바콘)와 주차. 초록 = 주행가능영역, 빨강 = 차선, 주황 = 정지선, 박스 = 검출. 위 줄은 bag 시간과 차량의 미션 상태입니다.</sub></td></tr>
 </table>
 
 ### original HybridNets vs AutoRace LimoPro HybridNets
