@@ -11,8 +11,7 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 </div>
 
 ## News
-- `2026-11-18` **[`multitask-v6`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) 릴리즈.** v5의 DA 꺼짐을 고치고, 11-18 대회장 bag 자동 라벨 996장을 더했습니다. 대회장 bag 11개 **DA 주행 검사 통과**가 릴리즈 기준입니다.
-- `2026-11-17` [`multitask-v5`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v5) **🛑 사용 금지.** 대회장 신호등 진입에서 DA·차선이 통째로 꺼졌습니다([경위](docs/VENUE_1118_STATUS.md)).
+- `2026-11-18` **[`multitask-v6`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) 릴리즈.** v4에서 이어 학습하고, 11-18 대회장 bag 자동 라벨 996장을 더했습니다. 대회장 bag 11개 전체 프레임으로 **DA 주행 검사**를 통과했습니다.
 - `2026-11-17` [`fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) 갈림길 A/B 분류기에 대회장 표지판을 학습시키고, 원 바깥을 항상 가리도록 했습니다. 대회장 '없음' 오탐이 35%에서 4%로 줄었습니다.
 - `2026-11-17` [`multitask-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v4) 원본 HybridNets에서 새로 학습했습니다(A·B를 `fork_sign` 하나로 합침).
 - `2026-11-13` [`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real) 실물 신호등 961장을 더해, 실물 노랑·초록 재현율이 22~71%에서 100%가 됐습니다.
@@ -35,6 +34,16 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 <tr><td><img src="docs/images/readme/drive.gif" width="100%"></td></tr>
 <tr><td align="center"><sub>대회장 rosbag 전 코스(출발 → 라바콘)와 주차, 약 3배속. 초록 = 주행가능영역, 빨강 = 차선, 주황 = 정지선, 박스 = 검출. 위 줄은 bag 시간과 차량의 미션 상태입니다.</sub></td></tr>
 </table>
+
+### Why fine-tune: original HybridNets vs LimoPro
+<table>
+<tr><td><img src="docs/images/readme/orig_vs_v6.gif" width="100%"></td></tr>
+<tr><td align="center"><sub>같은 대회장 bag(학습 안 씀), 전 코스. 왼쪽 = 원본 HybridNets(BDD100K 공개 가중치), 오른쪽 = LimoPro v6. 초록 = 주행가능영역, 빨강 = 차선.</sub></td></tr>
+</table>
+
+<a href="./"><img src="docs/images/readme/orig_vs_v6.jpg" width="100%"></a>
+
+<sub>위부터 횡단보도, 지그재그, 벽 옆 커브, 주차 구역. 원본은 실제 도로용이라 <b>횡단보도 줄무늬·정지선을 차선으로</b> 잡고, 벽 옆 커브나 주차 구역에서는 바닥을 거의 칠하지 못합니다. 원본은 도로 전체를 DA로 칠하도록, LimoPro는 내 차로만 칠하도록 학습했습니다.</sub>
 
 ### Model parameter and inference speed
 | Model | Input | Params | 출력 | LIMO PRO (Orin Nano, TensorRT FP16) |
@@ -98,31 +107,20 @@ AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 
 <sub>미션마다 한 장. 차량이 기록한 미션 상태(`mission_id`)로 구간을 나눴습니다. 3차선 칸의 장애물 차 옆 `fork_sign` 박스처럼 오탐도 그대로 두었습니다.</sub>
 
-### Why the DA gate: v5 vs v6
-<table>
-<tr><td><img src="docs/images/readme/v5_vs_v6.gif" width="100%"></td></tr>
-<tr><td align="center"><sub>같은 bag(학습 안 씀)의 신호등 진입 구간. <b>v5(왼쪽)는 62.3초부터 DA·차선이 통째로 꺼지고</b>, v6(오른쪽)은 끝까지 유지합니다.</sub></td></tr>
-</table>
+### DA gate: whole-bag check before release
+시험셋 점수만으로는 릴리즈하지 않습니다. 후보 모델을 **대회장 bag 전체 프레임**에 돌려 지금 차량 모델과 비교하고([`bag_da_gate.py`](tools/mt_v4_data/bag_da_gate.py)), 모두 통과해야 릴리즈합니다.
 
-v5는 시험셋 점수가 좋았지만 대회장에서 차가 멈췄습니다. 원인은 학습 데이터에 섞인 **빈 DA 정답 23장**이었습니다.
-그래서 이제는 릴리즈 전에 [`bag_da_gate.py`](tools/mt_v4_data/bag_da_gate.py)로 대회장 bag 전체 프레임을 차량 기준 모델과 함께 돌립니다.
-
-| 항목 | 통과 조건 | v5 (11-18 bag 8개) | **v6 (11-18 bag 11개)** |
-|---|---|---|---|
-| DA·차선 통째로 꺼짐 | 0 프레임 | 7개 bag 불합격 (최대 581 프레임) | **모두 0** |
-| 가장 긴 연속 꺼짐 | 0.3 s 미만 | 학습 안 쓴 bag에서 8.1 s, 다른 bag은 신호등부터 끝까지 | **0 s** |
-| 차 앞이 비어 보임 | 기준 + 5 프레임 이하 | - | 통과 |
-| 흔들림 (이웃 프레임 DA IoU 5% 분위) | 기준 − 0.05 이상 | - | 통과 (대부분 v4보다 안정) |
-
-<details><summary>bag별 DA 타임라인 (v4 · v5 · v6)</summary>
-<img src="docs/images/readme/gate_timeline.png" width="100%">
-</details>
+| 항목 | 통과 조건 | **v6 (11-18 bag 11개)** |
+|---|---|---|
+| DA·차선 통째로 꺼짐 | 0 프레임 | **모두 0** |
+| 가장 긴 연속 꺼짐 | 0.3 s 미만 | **0 s** |
+| 차 앞이 비어 보임 (화면 맨 아래 띠 DA < 20%) | 기준 + 5 프레임 이하 | 통과 |
+| 흔들림 (이웃 프레임 DA IoU 5% 분위) | 기준 − 0.05 이상 | 통과 (대부분 기준 모델보다 안정) |
 
 ## Models
 | 릴리즈 | 내용 |
 |---|---|
 | **[`multitask-v6`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6)** | **최신·권장.** v4에서 시작, 빈 DA 정답 제거, 11-18 대회장 자동 라벨 996장. DA 주행 검사 통과 |
-| [`multitask-v5`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v5) | 🛑 사용 금지 (대회장에서 DA 꺼짐) |
 | [`multitask-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v4) | 원본 HybridNets에서 새로 학습, `fork_sign` 합침. v6 이전 차량 기준 모델 |
 | [`fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) | 갈림길 A/B 분류기 (ONNX, OpenCV 4.5.4 dnn 호환). v4·v6의 `fork_sign` 박스 크롭에 씀 |
 | [`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real) · [`v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3) · [`v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2) · [`v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1) | 이전 다중 작업 모델 (검출 칸 1·2 = sign_A·sign_B) |
@@ -147,7 +145,7 @@ python -I tools/mt_v4_data/bag_fork_frames.py <out> <bag 폴더>... --msgdir <au
 
 # README 그림 다시 만들기 (이 페이지의 GIF·몽타주)
 python -I tools/mt_v4_data/readme_media.py --bundle <LimoPro_mt_v4> --weights hybridnets_mt_v6_best.pt \
-    --cmp-weights hybridnets_mt_v5_best.pt --frames-root <out> --out docs/images/readme
+    --orig-weights hybridnets.pth --frames-root <out> --out docs/images/readme
 
 # 릴리즈 전 DA 주행 검사 (후보 vs 지금 차량 모델)
 python -I tools/mt_v4_data/bag_da_gate.py --cand <후보 best.pt> --base <v4 best.pt> --bundle <LimoPro_mt_v4> --stride 2 <out>/<bag>...
@@ -159,14 +157,14 @@ python -I tools/mt_v4_data/heldout_video.py --bundle <LimoPro_mt_v4> --weights <
 | 도구 | 하는 일 |
 |---|---|
 | [`tools/mt_v4_data/bag_da_gate.py`](tools/mt_v4_data/bag_da_gate.py) | 릴리즈 전 DA 주행 검사 |
-| [`tools/mt_v4_data/gate_timeline_plot.py`](tools/mt_v4_data/gate_timeline_plot.py) | bag별 DA 타임라인 그림 (위 접은 그림) |
+| [`tools/mt_v4_data/gate_timeline_plot.py`](tools/mt_v4_data/gate_timeline_plot.py) | bag별 DA 비율 타임라인 그림 |
 | [`tools/mt_v4_data/which_model_in_bag.py`](tools/mt_v4_data/which_model_in_bag.py) | bag에 기록된 차량 출력(`/ar/lane/sl_mask`)으로 차에 올라간 모델 버전 찾기 |
 | [`tools/mt_v4_data/auto_label_v4.py`](tools/mt_v4_data/auto_label_v4.py) | 대회장 bag 자동 라벨 (v6 학습 데이터) |
 | [`scripts/eval_mt_stopline_montage.py`](scripts/eval_mt_stopline_montage.py) | 정지선 정답·예측을 겹친 몽타주와 사진별 IoU |
 | [`tools/h100_mt_v4/run_v6.sh`](tools/h100_mt_v4/run_v6.sh) | v6 학습 명령 (H100, epoch당 약 170초, 53 epoch 약 2.6시간) |
 
 ### Documents
-- [`docs/VENUE_1118_STATUS.md`](docs/VENUE_1118_STATUS.md): 11-18 대회장 정리 (v5 사고, DA 주행 검사, 자동 라벨, v6)
+- [`docs/VENUE_1118_STATUS.md`](docs/VENUE_1118_STATUS.md): 11-18 대회장 정리 (DA 주행 검사, 자동 라벨, v6 학습)
 - [`docs/MULTITASK_V4_TRAINING.md`](docs/MULTITASK_V4_TRAINING.md): v4 데이터·학습 설계
 - [`docs/FORK_SIGN_CLASSIFIER.md`](docs/FORK_SIGN_CLASSIFIER.md): 갈림길 A/B 분류기
 - [`docs/HISTORY.md`](docs/HISTORY.md): 전체 실험 기록 (차선 1~4차, 다중 작업 1~3차)

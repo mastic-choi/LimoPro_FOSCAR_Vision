@@ -10,6 +10,7 @@
   task_det.jpg      검출만 2x2
   task_da.jpg       주행가능영역(DA)만 2x2
   task_lane.jpg     차선 + 흰 가로선(정지선)만 2x2
+  orig_vs_v6.gif    (--orig-weights 를 주면) 원본 HybridNets(BDD100K 공개 가중치) 와 v6 나란히, 전 코스. DA·차선만 비교
   v5_vs_v6.gif      (--cmp-weights 를 주면) 신호등 진입 구간에서 v5 와 v6 나란히: v5 는 DA·차선이 꺼짐
 프레임 폴더: bag_fork_frames.py --all 로 뽑은 <frames-root>/<bag>/frames/*.jpg + frames.csv (name, t, mission_id)
 사용:
@@ -24,14 +25,16 @@ import torch
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--bundle", required=True); ap.add_argument("--weights", required=True); ap.add_argument("--frames-root", required=True)
-ap.add_argument("--out", required=True); ap.add_argument("--cmp-weights", default=""); ap.add_argument("--tag", default="v6")
+ap.add_argument("--out", required=True); ap.add_argument("--cmp-weights", default=""); ap.add_argument("--orig-weights", default="", help="원본 HybridNets hybridnets.pth (BDD100K)"); ap.add_argument("--tag", default="v6")
 ap.add_argument("--course-bag", default="arall_1118_135742"); ap.add_argument("--park-bag", default="ar4_1118_135516")
 ap.add_argument("--det-thr", type=float, default=0.4)
 ap.add_argument("--da-frames", nargs=4, default=["arall_1118_135742_00817", "arall_1118_135742_01444", "arall_1118_135742_01025", "arall_1118_135742_00410"],
                 help="task_da.jpg 네 칸 (왼쪽 위부터): 직선, 갈림길 A 갈래, 3차선, 지그재그. 11-19 에 DA 가 깔끔한 프레임으로 고름")
+ap.add_argument("--orig-frames", nargs=4, default=["arall_1118_135742_00612", "arall_1118_135742_00504", "arall_1118_135742_00834", "ar4_1118_135516_00150"],
+                help="orig_vs_v6.jpg 네 줄: 횡단보도, 지그재그, 벽 옆 커브, 주차 구역 (11-19 에 원본과 차이가 잘 보이는 장면으로 고름)")
 ap.add_argument("--course-end", type=int, default=1945, help="전 코스 bag 에서 쓸 마지막 프레임 번호 (기본: 신호등 대기 중 사람 손이 들어오기 전)")
 ap.add_argument("--park-end", type=int, default=260, help="주차 bag 에서 쓸 마지막 프레임 번호 (기본: 주차 끝. 그 뒤는 대기 후 사람이 차를 들고 감)")
-ap.add_argument("--picks", nargs="*", default=["2=arall_1118_135742_01292", "4=ar4_1118_135516_00090", "7=arall_1118_135742_01025", "8=arall_1118_135742_01709"],
+ap.add_argument("--picks", nargs="*", default=["2=arall_1118_135742_01284", "4=ar4_1118_135516_00090", "7=arall_1118_135742_01025", "8=arall_1118_135742_01697"],
                 help="미션 칸 프레임 직접 지정 (미션=프레임 이름). 기본값은 11-19 에 눈으로 고른 것: 표지판이 보이는 갈림길, 사람 다리 없는 주차 칸, 흔들리지 않은 3차선·라바콘")
 a = ap.parse_args()
 OUT = os.path.abspath(a.out); os.makedirs(OUT, exist_ok=True)
@@ -184,3 +187,27 @@ if a.cmp_weights:
         r = draw(C[i], head=f"{a.tag}  t={t:4.1f}s  DA {C[i][1][180:].mean():.2f}", foot=False)
         seq.append(np.hstack([l, np.full((360, 6, 3), 255, np.uint8), r]))
     gif(seq, os.path.join(OUT, "v5_vs_v6.gif"), 8, 760)
+
+# 5. 원본 HybridNets vs v6 (전 코스, DA·차선만). 원본은 BDD100K(실제 도로)용: road(도로 전체) / lane 두 클래스
+if a.orig_weights:
+    from backbone import HybridNetsBackbone
+    orig = HybridNetsBackbone(compound_coef=3, num_classes=1, ratios=[(0.62, 1.58), (1.0, 1.0), (1.58, 0.62)],
+                              scales=[2 ** 0, 2 ** 0.70, 2 ** 1.32], seg_classes=2, backbone_name=None, seg_mode="multiclass")   # projects/bdd100k.yml 값
+    orig.load_state_dict(torch.load(a.orig_weights, map_location="cpu", weights_only=True)); orig = orig.cuda().eval()
+    def orig_pair(items, head):
+        out = []
+        for k in range(0, len(items), 32):
+            ch = items[k:k + 32]
+            x = torch.from_numpy(np.stack([((cv2.cvtColor(cv2.copyMakeBorder(r[0], tm.PAD, tm.PAD, 0, 0, cv2.BORDER_CONSTANT, value=(114,) * 3),
+                                                          cv2.COLOR_BGR2RGB).astype(np.float32) / 255 - MEAN) / STD).transpose(2, 0, 1) for _, r in ch])).cuda()
+            with torch.no_grad():
+                seg = orig(x)[-1].argmax(1)[:, tm.PAD:-tm.PAD].cpu().numpy()   # 0 배경, 1 도로, 2 차선
+            for q, (row, r) in enumerate(ch):
+                l = draw((r[0], seg[q] == 1, seg[q] == 2, None, []), sl=False, det=False, head="HybridNets original (BDD100K)", foot=False)
+                rr = draw(r, sl=False, det=False, head=head(row), foot=False)
+                out.append(np.hstack([l, np.full((360, 6, 3), 255, np.uint8), rr]))
+        return out
+    seq = orig_pair([(rc[i], C[i]) for i in range(0, len(rc), 16)], lambda row: f"LimoPro {a.tag}  t={float(row['t']) - t0c:4.1f}s  mission: {mis(row)}")
+    gif(seq, os.path.join(OUT, "orig_vs_v6.gif"), 8, 760)
+    still = orig_pair([(BYNAME[n][1], BYNAME[n][2]) for n in a.orig_frames], lambda row: f"LimoPro {a.tag} (fine-tuned)  mission: {mis(row)}")
+    save(grid(still, 1), "orig_vs_v6.jpg")
