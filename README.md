@@ -1,159 +1,178 @@
+<div align="center">
+
 # LimoPro FOSCAR Vision
 
-> LIMO PRO 카메라 한 장으로 **차선·주행영역·표지판·신호등·라바콘**을 한 번에 보는 다중 작업(multi-task) 모델. AutoRace 2026 트랙에 맞춰 파인튜닝했습니다.
+**카메라 한 대로 차선 · 주행가능영역 · 정지선 · 표지판 · 신호등을 한 번에 보는 다중 작업 모델**
 
-![대회장 test 다중 작업 검출](outputs/train_mt_v3/montages/montage_test_venue.jpg)
+AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
 
-*대회장 조명 test 프레임입니다. 색 박스가 모델 예측(검출), 흰 얇은 박스가 정답입니다. 분할(차선·주행영역)은 같은 모델이 함께 냅니다.*
+[**최신 릴리즈 `multitask-v6`**](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) · [갈림길 분류기 `fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) · [팀 주행 코드](https://github.com/smoony0226/autorace2026)
 
-최신 릴리즈는 **[`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real)** (HybridNets 기반, v3 + 실물 신호등)입니다.
-상세 실험 기록(1~4차 차선 모델, 데이터·학습 설정, 한계 등)은 [`docs/HISTORY.md`](docs/HISTORY.md)에 있습니다.
+</div>
 
-### 진행 중 (2026-11-16): 실물 갈림길 A/B 표지판과 v4
+## News
+- `2026-11-18` **[`multitask-v6`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) 릴리즈.** v5의 DA 꺼짐을 고치고, 11-18 대회장 bag 자동 라벨 996장을 더했습니다. 대회장 bag 11개 **DA 주행 검사 통과**가 릴리즈 기준입니다.
+- `2026-11-17` [`multitask-v5`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v5) **🛑 사용 금지.** 대회장 신호등 진입에서 DA·차선이 통째로 꺼졌습니다([경위](docs/VENUE_1118_STATUS.md)).
+- `2026-11-17` [`fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) 갈림길 A/B 분류기에 대회장 표지판을 학습시키고, 원 바깥을 항상 가리도록 했습니다. 대회장 '없음' 오탐이 35%에서 4%로 줄었습니다.
+- `2026-11-17` [`multitask-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v4) 원본 HybridNets에서 새로 학습했습니다(A·B를 `fork_sign` 하나로 합침).
+- `2026-11-13` [`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real) 실물 신호등 961장을 더해, 실물 노랑·초록 재현율이 22~71%에서 100%가 됐습니다.
 
-![실물 A·B 표지판 SAM 2.1 추적](outputs/fork_cls_v2/sam2_tracking.gif)
+## Introduction
+[HybridNets](https://github.com/datvuthanh/HybridNets)를 바탕으로 AutoRace 2026 트랙과 LIMO PRO 카메라에 맞게 파인튜닝한 다중 작업 모델입니다.
+네트워크 하나가 **주행가능영역(내 차로)**, **차선**, **흰 가로선(정지선·횡단보도)**, **검출 12종**을 한 번에 냅니다.
+갈림길 A/B 글자만 작은 분류기([`fork-sign`](docs/FORK_SIGN_CLASSIFIER.md))가 따로 정합니다.
 
-*실물 크기(Ø80 mm 인쇄) A·B 표지판으로 돈 M7 주행 5개. 표지판 박스를 SAM 2.1 영상 추적으로 모든 프레임에 만들었습니다 —
-자홍 = 아주 먼 구간(3차선 구간에서 차로 끝), 하늘색 = 먼 구간(장애물 사이), 초록 = 가까운 구간, 빨강 = HybridNets 검출 + 갈림길 분류기 확인.*
+- **One model** 🧩 : 미션 9개(차선, 신호등, 갈림길, 횡단보도, 주차, 과속방지턱, 천천히, 3차선, 라바콘)에 필요한 인식을 한 번의 추론으로 처리합니다.
+- **Venue-tuned** 🏟️ : 대회장의 보라·파랑 LED 조명, 바닥 반사, 신호등 뒤 방해 모니터를 증강과 실제 대회장 bag으로 학습했습니다.
+- **Gate-verified** ✅ : 시험셋 점수만으로는 릴리즈하지 않습니다. **대회장 rosbag 전체를 돌려** DA가 한 프레임이라도 통째로 꺼지면 탈락시킵니다.
 
-- **갈림길 A/B 분류기 [`fork-sign-v0.2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.2)** (사전 릴리즈): 위 주행의 크롭을 더해 학습.
-  학습에 안 쓴 실물 주행으로 A↔B 혼동 0, 재현율 98~100%. 자세히: [`outputs/fork_cls_v2/README.md`](outputs/fork_cls_v2/README.md), [`docs/FORK_SIGN_CLASSIFIER.md`](docs/FORK_SIGN_CLASSIFIER.md)
-- **`hybridnets_mt_v4` 학습 준비**: 원본 HybridNets 에서 새로 학습, sign_A·sign_B 를 `fork_sign` 하나로 합침(A/B 는 분류기),
-  정지선 사람 검수 2,587장 추가, 실차 bag 834장·실물 A·B 주행 641장 추가, H100 속도 대응. 자세히: [`docs/MULTITASK_V4_TRAINING.md`](docs/MULTITASK_V4_TRAINING.md)
+## Results
+아래 그림은 **모두 실제 대회장(11-18 CO-SHOW) rosbag 프레임**에 `multitask-v6`를 돌린 결과입니다. 쓴 bag 두 개(`arall_1118_135742`, `ar4_1118_135516`)는 **학습에 쓰지 않았습니다.**
+학습은 H100 PCIe 1장에서 했습니다.
 
-## 1. 주요 기능
+### Visualization
+<table>
+<tr><td><img src="docs/images/readme/drive.gif" width="100%"></td></tr>
+<tr><td align="center"><sub>대회장 rosbag 전 코스(출발 → 라바콘)와 주차, 약 3배속. 초록 = 주행가능영역, 빨강 = 차선, 주황 = 정지선, 박스 = 검출. 위 줄은 bag 시간과 차량의 미션 상태입니다.</sub></td></tr>
+</table>
 
-- **한 모델, 네 가지 출력** — HybridNets 하나로 아래를 동시에 냅니다.
-  - **da (주행가능영역):** 지금 달리는 내 차로만. 3차선·갈림길도 내 차로만 칠합니다.
-  - **ll (차선):** 차선 위치
-  - **흰 가로선:** 정지선·횡단보도 같은 흰 가로선 (분할 4번째 채널)
-  - **검출 12종:** pedestrian, sign_A, sign_B, bump, slow, parking, traffic_light, light_red/yellow/green, limo, cone
-- **트랙·카메라 맞춤** — BDD100K 공개 모델을 LIMO PRO 영상과 대회 트랙(10m×6m, 차선 폭 550mm)에 맞게 파인튜닝.
-- **대회장 조명 증강** — 빨강·파랑 색 조명을 학습 사진에 입혀, 색 조명에서도 주행영역이 번지지 않게 함.
-- **신호등 뒤 방해 모니터 대응** — 학습 중 신호등 뒤에 단색·땡땡이 화면을 그려 넣어, 화면 속 원을 불빛으로 잡는 오탐을 줄임(v3).
-- **실물 신호등** — 로봇 카메라로 찍은 실물 신호등 961장을 섞어, 합성으로만 배운 v3가 못 잡던 실물 노란불·초록불을 잡게 함(v3real).
-- **1차 추론 코드 그대로** — v1·v2·v3·v3real은 구조·입력·출력이 같아 추론 코드에 가중치만 바꿔 끼우면 됩니다.
+### Model parameter and inference speed
+| Model | Input | Params | 출력 | LIMO PRO (Orin Nano, TensorRT FP16) |
+|---|---|---:|---|---|
+| HybridNets (원본, BDD100K) | 640×384 | 12.8M | DA, 차선, 검출 1종 | - |
+| **LimoPro multitask (v4~v6)** | 640×384 | **13.4M** | DA, 차선, 정지선, 검출 12종 | 차선 전용 HybridNets 기준 추론 32 ms, 전체 19.9 fps ([측정](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/blob/limo-trt-fp16/limo_deploy/LANE_PERCEPTION_USAGE.md)) |
 
-## 2. 모델 다운로드
+<sub>다중 작업 엔진의 차량 속도는 따로 재지 않았습니다. 백본과 입력 크기가 같아 차선 전용과 비슷할 것으로 봅니다.</sub>
 
+### Traffic Object Detection Result
+<table>
+<tr><th>Result</th><th>Visualization</th></tr>
+<tr><td>
+
+| test 세트 | v4 | **v6** |
+|---|---:|---:|
+| 합성 test | 0.978 | **0.981** |
+| 대회장 test | 0.987 | **0.987** |
+| 실차 test_bag | 0.980 | **0.981** |
+| 실물 신호등 | **0.989** | 0.985 |
+| 실물 A·B 표지판 주행 | 0.944 | **0.955** |
+
+<sub>mAP@0.5. 검출 칸: pedestrian, fork_sign, bump, slow, parking, traffic_light, light_red / yellow / green</sub>
+</td><td width="55%"><img src="docs/images/readme/task_det.jpg" width="100%"></td></tr>
+</table>
+
+### Drivable Area Segmentation
+<table>
+<tr><th>Result</th><th>Visualization</th></tr>
+<tr><td>
+
+| test 세트 | v4 | **v6** |
+|---|---:|---:|
+| 합성 test | 0.954 | **0.955** |
+| 대회장 test | 0.939 | **0.940** |
+| 실차 test_bag | **0.981** | 0.980 |
+| 실차 bag 11/16 | **0.973** | 0.969 |
+
+<sub>DA IoU. DA는 **지금 달리는 내 차로만** 칠합니다(3차선·갈림길 포함).</sub>
+</td><td width="55%"><img src="docs/images/readme/task_da.jpg" width="100%"></td></tr>
+</table>
+
+### Lane Line and Stop Line Detection
+<table>
+<tr><th>Result</th><th>Visualization</th></tr>
+<tr><td>
+
+| test 세트 | 차선 IoU v4 / **v6** | 정지선 IoU v4 / **v6** |
+|---|---:|---:|
+| 합성 test | 0.806 / **0.811** | 0.882 / **0.891** |
+| 대회장 test | 0.493 / **0.500** | 0.699 / **0.714** |
+| 실차 test_bag | 0.832 / **0.837** | - |
+| 실차 bag 11/16 | 0.864 / **0.874** | 0.883 / **0.885** |
+
+<sub>정지선 = 분할 4번째 채널(흰 가로선: 정지선·횡단보도 앞 선).</sub>
+</td><td width="55%"><img src="docs/images/readme/task_lane.jpg" width="100%"></td></tr>
+</table>
+
+### Mission-by-mission results (venue rosbag)
+<a href="./"><img src="docs/images/readme/missions.jpg" width="100%"></a>
+
+<sub>미션마다 한 장. 차량이 기록한 미션 상태(`mission_id`)로 구간을 나눴습니다. 3차선 칸의 장애물 차 옆 `fork_sign` 박스처럼 오탐도 그대로 두었습니다.</sub>
+
+### Why the DA gate: v5 vs v6
+<table>
+<tr><td><img src="docs/images/readme/v5_vs_v6.gif" width="100%"></td></tr>
+<tr><td align="center"><sub>같은 bag(학습 안 씀)의 신호등 진입 구간. <b>v5(왼쪽)는 62.3초부터 DA·차선이 통째로 꺼지고</b>, v6(오른쪽)은 끝까지 유지합니다.</sub></td></tr>
+</table>
+
+v5는 시험셋 점수가 좋았지만 대회장에서 차가 멈췄습니다. 원인은 학습 데이터에 섞인 **빈 DA 정답 23장**이었습니다(도로가 보이는데 "도로 없음"으로 학습).
+그래서 이제는 릴리즈 전에 [`bag_da_gate.py`](tools/mt_v4_data/bag_da_gate.py)로 대회장 bag 전체 프레임을 차량 기준 모델과 함께 돌립니다.
+
+| 항목 | 통과 조건 | v5 (11-18 bag 8개) | **v6 (11-18 bag 11개)** |
+|---|---|---|---|
+| DA·차선 통째로 꺼짐 | 0 프레임 | 7개 bag 불합격 (최대 581 프레임) | **모두 0** |
+| 가장 긴 연속 꺼짐 | 0.3 s 미만 | 학습 안 쓴 bag에서 8.1 s, 다른 bag은 신호등부터 끝까지 | **0 s** |
+| 차 앞이 비어 보임 | 기준 + 5 프레임 이하 | - | 통과 |
+| 흔들림 (이웃 프레임 DA IoU 5% 분위) | 기준 − 0.05 이상 | - | 통과 (대부분 v4보다 안정) |
+
+<details><summary>bag별 DA 타임라인 (v4 · v5 · v6)</summary>
+<img src="docs/images/readme/gate_timeline.png" width="100%">
+</details>
+
+## Models
 | 릴리즈 | 내용 |
 |---|---|
-| **[`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real)** | **3차 + 실물 신호등 (권장·최신).** 실물 노랑·초록 재현율(점수 0.5) 71 / 22% → 100 / 100%, 차선 ll 0.802 → 0.822, 모니터 가짜 불빛 4 → 0개. **콘은 학습 안 함(콘 출력 쓰지 말 것)**. 실물 신호등 데이터셋 포함 |
-| [`multitask-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3) | 다중 작업 3차 HybridNets. 콘 뺀 검출 mAP50 0.97~0.99, 모니터 가짜 불빛 61 → 4개. 콘 검출이 필요하면 이것 |
-| [`multitask-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2) | 다중 작업 2차 HybridNets. 검출 mAP50 0.90~0.95, A/B 구분 84~92%. 차선이 가장 중요하면 이것 |
-| [`multitask-v2-skip`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2-skip) | 참고용: v2 + 백본 지름길(실험 B). 성능은 v2와 비슷, 추론에 `forward_mt` 필요 |
-| [`multitask-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1) | 다중 작업 1차 + 학습 데이터셋 + 학습 코드 |
-| [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4) | 차선 전용 4차 HybridNets (실차 코너·이탈 프레임 보강) |
-| [`ego-lane-v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v3) | 차선 전용 3차 모델 4개 (HybridNets · TwinLiteNet+ · YOLOP · YOLOPv2) |
-| [`ego-lane-v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v2) · [`ego-lane-v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v1) | 차선 전용 2차 · 1차 |
+| **[`multitask-v6`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6)** | **최신·권장.** v4에서 시작, 빈 DA 정답 제거, 11-18 대회장 자동 라벨 996장. DA 주행 검사 통과 |
+| [`multitask-v5`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v5) | 🛑 사용 금지 (대회장에서 DA 꺼짐) |
+| [`multitask-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v4) | 원본 HybridNets에서 새로 학습, `fork_sign` 합침. v6 이전 차량 기준 모델 |
+| [`fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) | 갈림길 A/B 분류기 (ONNX, OpenCV 4.5.4 dnn 호환). v4·v6의 `fork_sign` 박스 크롭에 씀 |
+| [`multitask-v3real`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3real) · [`v3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v3) · [`v2`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v2) · [`v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v1) | 이전 다중 작업 모델 (검출 칸 1·2 = sign_A·sign_B) |
+| [`ego-lane-v4`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v4) ~ [`v1`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/ego-lane-v1) | 차선 전용 모델 (HybridNets · TwinLiteNet+ · YOLOP · YOLOPv2) |
 
 ```bash
-# 최신 다중 작업 가중치 받기
-gh release download multitask-v3real -p "hybridnets_mt_v3real_best.pt" -p "hybridnets_mt_v3real_calib.json"
+gh release download multitask-v6 -R mastic-choi/LimoPro_FOSCAR_Vision -p 'hybridnets_mt_v6_*'
 ```
 
-- `hybridnets_mt_v3real_best.pt`는 state_dict(epoch 29)입니다. 분할 4채널(배경/도로/차선/흰 가로선), 검출 12클래스(cone 출력은 학습하지 않아 쓰지 않음).
-- `hybridnets_mt_v3real_calib.json`은 클래스별 점수 보정값입니다. `p' = sigmoid(logit(p) / T[클래스])`. v3와 점수 분포가 달라, 주행 코드의 점수 기준은 바꿔 넣은 뒤 다시 확인하세요.
-- **전처리:** 1280×720 → 640×360 리사이즈 → 위아래 12px 패딩(값 114), RGB + ImageNet 정규화.
-- 차선 전용 모델의 모델별 전처리와 사전학습 가중치는 [`models/README.md`](models/README.md)를 보세요.
+- `hybridnets_mt_v6_best.pt`: state_dict (epoch 41). 분할 4채널(배경 / DA / 차선 / 흰 가로선), 검출 12칸.
+  - 검출 칸: 0 pedestrian, 1 fork_sign, 2 비움, 3 bump, 4 slow, 5 parking, 6 traffic_light, 7~9 light_red / yellow / green, 10·11 쓰지 않음
+- `hybridnets_mt_v6_calib.json`: 클래스별 점수 보정. `p' = sigmoid(logit(p) / T[클래스])`
+- **전처리**: 1280×720 → 640×360 리사이즈 → 위아래 12px 패딩(값 114), RGB + ImageNet 정규화
+- v4와 구조가 같아서 차량에서는 가중치만 바꿔 TensorRT 엔진을 다시 만들면 됩니다([릴리즈 노트](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6)). **바꾸면 팀에 알리고 기록해 주세요.**
 
-## 3. 성능 (multitask-v3real)
-
-점수는 시드 1개 기준입니다. 합성 test의 표지판·신호등은 실제 프레임에 합성한 것입니다. 실물 신호등 test는 학습과 같은 수집 영상에서 시간 구간만 떼어 둔 것이라, 실제보다 좋게 나왔을 수 있습니다.
-
-| 지표 | 2차 (v2) | 3차 (v3) | **3차 + 실물 (v3real)** |
-|---|---:|---:|---:|
-| 실물 신호등 test 171장, 빨강 / 노랑 / 초록 재현율 (점수 0.5) | 측정 안 함 | 82 / 71 / 22% | **96 / 100 / 100%** |
-| 실물 신호등 1.2m 12장, 노랑 / 초록 재현율 (점수 0.3) | 측정 안 함 | 0 / 0% | **100 / 75%** |
-| 검출 mAP50, 콘 제외 (기존 / 대회장 / bag) | 0.931 / 0.937 / 0.952 | 0.969 / 0.979 / 0.987 | **0.978 / 0.980 / 1.000** |
-| A/B 구분, A·B 점수만 비교 (기존 / 대회장 / bag) | 84 / 84 / 92% | **97 / 95 / 100%** | 측정 안 함 |
-| 땡땡이 모니터 앞 가짜 불빛 (193장, 점수 0.3) | 61개 (36장) | 4개 (3장) | **0개** |
-| 콘 AP50 (14px 이상) / 콘 오탐 (1,363장, 점수 0.4) | 0.887 / 2,365개 | **0.970 / 189개** | 학습 안 함 |
-| 차선 da / ll, 기존 test | 0.955 / 0.816 | 0.952 / 0.802 | **0.956 / 0.822** |
-| 차선 da / ll, 대회장 test | 0.935 / 0.486 | 0.932 / 0.483 | **0.937 / 0.490** |
-| 차선 da / ll, 실차 test_bag | 0.981 / 0.826 | 0.979 / 0.810 | **0.982 / 0.845** |
-| 흰 가로선 IoU, 대회장 test | 0.604 | **0.645** | 0.618 |
-
-v3real 검출 AP50 (대회장 test): pedestrian 1.00 · bump 0.95 · sign_A 0.96 · sign_B 1.00 · parking 1.00 · slow 1.00 · traffic_light 0.99 · light red/yellow/green 0.95 / 1.00 / 0.96.
-
-- **실물 신호등은 실차에서 꼭 확인하세요.** 따로 찍은 사진은 1.2m 12장뿐입니다. **1.2m 초록불은 점수 0.30~0.31로 겨우 잡히거나 놓칩니다.** 초록불은 가까워질 때까지 몇 프레임 지켜보고 판단하세요. 비교 그림은 [`outputs/train_mt_v3real/compare/`](outputs/train_mt_v3real/compare/)에 있습니다.
-- **콘 출력은 쓰지 마세요.** v3real은 콘 없이 학습했습니다. 콘 검출이 필요하면 v3를 쓰세요.
-- **흰 가로선 IoU가 v3보다 0.027 낮습니다.** 주로 실제 가로선을 덜 칠해서 생긴 하락입니다(잘못 칠한 픽셀은 줄었음). 정지선 판단에 쓴다면 실차에서 v3와 비교해 보세요.
-- 전체 표는 [`outputs/train_mt_v3real/README.md`](outputs/train_mt_v3real/README.md), 3차는 [`outputs/train_mt_v3/README.md`](outputs/train_mt_v3/README.md), 2차는 [`outputs/train_mt_v2/README.md`](outputs/train_mt_v2/README.md)에 있습니다.
-
-## 4. Quick start
-
-학습·추론 코드는 HybridNets를 함께 두어야 돕니다(`models/README.md`). 경로는 Windows + `.venv` 기준입니다.
-
-**추론 / 시각화** — test 사진에 검출 박스를 그려 몽타주를 만듭니다.
+## Demo Test
+학습·추론 코드는 HybridNets를 함께 두어야 돕니다([`models/README.md`](models/README.md)). 아래 명령은 학습 번들(`LimoPro_mt_v4`)의 venv 기준입니다.
 
 ```bash
-.venv/Scripts/python scripts/eval_mt_montage.py . hybridnets_mt_v3real_best.pt outputs/preview "multitask-v3real"
+# 대회장 bag 프레임 뽑기 (-> <out>/<bag>/frames/*.jpg + frames.csv)
+python -I tools/mt_v4_data/bag_fork_frames.py <out> <bag 폴더>... --msgdir <autorace2026>/src/ar_msgs/msg --all
+
+# README 그림 다시 만들기 (이 페이지의 GIF·몽타주)
+python -I tools/mt_v4_data/readme_media.py --bundle <LimoPro_mt_v4> --weights hybridnets_mt_v6_best.pt \
+    --cmp-weights hybridnets_mt_v5_best.pt --frames-root <out> --out docs/images/readme
+
+# 릴리즈 전 DA 주행 검사 (후보 vs 지금 차량 모델)
+python -I tools/mt_v4_data/bag_da_gate.py --cand <후보 best.pt> --base <v4 best.pt> --bundle <LimoPro_mt_v4> --stride 2 <out>/<bag>...
+
+# 학습에 안 쓴 bag 확인 영상(mp4) + 몽타주
+python -I tools/mt_v4_data/heldout_video.py --bundle <LimoPro_mt_v4> --weights <best.pt> --frames-root <out> --out <폴더> arall_1118_135742
 ```
 
-**이어서 학습 (v1 → v2 재현)** — 1차 best.pt에서 검출 머리·BiFPN lr 10배, 검출 손실 2배로 15 epoch.
+| 도구 | 하는 일 |
+|---|---|
+| [`tools/mt_v4_data/bag_da_gate.py`](tools/mt_v4_data/bag_da_gate.py) | 릴리즈 전 DA 주행 검사 |
+| [`tools/mt_v4_data/gate_timeline_plot.py`](tools/mt_v4_data/gate_timeline_plot.py) | bag별 DA 타임라인 그림 (위 접은 그림) |
+| [`tools/mt_v4_data/which_model_in_bag.py`](tools/mt_v4_data/which_model_in_bag.py) | bag에 기록된 차량 출력(`/ar/lane/sl_mask`)으로 차에 올라간 모델 버전 찾기 |
+| [`tools/mt_v4_data/auto_label_v4.py`](tools/mt_v4_data/auto_label_v4.py) | 대회장 bag 자동 라벨 (v6 학습 데이터) |
+| [`scripts/eval_mt_stopline_montage.py`](scripts/eval_mt_stopline_montage.py) | 정지선 정답·예측을 겹친 몽타주와 사진별 IoU |
+| [`tools/h100_mt_v4/run_v6.sh`](tools/h100_mt_v4/run_v6.sh) | v6 학습 명령 (H100, epoch당 약 170초, 53 epoch 약 2.6시간) |
 
-```bash
-.venv/Scripts/python scripts/train_multitask.py \
-  --seg-data dataset/synth_signs_v2 --det-data dataset/cones_v1 \
-  --venue-ref-dir dataset/venue_ref_20261106 \
-  --init outputs/train/hybridnets_mt_v1_seed0/best.pt \
-  --head-lr-mult 10 --det-weight 2 --warmup-steps 500 --epochs 15 \
-  --amp --batch 32 --workers 16 --out outputs/train/hybridnets_mt_v2
-# 실험 A(=v2)·B를 한 번에 돌리고 비교표까지: bash scripts/run_mt_exp_ab.sh
-```
+### Documents
+- [`docs/VENUE_1118_STATUS.md`](docs/VENUE_1118_STATUS.md): 11-18 대회장 정리 (v5 사고, DA 주행 검사, 자동 라벨, v6)
+- [`docs/MULTITASK_V4_TRAINING.md`](docs/MULTITASK_V4_TRAINING.md): v4 데이터·학습 설계
+- [`docs/FORK_SIGN_CLASSIFIER.md`](docs/FORK_SIGN_CLASSIFIER.md): 갈림길 A/B 분류기
+- [`docs/HISTORY.md`](docs/HISTORY.md): 전체 실험 기록 (차선 1~4차, 다중 작업 1~3차)
+- [`docs/LIMO_DEPLOY_NOTES.md`](docs/LIMO_DEPLOY_NOTES.md): LIMO PRO 사양과 배포 전 확인 사항
 
-**H100 서버 학습 (v2 → v3 재현)** — 묶음 zip을 만들어 서버에 올리고 실행합니다(이미지는 서버에 둔 v2 데이터 재사용).
-
-```bash
-# 이 PC: 코드 + 시작 가중치(v2 best)만 담은 번들 생성
-.venv/Scripts/python -I scripts/make_h100_mt_v3_bundle.py --out outputs/share
-
-# 서버: v2 폴더 위에 덮어 풀고 실행
-unzip -o LimoPro_mt_v3_h100.zip && cd LimoPro_mt
-bash run_v3.sh check    # 데이터·가중치·SHA256 확인
-bash run_v3.sh          # 학습 → 모니터 시험 → results_v3_<서버이름>.zip
-```
-
-v3 릴리즈는 학습이 남긴 후보 중 `best_score.pt`(epoch 11)입니다. 다른 후보를 쓸 때는 점수 보정과 test 채점을 다시 합니다.
-
-```bash
-.venv/Scripts/python scripts/eval_mt_finalize.py outputs/train/hybridnets_mt_v3_seed0/best_score.pt outputs/train_mt_v3/hybridnets_mt_v3
-```
-
-자세한 서버 실행법은 [`tools/h100_mt_v3/README_V3.md`](tools/h100_mt_v3/README_V3.md), v3 설계는 [`docs/MULTITASK_V3_TRAINING.md`](docs/MULTITASK_V3_TRAINING.md)를 보세요.
-
-**RTX PC 학습 (v3 → v3real 재현)** — v3 릴리즈 가중치에서 이어서 실물 신호등을 섞어 30 epoch 학습합니다(RTX 3070 Ti에서 epoch당 약 6분, 약 3시간).
-
-```bash
-# 번들 폴더(LimoPro_mt_rtx)에 tools/rtx_mt_v3real/의 파일과 scripts/, models/HybridNets, weights/hybridnets_mt_v3_best.pt,
-# dataset/real_tl_v1(릴리즈의 LimoPro_dataset_real_tl_v1.zip)을 두고, 상위 폴더에 LimoPro_dataset_mt_v1.zip을 둡니다.
-bash run.sh check   # venv 만들기, 합성 데이터 풀기, 데이터·가중치·GPU 확인
-bash run.sh         # 학습 -> 실물 신호등 비교 -> 모니터 시험 -> results_v3real_<PC이름>.zip
-```
-
-설정과 결과 보는 법은 [`tools/rtx_mt_v3real/README.md`](tools/rtx_mt_v3real/README.md)에 있습니다.
-
-## 5. 다음 할 일
-
-- **실차에서 실물 신호등 확인 (v3real)** — 대회장 신호등과 거리(1~2m), 조명에서 노랑·초록을 잡는지, 불빛 점수 기준(0.3 / 0.5)별로 확인합니다. 따로 찍은 실물 사진을 더 모아 test를 늘립니다.
-- **실차에서 차선·정지선 비교** — 같은 코스에서 v2 / v3 / v3real의 차선 추종과 흰 가로선(정지선)을 비교합니다. v3real은 ll이 가장 높고 흰 가로선은 v3보다 낮습니다.
-- **실제 모니터 사진 확인** — 모니터 시험은 합성 화면이라, 대회장에서 신호등 뒤 실제 모니터를 찍어 확인합니다.
-
-## 6. 문서
-
-- [`docs/HISTORY.md`](docs/HISTORY.md) — 전체 실험 기록(차선 1~4차, 데이터·학습 설정, 결과·한계, 저장소 구성)
-- [`outputs/train_mt_v3real/README.md`](outputs/train_mt_v3real/README.md) — 3차 + 실물 신호등 결과 전체(실물 신호등, 합성 test, 모니터 시험, 학습 곡선)
-- [`tools/rtx_mt_v3real/README.md`](tools/rtx_mt_v3real/README.md) — v3real 학습 설정과 RTX PC 실행법
-- [`outputs/train_mt_v3/README.md`](outputs/train_mt_v3/README.md) — 다중 작업 3차 결과 전체(후보 비교, 크기별 정답률, 모니터 시험, 점수 보정)
-- [`outputs/train_mt_v2/README.md`](outputs/train_mt_v2/README.md) — 다중 작업 2차 결과 전체
-- [`docs/MULTITASK_DETECTION_ANALYSIS.md`](docs/MULTITASK_DETECTION_ANALYSIS.md) — 표지판 구분 실패 원인 분석(A/B 언더피팅)
-- [`docs/MULTITASK_V3_TRAINING.md`](docs/MULTITASK_V3_TRAINING.md) · [`tools/h100_mt_v3/README_V3.md`](tools/h100_mt_v3/README_V3.md) — v3 설계와 서버 실행법
-- [`docs/ENSEMBLE_FINETUNE.md`](docs/ENSEMBLE_FINETUNE.md) — 차선 파인튜닝 방법과 결과
-- [`docs/LIMO_DEPLOY_NOTES.md`](docs/LIMO_DEPLOY_NOTES.md) — LIMO PRO 사양과 배포 전 확인 사항
-
-## 7. 사용한 모델 · 라이선스 · 크레딧
-
-- 기반 모델: [HybridNets](https://github.com/datvuthanh/HybridNets), [TwinLiteNetPlus](https://github.com/chequanghuy/TwinLiteNetPlus), [YOLOP](https://github.com/hustvl/YOLOP), [YOLOPv2](https://github.com/CAIC-AD/YOLOPv2) — 모두 MIT License.
-- 라바콘 공개 데이터: TraCon, FSOCO.
-- AutoRace 2026 참가팀 **FOSCAR** — [smoony0226/autorace2026](https://github.com/smoony0226/autorace2026).
+## License
+- 기반 모델: [HybridNets](https://github.com/datvuthanh/HybridNets), [TwinLiteNetPlus](https://github.com/chequanghuy/TwinLiteNetPlus), [YOLOP](https://github.com/hustvl/YOLOP), [YOLOPv2](https://github.com/CAIC-AD/YOLOPv2). 모두 MIT License입니다.
+- 라바콘 공개 데이터: TraCon, FSOCO
+- AutoRace 2026 참가팀 **FOSCAR**: [smoony0226/autorace2026](https://github.com/smoony0226/autorace2026)
