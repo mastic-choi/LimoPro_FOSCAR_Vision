@@ -18,8 +18,8 @@
 | 파일 | 하는 일 |
 |---|---|
 | `bag_da_gate.py` | 릴리즈 전 DA 주행 검사 (후보 vs 차량 기준 모델, 대회장 bag 전체 프레임) |
-| `gate_timeline_plot.py` | bag 별 v4·v5·v6 DA 비율 타임라인 그림 |
+| `gate_timeline_plot.py` | bag 별 모델 DA 비율 타임라인 그림 |
 | `which_model_in_bag.py` | bag 의 차량 출력 `/ar/lane/sl_mask` 와 후보 모델 정지선을 비교해 차에 올라간 버전 찾기 |
 | `heldout_video.py` | 학습에 안 쓴 bag 확인 영상(mp4) + 16장 몽타주 |
-| `readme_media.py` | 레포 README 대문 그림 (대회장 bag 전 코스 GIF, 미션별 3x3, 작업별 2x2, v5 vs v6 GIF) |
+| `readme_media.py` | 레포 README 대문 그림 (대회장 bag 전 코스 GIF, 미션별 3x3, 작업별 2x2, 원본 HybridNets vs v6) |
 | `auto_label_v4.py` / `ego_lane_label.py` | 대회장 bag 자동 라벨 (v6 학습 데이터) |

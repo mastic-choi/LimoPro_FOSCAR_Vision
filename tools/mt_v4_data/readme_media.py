@@ -11,11 +11,11 @@
   task_da.jpg       주행가능영역(DA)만 2x2
   task_lane.jpg     차선 + 흰 가로선(정지선)만 2x2
   orig_vs_v6.gif    (--orig-weights 를 주면) 원본 HybridNets(BDD100K 공개 가중치) 와 v6 나란히, 전 코스. DA·차선만 비교
-  v5_vs_v6.gif      (--cmp-weights 를 주면) 신호등 진입 구간에서 v5 와 v6 나란히: v5 는 DA·차선이 꺼짐
+  compare_vs_v6.gif (--cmp-weights 를 주면) 신호등 진입 구간에서 다른 모델과 v6 나란히
 프레임 폴더: bag_fork_frames.py --all 로 뽑은 <frames-root>/<bag>/frames/*.jpg + frames.csv (name, t, mission_id)
 사용:
   <번들>/.venv/bin/python -I tools/mt_v4_data/readme_media.py --bundle <LimoPro_mt_v4> --weights <v6 best.pt> \
-      --frames-root <label_work/fullbag1118> --out docs/images/readme [--cmp-weights <v5 best.pt>]
+      --frames-root <label_work/fullbag1118> --out docs/images/readme [--orig-weights <hybridnets.pth>]
 """
 import argparse, csv, os, shutil, subprocess, sys, tempfile
 
@@ -177,16 +177,16 @@ lane_mids += [x for x in ["0", "5", "6", "7"] if x not in lane_mids][:4 - len(la
 save(grid([draw(r, da=False, det=False, foot=False) for r in pick(lane_mids)], 2), "task_lane.jpg")
 print("미션별 프레임:", {k: (v[0], v[1]["name"]) for k, v in picks.items()}, "| 차선 그림 미션:", lane_mids)
 
-# 4. v5 vs v6 (신호등 진입 구간): v5 는 이 bag 62.3 s 부터 DA·차선이 꺼짐
+# 4. 다른 모델 vs v6 (신호등 진입 구간)
 if a.cmp_weights:
     sel = [i for i, row in enumerate(rc) if 58.0 <= float(row["t"]) - t0c <= 69.0][::4]
     old = load(a.cmp_weights); O = infer(old, Rc, [rc[i] for i in sel]); seq = []
     for j, i in enumerate(sel):
         t = float(rc[i]["t"]) - t0c
-        l = draw(O[j], head=f"v5 (withdrawn)  t={t:4.1f}s  DA {O[j][1][180:].mean():.2f}", foot=False)
+        l = draw(O[j], head=f"compare  t={t:4.1f}s  DA {O[j][1][180:].mean():.2f}", foot=False)
         r = draw(C[i], head=f"{a.tag}  t={t:4.1f}s  DA {C[i][1][180:].mean():.2f}", foot=False)
         seq.append(np.hstack([l, np.full((360, 6, 3), 255, np.uint8), r]))
-    gif(seq, os.path.join(OUT, "v5_vs_v6.gif"), 8, 760)
+    gif(seq, os.path.join(OUT, "compare_vs_v6.gif"), 8, 760)
 
 # 5. 원본 HybridNets vs v6 (전 코스, DA·차선만). 원본은 BDD100K(실제 도로)용: road(도로 전체) / lane 두 클래스
 if a.orig_weights:
@@ -203,11 +203,11 @@ if a.orig_weights:
             with torch.no_grad():
                 seg = orig(x)[-1].argmax(1)[:, tm.PAD:-tm.PAD].cpu().numpy()   # 0 배경, 1 도로, 2 차선
             for q, (row, r) in enumerate(ch):
-                l = draw((r[0], seg[q] == 1, seg[q] == 2, None, []), sl=False, det=False, head="HybridNets original (BDD100K)", foot=False)
+                l = draw((r[0], seg[q] == 1, seg[q] == 2, None, []), sl=False, det=False, head="original HybridNets (BDD100K)", foot=False)
                 rr = draw(r, sl=False, det=False, head=head(row), foot=False)
                 out.append(np.hstack([l, np.full((360, 6, 3), 255, np.uint8), rr]))
         return out
-    seq = orig_pair([(rc[i], C[i]) for i in range(0, len(rc), 16)], lambda row: f"LimoPro {a.tag}  t={float(row['t']) - t0c:4.1f}s  mission: {mis(row)}")
+    seq = orig_pair([(rc[i], C[i]) for i in range(0, len(rc), 16)], lambda row: f"AutoRace LimoPro HybridNets  t={float(row['t']) - t0c:4.1f}s  mission: {mis(row)}")
     gif(seq, os.path.join(OUT, "orig_vs_v6.gif"), 8, 760)
-    still = orig_pair([(BYNAME[n][1], BYNAME[n][2]) for n in a.orig_frames], lambda row: f"LimoPro {a.tag} (fine-tuned)  mission: {mis(row)}")
+    still = orig_pair([(BYNAME[n][1], BYNAME[n][2]) for n in a.orig_frames], lambda row: f"AutoRace LimoPro HybridNets  mission: {mis(row)}")
     save(grid(still, 1), "orig_vs_v6.jpg")
