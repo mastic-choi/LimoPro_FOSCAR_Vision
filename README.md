@@ -4,7 +4,7 @@
 
 **카메라 한 대로 차선 · 주행가능영역 · 정지선 · 표지판 · 신호등을 한 번에 보는 다중 작업 모델**
 
-AutoRace 2026 (CO-SHOW) 참가팀 **FOSCAR** · LIMO PRO
+AutoRace 2026 (CO-SHOW) 최우수상 수상팀 **FOSCAR** · LIMO PRO
 
 [**최신 릴리즈 `multitask-v6`**](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) · [갈림길 분류기 `fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) · [팀 주행 코드](https://github.com/smoony0226/autorace2026)
 
