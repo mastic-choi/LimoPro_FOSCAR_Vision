@@ -165,6 +165,12 @@ python -I tools/mt_v4_data/heldout_video.py --bundle <LimoPro_mt_v4> --weights <
 - [`docs/LIMO_DEPLOY_NOTES.md`](docs/LIMO_DEPLOY_NOTES.md): LIMO PRO 사양과 배포 전 확인 사항
 
 ## License
-- 기반 모델: [HybridNets](https://github.com/datvuthanh/HybridNets), [TwinLiteNetPlus](https://github.com/chequanghuy/TwinLiteNetPlus), [YOLOP](https://github.com/hustvl/YOLOP), [YOLOPv2](https://github.com/CAIC-AD/YOLOPv2). 모두 MIT License입니다.
-- 라바콘 공개 데이터: TraCon, FSOCO
+이 저장소의 코드와 모델 가중치는 [MIT License](LICENSE)로 공개합니다. Copyright (c) 2026 mastic-choi and FOSCAR.
+
+- 기반 모델: [HybridNets](https://github.com/datvuthanh/HybridNets), [TwinLiteNetPlus](https://github.com/chequanghuy/TwinLiteNetPlus), [YOLOP](https://github.com/hustvl/YOLOP), [YOLOPv2](https://github.com/CAIC-AD/YOLOPv2). 모두 MIT License이고, 원본 저작권 고지는 [`NOTICE`](NOTICE)에 모았습니다.
+- 사전학습 가중치는 BDD100K로 학습된 공개 가중치에서 출발했습니다. BDD100K 이용 조건도 함께 확인해 주세요.
+- 라바콘 공개 데이터: TraCon, FSOCO (multitask-v1~v3 학습에만 사용, v4부터는 쓰지 않음)
 - AutoRace 2026 참가팀 **FOSCAR**: [smoony0226/autorace2026](https://github.com/smoony0226/autorace2026)
+
+## Special Thanks
+- 국민대학교 전자공학부 송문영 ([smoony0226](https://github.com/smoony0226))
