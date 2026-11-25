@@ -6,7 +6,7 @@
 
 AutoRace 2026 (CO-SHOW) 최우수상 수상팀 **FOSCAR** · LIMO PRO
 
-[**최신 릴리즈 `multitask-v6`**](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) · [갈림길 분류기 `fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) · [팀 주행 코드](https://github.com/smoony0226/autorace2026)
+[**최신 릴리즈 `multitask-v6`**](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/multitask-v6) · [갈림길 분류기 `fork-sign-v0.3`](https://github.com/mastic-choi/LimoPro_FOSCAR_Vision/releases/tag/fork-sign-v0.3) · [Hugging Face 모델](https://huggingface.co/mastic-choi/LimoPro_FOSCAR_Vision) · [팀 주행 코드](https://github.com/smoony0226/autorace2026)
 
 </div>
 
@@ -123,6 +123,8 @@ AutoRace 2026 (CO-SHOW) 최우수상 수상팀 **FOSCAR** · LIMO PRO
 ```bash
 gh release download multitask-v6 -R mastic-choi/LimoPro_FOSCAR_Vision -p 'hybridnets_mt_v6_*'
 ```
+
+v6는 [Hugging Face](https://huggingface.co/mastic-choi/LimoPro_FOSCAR_Vision)에도 있습니다(`hybridnets_mt_v6.safetensors`, 로딩 예제 포함).
 
 - `hybridnets_mt_v6_best.pt`: state_dict (epoch 41). 분할 4채널(배경 / DA / 차선 / 흰 가로선), 검출 12칸.
   - 검출 칸: 0 pedestrian, 1 fork_sign, 2 비움, 3 bump, 4 slow, 5 parking, 6 traffic_light, 7~9 light_red / yellow / green, 10·11 쓰지 않음
