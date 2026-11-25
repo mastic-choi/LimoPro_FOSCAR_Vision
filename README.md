@@ -172,7 +172,7 @@ python -I tools/mt_v4_data/heldout_video.py --bundle <LimoPro_mt_v4> --weights <
 - 기반 모델: [HybridNets](https://github.com/datvuthanh/HybridNets), [TwinLiteNetPlus](https://github.com/chequanghuy/TwinLiteNetPlus), [YOLOP](https://github.com/hustvl/YOLOP), [YOLOPv2](https://github.com/CAIC-AD/YOLOPv2). 모두 MIT License이고, 원본 저작권 고지는 [`NOTICE`](NOTICE)에 모았습니다.
 - 사전학습 가중치는 BDD100K로 학습된 공개 가중치에서 출발했습니다. BDD100K 이용 조건도 함께 확인해 주세요.
 - 라바콘 공개 데이터: TraCon, FSOCO (multitask-v1~v3 학습에만 사용, v4부터는 쓰지 않음)
-- AutoRace 2026 참가팀 **FOSCAR**: [smoony0226/autorace2026](https://github.com/smoony0226/autorace2026)
+- AutoRace2026(CO-SHOW) 최우수상 수상팀 **FOSCAR**: [smoony0226/autorace2026](https://github.com/smoony0226/autorace2026)
 
 ## Special Thanks
 이 프로젝트의 모델 학습에 필요한 하드웨어를 지원해 주신 국민대학교 전자공학부 [송문영](https://github.com/smoony0226) 님께 깊이 감사드립니다.
