@@ -173,4 +173,4 @@ python -I tools/mt_v4_data/heldout_video.py --bundle <LimoPro_mt_v4> --weights <
 - AutoRace 2026 참가팀 **FOSCAR**: [smoony0226/autorace2026](https://github.com/smoony0226/autorace2026)
 
 ## Special Thanks
-- 국민대학교 전자공학부 송문영 ([smoony0226](https://github.com/smoony0226))
+이 프로젝트의 모델 학습에 필요한 하드웨어를 지원해 주신 국민대학교 전자공학부 [송문영](https://github.com/smoony0226) 님께 깊이 감사드립니다.
